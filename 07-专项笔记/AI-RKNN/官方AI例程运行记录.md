@@ -428,6 +428,49 @@ Windows: E:\RK3568\face_stage\result\scrfd_realtime_last.jpg
 Obsidian: 08-附录/实验产物/assets/scrfd_realtime_last.jpg
 ```
 
+### 第四次结果（MIPI屏实时显示）
+
+测试目标：
+
+```text
+验证 OpenCV 窗口显示能否直接输出到板载 MIPI 屏。
+```
+
+运行命令：
+
+```bash
+python3 main_gst_realtime.py --frames 300 --save-every 60 --display
+```
+
+关键输出：
+
+```text
+processed_frames 300
+elapsed_sec 45.322
+fps 6.619
+avg_faces_per_frame 0.913
+```
+
+现象：
+
+```text
+MIPI 屏可以实时显示 Camera 画面和 SCRFD 人脸检测框。
+```
+
+结论：
+
+```text
+当前 Buildroot + OpenCV 环境支持 cv2.imshow() 输出到 MIPI 屏。
+Camera -> GStreamer -> OpenCV -> SCRFD RKNN -> MIPI屏实时显示 链路已跑通。
+```
+
+说明：
+
+```text
+终端中的 RKNN size_with_stride warning 暂时不影响当前功能验证。
+后续做性能优化或 C++ 化时再单独处理。
+```
+
 脚本、图片和板端路径的完整索引见：
 
 - [[附录-实验产物索引]]
@@ -454,6 +497,7 @@ Camera 实时帧进入 RKNN 人脸检测模型已跑通。
 - `01_lenet` 最小 RKNN 推理。
 - `11_facedet_scrfd_npu` 单帧 Camera 人脸检测。
 - `11_facedet_scrfd_npu` 实时 90 帧检测（含 FPS 统计与结果图保存）。
+- `11_facedet_scrfd_npu` MIPI 屏实时显示（300 帧，约 6.619 FPS）。
 - 脚本和结果图已登记到 [[附录-实验产物索引]]。
 
 后续不继续在本文追加临时路径，新增实验产物统一放入 [[附录-实验产物索引]]。
