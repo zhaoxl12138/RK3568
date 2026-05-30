@@ -85,6 +85,15 @@ cmake --build build
 processed_frames 1
 ```
 
+OpenCV C++ 接入状态：
+
+```text
+WSL 已安装 libopencv-dev。
+CMake 已找到 OpenCV 4.2.0。
+OpenCvCameraSource / OpenCvDisplaySink 已加入工程并编译通过。
+当前主程序仍默认运行 stub pipeline。
+```
+
 关联：
 
 - [[MIPI屏显示链路]]
