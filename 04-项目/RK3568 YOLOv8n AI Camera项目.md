@@ -91,7 +91,21 @@ OpenCV C++ 接入状态：
 WSL 已安装 libopencv-dev。
 CMake 已找到 OpenCV 4.2.0。
 OpenCvCameraSource / OpenCvDisplaySink 已加入工程并编译通过。
-当前主程序仍默认运行 stub pipeline。
+当前主程序已支持 --mode stub 和 --mode opencv。
+已用测试 JPG 验证 C++ OpenCV 输入链路。
+```
+
+验证命令：
+
+```bash
+./build/ai_camera_demo --mode opencv --source /mnt/e/RK3568/opencv_test/opencv_frame_gst.jpg --frames 1 --no-display
+```
+
+关键输出：
+
+```text
+detect frame 1280x720 BGR888
+processed_frames 1
 ```
 
 关联：
