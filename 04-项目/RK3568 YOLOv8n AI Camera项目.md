@@ -24,8 +24,8 @@ Camera -> V4L2/GStreamer -> OpenCV -> YOLOv8n -> NCNN/RKNN -> RTSP/RTMP -> Linux
 
 ## 软件目标
 
-- C++17
-- CMake
+- Python 优先跑通完整闭环
+- C++17/CMake 后置升级
 - Linux 工程化
 - 模块化
 - 可维护
@@ -41,6 +41,26 @@ Camera -> V4L2/GStreamer -> OpenCV -> YOLOv8n -> NCNN/RKNN -> RTSP/RTMP -> Linux
 - `streamer`: RTSP/RTMP 推流
 - `config`: 配置文件
 - `app`: 主程序入口
+
+## 当前路线决策
+
+```text
+现在用 Python 冲完整闭环，后面用 C++ 做项目升级。
+```
+
+原因：
+
+```text
+当前最重要的是先跑通 Camera -> AI -> MIPI屏 -> 推流。
+C++ 骨架已经建立，但暂时不继续作为主线推进。
+```
+
+当前 YOLO 阶段策略：
+
+```text
+优先使用 4.19 官方 YOLOv5 RKNN 模型做 Python 最小推理。
+YOLOv8 后置，因为官方 YOLOv8 例程在 Linux5.10 资料中，当前板端系统是 4.19。
+```
 
 ## 当前工程骨架
 
