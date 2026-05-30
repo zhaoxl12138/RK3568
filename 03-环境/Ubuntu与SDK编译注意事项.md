@@ -1,4 +1,4 @@
-﻿# Ubuntu与SDK编译注意事项
+# Ubuntu与SDK编译注意事项
 
 ## 官方建议
 
