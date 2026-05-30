@@ -68,7 +68,21 @@ docs/C++17-CMake项目骨架设计.md
 当前状态：
 
 ```text
-骨架已创建，WSL 暂无 cmake/g++/make，尚未编译验证。
+骨架已创建，WSL 主机编译和运行已通过。
+```
+
+验证命令：
+
+```bash
+cmake -S . -B build
+cmake --build build
+./build/ai_camera_demo
+```
+
+关键输出：
+
+```text
+processed_frames 1
 ```
 
 关联：
