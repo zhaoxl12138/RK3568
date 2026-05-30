@@ -42,4 +42,38 @@ Camera -> V4L2/GStreamer -> OpenCV -> YOLOv8n -> NCNN/RKNN -> RTSP/RTMP -> Linux
 - `config`: 配置文件
 - `app`: 主程序入口
 
+## 当前工程骨架
+
+代码仓库：
+
+```text
+\\wsl$\Ubuntu-20.04\home\rk3568\work\rk3568_ai_camera
+```
+
+已建立 C++17/CMake 骨架：
+
+```text
+CameraSource -> Detector -> DisplaySink -> StreamSink
+```
+
+当前文件：
+
+```text
+CMakeLists.txt
+include/rk3568_ai_camera/
+src/
+docs/C++17-CMake项目骨架设计.md
+```
+
+当前状态：
+
+```text
+骨架已创建，WSL 暂无 cmake/g++/make，尚未编译验证。
+```
+
+关联：
+
+- [[MIPI屏显示链路]]
+- [[SCRFD源码拆解与复用点]]
+
 #项目 #YOLOv8n #RKNN #Camera #RTSP
