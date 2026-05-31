@@ -2,6 +2,13 @@
 
 ## 当前结论
 
+SCRFD 的定位：
+
+```text
+SCRFD 用于验证 Camera -> OpenCV -> RKNN 汇合链路，不是最终项目主模型。
+当前最终展示主线已经切到 YOLOv5 RKNN Python MVP。
+```
+
 `11_facedet_scrfd_npu` 已经验证过两条链路：
 
 - 单帧链路：Camera -> GStreamer -> OpenCV -> SCRFD RKNN -> JPG。
@@ -78,7 +85,7 @@ main_gst_realtime.py
 
 拆分后，后续替换模型或替换输入源时，影响范围更小。
 
-## 当前验证状态
+## 历史验证状态
 
 已完成：
 
@@ -86,7 +93,7 @@ main_gst_realtime.py
 WSL 本地 py_compile 语法检查通过。
 ```
 
-待完成：
+历史待办 / 当时状态：
 
 ```text
 复制拆分后的 4 个 Python 文件到板端。
@@ -99,6 +106,13 @@ WSL 本地 py_compile 语法检查通过。
 ```text
 当前 Codex 不能直接通过 SSH 登录板端，OpenSSH 返回 Permission denied。
 MobaXterm 里可以登录，但 Codex 不能直接接管 MobaXterm 会话。
+```
+
+当前状态：
+
+```text
+这组待办不是当前主线任务。
+当前主线是复盘已经跑通的 YOLOv5 Python MVP，并把 Camera、OpenCV、RKNN、MIPI、HLS 链路讲清楚。
 ```
 
 ## 板端复测命令

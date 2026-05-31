@@ -38,12 +38,12 @@ Ubuntu 下：
 - Windows 10
 - Ryzen 5 5600
 - 32GB 内存
-- 当前 WSL2 Ubuntu 22.04
+- 当前主力环境：Ubuntu-20.04 WSL2
 
 ## 当前策略
 
-- Ubuntu20.04 WSL2：已安装到 `E:\wsl\Ubuntu-20.04`，用于 Buildroot SDK 编译，更贴合官方资料。
-- Ubuntu22.04 WSL2：旧环境记录，后续可用于普通 C++、OpenCV、项目工程开发。
+- Ubuntu-20.04 WSL2：当前主力环境，已安装到 `E:\wsl\Ubuntu-20.04`，用于 SDK 编译和项目主开发，更贴合官方资料。
+- Ubuntu-22.04 WSL2：旧环境记录，可用于普通实验，但不作为当前主线。
 
 ## 相关笔记
 
@@ -52,4 +52,3 @@ Ubuntu 下：
 - [[00-当前阅读位置和下一步文档]]
 
 #Ubuntu #WSL2 #SDK #Buildroot
-
