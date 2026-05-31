@@ -148,6 +148,7 @@ OpenCV 把图像送给 RKNN 跑 YOLOv5；
 
 - Buildroot 是一个生成嵌入式 Linux 系统的工具，不是 Ubuntu/Debian 那种通用发行版。
 - 正点原子出厂系统是一个裁剪过的嵌入式 Linux，适合做板级验证和部署。
+- 当前阶段不学习如何编译 Buildroot，也不进入 SDK；这里只使用厂家已经烧好的出厂系统做硬件和系统验机。
 - 串口是救命通道，SSH 是日常开发通道。
 
 已验证事实：
@@ -272,6 +273,7 @@ Linux 里 Camera 到底以什么形式暴露给应用层。
 
 - V4L2 是 Linux 用户态访问 Camera/Video 设备的标准接口。
 - `/dev/video0` 是一个视频采集节点，不等于 Camera sensor 本身。
+- MIPI 屏上 Camera 应用能出图，只能证明官方应用链路能跑；`v4l2-ctl` 能从 `/dev/video0` 抓帧，才证明用户态可控采集链路能跑。
 - RK3568 的 Camera 链路大致是 `IMX415 -> MIPI CSI -> RKISP -> /dev/video0`。
 - `rkisp_mainpath` 是主采集通道，当前对应 `/dev/video0` 和 `/dev/video-camera0`。
 - `NV12` 是一种 YUV 4:2:0 图像格式。
@@ -359,7 +361,7 @@ v4l2-ctl -d /dev/video0 --list-formats-ext
 
 - 原始 YUV 文件没有文件头，播放器不知道宽高和格式。
 - NV12 单帧大小约等于 `width * height * 1.5`。
-- `1280x720 NV12` 单帧大小是 `1280 * 720 * 1.5 = 1382400` 字节。
+- `1280x720 NV12` 单帧大小是 `1280 * 720 * 1.5 = 1382400 bytes ≈ 1.4MB`。
 - `--stream-mmap` 表示使用内存映射方式从驱动取帧。
 
 跟跑命令：
@@ -482,6 +484,7 @@ Pipeline 看点：
 - `videoconvert`：做颜色格式转换。
 - `video/x-raw,format=BGR`：转成 OpenCV 常用的 BGR。
 - `appsink drop=1 sync=false`：把帧交给 OpenCV，并尽量保持实时。
+- `appsink` 是 GStreamer 和 OpenCV/Python 程序之间的出口；没有 `appsink`，OpenCV 程序拿不到管道里的帧。
 
 验证脚本：
 
