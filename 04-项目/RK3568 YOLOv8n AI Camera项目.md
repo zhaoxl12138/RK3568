@@ -6,6 +6,8 @@
 
 当前任务见 [[下一步任务看板]]。
 
+从零复盘路线见 [[01-从零到Python MVP学习路线]]。
+
 ## 项目目标
 
 做一个可以用于 GitHub 展示和求职说明的 AI 视觉系统工程项目。
@@ -60,6 +62,13 @@ C++ 骨架已经建立，但暂时不继续作为主线推进。
 ```text
 优先使用 4.19 官方 YOLOv5 RKNN 模型做 Python 最小推理。
 YOLOv8 后置，因为官方 YOLOv8 例程在 Linux5.10 资料中，当前板端系统是 4.19。
+```
+
+当前学习策略：
+
+```text
+功能已经跑通 Python MVP。
+下一步先按 [[01-从零到Python MVP学习路线]] 从头复盘原理，再继续升级 YOLOv8n 或 C++。
 ```
 
 ## 当前工程骨架
@@ -134,3 +143,57 @@ processed_frames 1
 - [[SCRFD源码拆解与复用点]]
 
 #项目 #YOLOv8n #RKNN #Camera #RTSP
+# 2026-05-31 项目当前版本
+
+当前项目名先按实际成果描述为：
+
+```text
+RK3568 YOLOv5 RKNN AI Camera Python MVP
+```
+
+说明：最终目标仍可升级到 YOLOv8n，但当前在 Buildroot 4.19 出厂系统上，已跑通的是官方 YOLOv5 RKNN 模型。
+
+当前已完成能力：
+
+- IMX415 MIPI Camera 实时采集。
+- GStreamer pipeline 输入 OpenCV。
+- YOLOv5 RKNN 模型 NPU 推理。
+- 检测框绘制。
+- MIPI 竖屏全屏显示。
+- FFmpeg 推 RTMP。
+- Nginx 输出 HLS。
+- Windows `ffplay` 拉流显示。
+- 一键启动脚本和 WSL 部署脚本。
+
+当前板端启动：
+
+```bash
+cd /userdata/aidemo/06_yolov5_python
+SHOW_MIPI=1 FRAMES=0 ./start_yolov5_hls_demo.sh
+```
+
+当前 Windows 拉流：
+
+```powershell
+ffplay http://192.168.0.230/hls/yolo.m3u8
+```
+
+当前默认方向：
+
+```text
+ROTATE=none
+DISPLAY_ROTATE=ccw
+STREAM_ROTATE=ccw
+```
+
+当前项目定位：
+
+```text
+这已经不是单个 AI demo，而是一个 AI Camera 系统最小闭环。
+```
+
+下一步：
+
+- 固化 README 和演示步骤。
+- 整理代码结构。
+- 再做 C++17/CMake 工程化升级。

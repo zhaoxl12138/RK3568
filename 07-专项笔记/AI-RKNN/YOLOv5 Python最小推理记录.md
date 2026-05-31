@@ -129,14 +129,17 @@ main_image.py
 ```text
 WSL 本地 py_compile 语法检查通过。
 模型、anchors、labels、脚本已放入 Windows 中转目录。
+文件已复制到板端 /userdata/aidemo/06_yolov5_python。
+YOLOv5 RKNN 单图推理已在板端跑通。
 ```
 
-待完成：
+关键结论：
 
 ```text
-复制到板端运行。
-验证 output_shapes。
-验证 detections 数量和结果图。
+RKNN inference 正常。
+output_shapes 已确认。
+Python 后处理能解析出目标框。
+结果图能正常写出。
 ```
 
 ## 板端建议目录
@@ -175,6 +178,271 @@ detections N
 write True /tmp/yolov5_result.jpg
 ```
 
+实测输出：
+
+```text
+output_shapes [(1, 255, 80, 80), (1, 255, 40, 40), (1, 255, 20, 20)]
+detections 0
+write True /tmp/yolov5_result.jpg
+```
+
+说明：
+
+```text
+/tmp/opencv_frame_gst.jpg 是当前桌面/线缆画面，没有明显 COCO 目标，所以 detections 0 是合理现象。
+这一步已经证明模型加载、NPU 推理、输出张量获取、结果图写出都正常。
+```
+
+## 标准测试图验证
+
+为了确认后处理逻辑不是空跑，使用 YOLO 官方常见测试图 `bus.jpg` 再跑一次。
+
+板端命令：
+
+```bash
+cd /userdata/aidemo/06_yolov5_python
+python3 main_image.py \
+  --model yolov5s_relu_tk2_RK356X_i8.rknn \
+  --anchors RK_anchors_yolov5.txt \
+  --labels coco_80_labels_list.txt \
+  --image bus.jpg \
+  --output /tmp/yolov5_bus_result.jpg
+```
+
+实测输出：
+
+```text
+output_shapes [(1, 255, 80, 80), (1, 255, 40, 40), (1, 255, 20, 20)]
+detections 4
+person 0.880 (215, 404, 349, 860)
+person 0.874 (674, 396, 808, 890)
+person 0.840 (52, 404, 255, 898)
+bus 0.693 (13, 223, 803, 776)
+write True /tmp/yolov5_bus_result.jpg
+```
+
+结果图：
+
+```text
+板端：/tmp/yolov5_bus_result.jpg
+Windows：E:\RK3568\yolo_stage\python_files\yolov5_bus_result.jpg
+Obsidian：08-附录/实验产物/assets/yolov5_bus_result.jpg
+```
+
+预览：
+
+![[yolov5_bus_result.jpg]]
+
+## 当前结论
+
+```text
+图片 -> YOLOv5 RKNN -> 后处理 -> 检测框 -> JPG
+```
+
+已经跑通。
+
+现在还没有接 Camera，不代表项目完成；它只说明 YOLOv5 RKNN 推理和后处理链路单独成立。
+
+下一步要做的是：
+
+```text
+Camera -> 单帧 -> YOLOv5 RKNN -> JPG
+```
+
+再下一步才是：
+
+```text
+Camera -> YOLOv5 RKNN -> MIPI屏实时显示
+```
+
+## Camera单帧验证
+
+单图推理成功后，新增脚本：
+
+```text
+WSL：\\wsl$\Ubuntu-20.04\home\rk3568\work\rk3568_ai_camera\experiments\yolov5_object\main_gst_one_frame.py
+板端：/userdata/aidemo/06_yolov5_python/main_gst_one_frame.py
+```
+
+核心变化：
+
+```text
+main_image.py：从图片文件 cv2.imread() 输入。
+main_gst_one_frame.py：从 /dev/video0 通过 GStreamer pipeline 抓一帧输入。
+```
+
+板端命令：
+
+```bash
+cd /userdata/aidemo/06_yolov5_python
+python3 main_gst_one_frame.py \
+  --model yolov5s_relu_tk2_RK356X_i8.rknn \
+  --anchors RK_anchors_yolov5.txt \
+  --labels coco_80_labels_list.txt \
+  --output /tmp/yolov5_camera_result.jpg \
+  --raw-output /tmp/yolov5_camera_raw.jpg
+```
+
+实测输出：
+
+```text
+output_shapes [(1, 255, 80, 80), (1, 255, 40, 40), (1, 255, 20, 20)]
+detections 1
+person 0.684 (0, 0, 773, 719)
+write True /tmp/yolov5_camera_result.jpg
+```
+
+结果文件：
+
+```text
+原始抓图：/tmp/yolov5_camera_raw.jpg
+检测结果：/tmp/yolov5_camera_result.jpg
+Windows：E:\RK3568\yolo_stage\python_files\yolov5_camera_result.jpg
+Obsidian：08-附录/实验产物/assets/yolov5_camera_result.jpg
+```
+
+预览：
+
+![[yolov5_camera_result.jpg]]
+
+说明：
+
+```text
+OpenCV 打印的 Cannot query video position 是实时流无法查询进度的普通警告，不影响采集和检测。
+```
+
+当前结论：
+
+```text
+Camera -> 单帧 -> YOLOv5 RKNN -> 检测框 -> JPG
+```
+
+已经跑通。
+
+下一步：
+
+```text
+Camera -> YOLOv5 RKNN -> cv2.imshow -> MIPI屏实时显示
+```
+
+## MIPI屏实时显示验证
+
+新增实时脚本：
+
+```text
+WSL：\\wsl$\Ubuntu-20.04\home\rk3568\work\rk3568_ai_camera\experiments\yolov5_object\main_gst_realtime.py
+板端：/userdata/aidemo/06_yolov5_python/main_gst_realtime.py
+```
+
+板端命令：
+
+```bash
+cd /userdata/aidemo/06_yolov5_python
+python3 main_gst_realtime.py \
+  --model yolov5s_relu_tk2_RK356X_i8.rknn \
+  --anchors RK_anchors_yolov5.txt \
+  --labels coco_80_labels_list.txt \
+  --frames 100 \
+  --display \
+  --save-every 50 \
+  --output /tmp/yolov5_realtime_last.jpg
+```
+
+实测输出：
+
+```text
+frame 50 fps 3.918 detections 2
+frame 100 fps 4.111 detections 2
+processed_frames 100
+elapsed_sec 24.424
+fps 4.094
+avg_detections_per_frame 2.180
+saved True /tmp/yolov5_realtime_last.jpg
+```
+
+结果文件：
+
+```text
+板端：/tmp/yolov5_realtime_last.jpg
+Windows：E:\RK3568\yolo_stage\python_files\yolov5_realtime_last.jpg
+Obsidian：08-附录/实验产物/assets/yolov5_realtime_last.jpg
+```
+
+预览：
+
+![[yolov5_realtime_last.jpg]]
+
+当前结论：
+
+```text
+Camera -> GStreamer -> OpenCV -> YOLOv5 RKNN -> cv2.imshow -> MIPI屏
+```
+
+已经跑通。
+
+注意：
+
+```text
+当前 YOLOv5s 单模型实时速度约 4 FPS，低于 SCRFD 的约 6.6 FPS。
+这一步目标是验证闭环，不是做性能优化。
+检测结果存在误检，例如局部物体被识别为 cup，后续可通过阈值、输入分辨率、模型选择再优化。
+```
+
+## 2026-05-31 日志收口复测
+
+复测原因：
+
+```text
+上一轮实时测试里每帧都会打印 output_shapes，日志太吵。
+已把 output_shapes 改成只有加 --verbose 时才打印。
+```
+
+复测命令：
+
+```bash
+cd /userdata/aidemo/06_yolov5_python
+python3 main_gst_realtime.py \
+  --model yolov5s_relu_tk2_RK356X_i8.rknn \
+  --anchors RK_anchors_yolov5.txt \
+  --labels coco_80_labels_list.txt \
+  --frames 30 \
+  --display \
+  --output /tmp/yolov5_realtime_clean_last.jpg
+```
+
+实测输出：
+
+```text
+frame 10 fps 3.001 detections 1
+frame 20 fps 3.594 detections 1
+frame 30 fps 3.862 detections 1
+processed_frames 30
+elapsed_sec 7.858
+fps 3.818
+avg_detections_per_frame 1.000
+saved True /tmp/yolov5_realtime_clean_last.jpg
+```
+
+结果文件：
+
+```text
+板端：/tmp/yolov5_realtime_clean_last.jpg
+Windows：E:\RK3568\yolo_stage\python_files\yolov5_realtime_clean_last.jpg
+Obsidian：08-附录/实验产物/assets/yolov5_realtime_clean_last.jpg
+```
+
+预览：
+
+![[yolov5_realtime_clean_last.jpg]]
+
+日志结论：
+
+```text
+脚本自己的 output_shapes 噪声已经消失。
+RKNN runtime 的 warning 仍然会输出，而且不是普通 stderr 重定向能完全压住。
+这些 warning 不影响当前功能，后续如果需要干净终端，再做外层日志过滤。
+```
+
 ## 风险点
 
 当前 Python 后处理是按官方 C++ `yolo.cc` 移植的第一版。
@@ -186,12 +454,13 @@ write True /tmp/yolov5_result.jpg
 - 输出分支顺序是否对应 stride `8/16/32`。
 - `sigmoid` 是否需要补回。
 
-因此第一轮目标不是一次就完美检测，而是先拿到：
+这些风险点已经通过 `bus.jpg` 初步排除：
 
 ```text
-output_shapes
-是否能成功 inference
-是否能生成结果图
+输出是 CHW 结构。
+输出已经是 float32，数值范围大约 0.0 ~ 0.98，不需要手动反量化。
+3 个输出分支顺序对应 stride 8/16/32。
+当前 sigmoid + anchors + NMS 后处理能得到合理检测框。
 ```
 
 #YOLOv5 #RKNN #Python #目标检测
