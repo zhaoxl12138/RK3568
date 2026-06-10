@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RK3568 AI Camera — 芯片级全系统框架图</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #080c14;
+    --surface: rgba(255,255,255,0.02);
+    --border: rgba(255,255,255,0.06);
+    --text: #c8ccd4;
+    --text-dim: #78909c;
+    --text-bright: #e8eaed;
+    --blue: #42a5f5; --blue-bg: rgba(66,165,245,0.08); --blue-border: rgba(66,165,245,0.2);
+    --purple: #7c4dff; --purple-bg: rgba(124,77,255,0.08); --purple-border: rgba(124,77,255,0.2);
+    --green: #66bb6a; --green-bg: rgba(102,187,106,0.08); --green-border: rgba(102,187,106,0.2);
+    --red: #ef5350; --red-bg: rgba(239,83,80,0.08); --red-border: rgba(239,83,80,0.2);
+    --orange: #ffa726; --orange-bg: rgba(255,167,38,0.08); --orange-border: rgba(255,167,38,0.2);
+    --cyan: #26c6da; --cyan-bg: rgba(38,198,218,0.08); --cyan-border: rgba(38,198,218,0.2);
+    --pink: #ab47bc; --pink-bg: rgba(171,71,188,0.08); --pink-border: rgba(171,71,188,0.2);
+    --mono: 'JetBrains Mono', monospace;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Inter','Noto Sans SC',sans-serif; background:var(--bg); color:var(--text); line-height:1.6; }
+
+  .hero {
+    background:linear-gradient(180deg, rgba(20,30,60,0.95) 0%, var(--bg) 100%);
+    border-bottom:1px solid var(--border); padding:56px 24px 40px; text-align:center;
+  }
+  .hero h1 { font-size:2.2em; font-weight:700; color:var(--text-bright); }
+  .hero h1 em { font-style:normal; background:linear-gradient(135deg,var(--blue),var(--purple)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+  .hero .sub { font-size:1em; color:var(--text-dim); margin-top:8px; }
+  .hero .src { margin-top:12px; font-size:0.78em; color:var(--text-dim); }
+  .hero .src a { color:var(--blue); text-decoration:none; }
+
+  .container { max-width:1480px; margin:0 auto; padding:32px 24px; }
+
+  .section-title {
+    font-size:1.2em; font-weight:600; color:#b0bec5; margin:48px 0 20px;
+    padding-left:14px; border-left:3px solid var(--purple);
+  }
+  .section-title small { font-size:0.7em; font-weight:400; color:var(--text-dim); margin-left:8px; }
+
+  /* ======== SOC BLOCK DIAGRAM ======== */
+  .soc-diagram {
+    background:var(--surface); border:1px solid var(--border); border-radius:16px;
+    padding:28px 20px; margin:20px 0; position:relative;
+  }
+  .soc-title { text-align:center; font-size:0.85em; color:var(--text-dim); margin-bottom:24px; letter-spacing:0.1em; text-transform:uppercase; }
+
+  .soc-grid { display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; }
+
+  .soc-block {
+    background:rgba(255,255,255,0.015); border:1px solid rgba(255,255,255,0.08);
+    border-radius:10px; padding:16px 12px; text-align:center;
+    transition:all 0.2s;
+  }
+  .soc-block:hover { border-color:rgba(124,77,255,0.4); transform:translateY(-1px); }
+  .soc-block.core { border-color:rgba(66,165,245,0.25); }
+  .soc-block.mm   { border-color:rgba(124,77,255,0.25); }
+  .soc-block.npu  { border-color:rgba(239,83,80,0.25); }
+  .soc-block.disp { border-color:rgba(102,187,106,0.25); }
+  .soc-block.mem  { border-color:rgba(255,167,38,0.25); }
+  .soc-block.io   { border-color:rgba(38,198,218,0.25); }
+
+  .soc-block .blk-title { font-size:0.9em; font-weight:600; color:var(--text-bright); margin-bottom:4px; }
+  .soc-block .blk-desc  { font-size:0.72em; color:var(--text-dim); font-family:var(--mono); line-height:1.5; }
+
+  .soc-row-title {
+    grid-column:1/-1; font-size:0.72em; font-weight:600; color:var(--text-dim);
+    letter-spacing:0.06em; padding:6px 0 2px; border-top:1px solid rgba(255,255,255,0.04);
+    margin-top:4px;
+  }
+
+  @media (max-width:1000px) { .soc-grid { grid-template-columns:repeat(2, 1fr); } }
+  @media (max-width:600px)  { .soc-grid { grid-template-columns:1fr; } }
+
+  /* ======== CAMERA PIPELINE DETAIL ======== */
+  .pipe-flow {
+    display:flex; align-items:stretch; gap:0;
+    background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    overflow:hidden; margin:16px 0;
+  }
+  .pipe-node {
+    flex:1; padding:18px 14px; text-align:center; position:relative;
+    border-right:1px solid var(--border);
+  }
+  .pipe-node:last-child { border-right:none; }
+  .pipe-node .p-icon { font-size:1.6em; margin-bottom:6px; }
+  .pipe-node .p-name { font-size:0.9em; font-weight:600; color:var(--text-bright); }
+  .pipe-node .p-drv  { font-size:0.68em; color:var(--text-dim); font-family:var(--mono); margin-top:4px; }
+  .pipe-node .p-fmt  { font-size:0.68em; color:var(--green); font-family:var(--mono); margin-top:2px; }
+  .pipe-arrow {
+    position:absolute; right:-10px; top:50%; transform:translateY(-50%); z-index:1;
+    width:20px; height:20px; display:flex; align-items:center; justify-content:center;
+    color:var(--text-dim); font-size:1em; pointer-events:none;
+  }
+  @media (max-width:900px) { .pipe-flow { flex-wrap:wrap; } .pipe-node { flex:auto; min-width:33%; } }
+
+  /* ======== LAYER TABLE ======== */
+  .layer-stack {
+    display:grid; grid-template-columns:120px 1fr; gap:0;
+    border:1px solid var(--border); border-radius:12px; overflow:hidden;
+    margin:16px 0; font-size:0.82em;
+  }
+  .layer-row { display:contents; }
+  .layer-tag {
+    padding:10px 14px; font-weight:600; text-align:right;
+    border-right:1px solid var(--border); border-bottom:1px solid var(--border);
+    font-size:0.78em; letter-spacing:0.04em;
+  }
+  .layer-content {
+    padding:10px 16px; border-bottom:1px solid var(--border);
+    display:flex; flex-wrap:wrap; gap:8px; align-items:center;
+  }
+  .layer-chip {
+    padding:4px 10px; border-radius:5px; font-size:0.82em;
+    font-family:var(--mono); white-space:nowrap;
+  }
+
+  /* ======== DETAIL CARDS ======== */
+  .detail-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(440px,1fr)); gap:18px; margin:16px 0; }
+
+  .card {
+    background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:22px 20px;
+    transition:border-color 0.2s;
+  }
+  .card:hover { border-color:rgba(124,77,255,0.25); }
+  .card h3 { font-size:0.95em; font-weight:600; color:var(--text-bright); margin-bottom:14px; padding-bottom:10px; border-bottom:1px solid var(--border); }
+  .card h3 .dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:8px; }
+
+  table.kv { width:100%; font-size:0.82em; border-collapse:collapse; }
+  table.kv td { padding:5px 0; vertical-align:top; }
+  table.kv td.k { width:1%; font-family:var(--mono); font-size:0.88em; color:var(--blue); white-space:nowrap; padding-right:14px; }
+  table.kv td.v { color:#b0bec5; }
+
+  .code-block {
+    background:rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.08);
+    border-radius:8px; padding:14px 16px; margin:10px 0;
+    font-family:var(--mono); font-size:0.75em; color:#a5d6a7;
+    overflow-x:auto; white-space:pre; line-height:1.55;
+  }
+  .code-block .kw { color:#82aaff; }
+  .code-block .str { color:#c3e88d; }
+  .code-block .cmt { color:#546e7a; }
+  .code-block .fn  { color:#ffcb6b; }
+  .code-block .num { color:#f78c6c; }
+
+  .callout {
+    padding:12px 16px; border-radius:8px; margin:10px 0; font-size:0.82em;
+    border-left:3px solid;
+  }
+
+  .ref-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(260px,1fr)); gap:6px; margin:12px 0; }
+  .ref-item {
+    background:rgba(255,255,255,0.015); border:1px solid rgba(255,255,255,0.05);
+    border-radius:6px; padding:8px 12px; font-size:0.73em;
+    font-family:var(--mono);
+  }
+  .ref-item .r-name { color:var(--blue); }
+  .ref-item .r-desc { color:var(--text-dim); font-size:0.88em; }
+
+  .footer { text-align:center; padding:28px; font-size:0.75em; color:var(--text-dim); border-top:1px solid var(--border); margin-top:48px; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>RK3568 <em>AI Camera</em> &mdash; 芯片级全系统框架图</h1>
+  <div class="sub">Phase 0 权威版 &mdash; 基于 Rockchip 官方 Datasheet V1.1 · TRM Part1/Part2 V1.1 · Linux Mainline Kernel · 正点原子原理图</div>
+  <div class="src">
+    数据来源:
+    <a href="https://www.rock-chips.com/" target="_blank">Rockchip RK3568 Datasheet V1.1 (2021-03)</a> ·
+    <a href="https://www.rock-chips.com/" target="_blank">RK3568 TRM Part1/Part2 V1.1</a> ·
+    <a href="https://gitlab.freedesktop.org/linux-media/media-committers" target="_blank">Linux Media Committers</a> ·
+    <a href="https://github.com/torvalds/linux/tree/master/drivers/gpu/drm/rockchip" target="_blank">Linux DRM/Rockchip</a>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ===== 1. RK3568 SOC BLOCK DIAGRAM ===== -->
+<div class="section-title">1. RK3568 芯片级框图 <small>来源: Rockchip RK3568 Datasheet V1.1, Fig.1-1 Block Diagram (p.19), TRM Part1/Part2</small></div>
+
+<div class="soc-diagram">
+  <div class="soc-title">RK3568 SoC Architecture &mdash; FCBGA636L Package &mdash; 22nm Process</div>
+  <div class="soc-grid">
+
+    <div class="soc-block core" style="grid-column:span 2;">
+      <div class="blk-title">CPU 子系统</div>
+      <div class="blk-desc">
+        Quad-core ARM Cortex-A55 @ 2.0GHz<br>
+        ARMv8-A · Neon SIMD · VFPv4 · Crypto Ext<br>
+        32KB L1-I + 32KB L1-D (ECC) per core<br>
+        512KB unified L3 cache (ECC)<br>
+        独立电源域: PD_A55_0/1/2/3
+      </div>
+    </div>
+
+    <div class="soc-block npu">
+      <div class="blk-title">NPU 神经网络处理器</div>
+      <div class="blk-desc">
+        0.8 TOPS @ INT8<br>
+        支持 INT8/INT16/FP16/BFP16<br>
+        框架: TF / TFLite / PyTorch<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Caffe / ONNX / Darknet<br>
+        独立电源域: VD_NPU
+      </div>
+    </div>
+
+    <div class="soc-block core">
+      <div class="blk-title">GPU 图形处理器</div>
+      <div class="blk-desc">
+        ARM Mali-G52 2EE<br>
+        OpenGL ES 1.1/2.0/3.2<br>
+        OpenCL 2.0 · Vulkan 1.1<br>
+        独立电源域: VD_GPU
+      </div>
+    </div>
+
+    <div class="soc-row-title">多媒体处理引擎</div>
+
+    <div class="soc-block mm">
+      <div class="blk-title">ISP 2.1 图像信号处理器</div>
+      <div class="blk-desc">
+        最高 8M 像素<br>
+        内置 MIPI CSI-2 Host<br>
+        3A (AF/AE/AWB)<br>
+        3DNR / HDR / LSC / DPC
+      </div>
+    </div>
+    <div class="soc-block mm">
+      <div class="blk-title">VICAP 视频采集单元</div>
+      <div class="blk-desc">
+        DVP 并行 + MIPI CSI-2 输入<br>
+        Ping-pong DMA 缓冲<br>
+        独立于 ISP 的采集通路<br>
+        通过 sditf 虚拟链路与 ISP 互通
+      </div>
+    </div>
+    <div class="soc-block mm">
+      <div class="blk-title">Video Decoder 视频解码器</div>
+      <div class="blk-desc">
+        H.265 HEVC 4K@60fps<br>
+        H.264 AVC 4K@60fps<br>
+        VP9 4K@60fps
+      </div>
+    </div>
+    <div class="soc-block mm">
+      <div class="blk-title">Video Encoder 视频编码器</div>
+      <div class="blk-desc">
+        H.264 1080p@60fps<br>
+        H.265 1080p@60fps<br>
+        JPEG Encoder/Decoder
+      </div>
+    </div>
+
+    <div class="soc-row-title">MIPI PHY</div>
+
+    <div class="soc-block mm">
+      <div class="blk-title">MIPI CSI DPHY</div>
+      <div class="blk-desc">
+        Innosilicon combo PHY<br>
+        4 data lanes + 2 clock lanes<br>
+        模式: 1×4 (全模式) / 2×2 (拆分模式)<br>
+        最大 2.5Gbps/lane
+      </div>
+    </div>
+    <div class="soc-block mm">
+      <div class="blk-title">MIPI DSI DPHY</div>
+      <div class="blk-desc">
+        MIPI DSI 2.0<br>
+        双通道支持<br>
+        最大 2.5Gbps/lane
+      </div>
+    </div>
+
+    <div class="soc-row-title">显示子系统 VOP2 (Video Output Processor v2) @ 0xFE040000</div>
+
+    <div class="soc-block disp" style="grid-column:span 2;">
+      <div class="blk-title">VOP2 显示控制器</div>
+      <div class="blk-desc">
+        6 窗口 (2×Cluster + 2×ESmart + 2×Smart) · 4 级 Overlay 混合<br>
+        3 独立 Video Port: VP0(4K@60) / VP1(2K) / VP2(1080P)<br>
+        Post-Process: BCSH · Gamma · 3D_LUT · HDR10 · HDR2SDR<br>
+        显示接口: HDMI 2.0 · eDP 1.3 · MIPI DSI · LVDS · RGB/BT1120
+      </div>
+    </div>
+    <div class="soc-block disp">
+      <div class="blk-title">HDMI 2.0 TX</div>
+      <div class="blk-desc">
+        4K@60fps · HDCP 2.2
+      </div>
+    </div>
+    <div class="soc-block disp">
+      <div class="blk-title">eDP 1.3</div>
+      <div class="blk-desc">
+        2560×1600@60fps<br>
+        ASSR / eDP authentication
+      </div>
+    </div>
+
+    <div class="soc-row-title">内存接口</div>
+
+    <div class="soc-block mem" style="grid-column:span 2;">
+      <div class="blk-title">DDR Memory Controller</div>
+      <div class="blk-desc">
+        32-bit 数据宽度 · DDR3/DDR3L/DDR4/LPDDR3/LPDDR4/LPDDR4X<br>
+        最大 8GB · ECC for DDR3/DDR4 · 可编程 ODT 阻抗<br>
+        DDR4-3200 / LPDDR4X-3200
+      </div>
+    </div>
+    <div class="soc-block mem">
+      <div class="blk-title">eMMC 5.1</div>
+      <div class="blk-desc">8-bit HS200 · CMD Queue</div>
+    </div>
+    <div class="soc-block mem">
+      <div class="blk-title">SPI / NAND Flash</div>
+      <div class="blk-desc">SPI NOR/NAND · 8-bit async NAND · ONFI · Toggle</div>
+    </div>
+
+    <div class="soc-row-title">系统组件 &amp; 外设</div>
+
+    <div class="soc-block io">
+      <div class="blk-title">CRU 时钟复位单元</div>
+      <div class="blk-desc">24MHz 晶振 · 29 PLL · 时钟门控 · 软复位</div>
+    </div>
+    <div class="soc-block io">
+      <div class="blk-title">PMU 电源管理</div>
+      <div class="blk-desc">5 电压域 · 15 电源域 · 动态开关</div>
+    </div>
+    <div class="soc-block io">
+      <div class="blk-title">DMAC ×2</div>
+      <div class="blk-desc">每块 8 通道 · 链表 DMA · 微码编程</div>
+    </div>
+    <div class="soc-block io">
+      <div class="blk-title">TrustZone TEE</div>
+      <div class="blk-desc">Crypto Engine · AES/SHA/RSA · Secure OTP · Secure Boot</div>
+    </div>
+    <div class="soc-block io">
+      <div class="blk-title">GMAC ×2</div>
+      <div class="blk-desc">RGMII · 10/100/1000M</div>
+    </div>
+    <div class="soc-block io">
+      <div class="blk-title">USB 3.0 ×2</div>
+      <div class="blk-desc">Host/Device/OTG</div>
+    </div>
+    <div class="soc-block io">
+      <div class="blk-title">PCIe 3.0 ×2 / SATA 3.0 ×3</div>
+      <div class="blk-desc">2-lane PCIe 3.0 + 1-lane PCIe 2.1 · SATA 6Gbps</div>
+    </div>
+    <div class="soc-block io">
+      <div class="blk-title">其他接口</div>
+      <div class="blk-desc">I2C×6 · SPI×4 · UART×10 · PWM×16 · GPIO · SARADC×8 · CAN×3 · I2S×8 · PDM×8 · TDM×2 · SPDIF×2</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== 2. CAMERA → DISPLAY / STREAM 完整数据流 ===== -->
+<div class="section-title">2. Camera → ISP → NPU → Display / Stream 数据流 <small>来源: RK3568 TRM Part2 Ch.12(ISP) Ch.27(CSI) Ch.28(DPHY) Ch.44(VOP2), Linux Mainline rkisp1 + rkcif + rockchip-drm</small></div>
+
+<div class="pipe-flow">
+  <div class="pipe-node" style="background:rgba(66,165,245,0.04);">
+    <div class="p-icon">&#x1F4F7;</div>
+    <div class="p-name">IMX415 Sensor</div>
+    <div class="p-drv">drivers/media/i2c/imx415.c</div>
+    <div class="p-fmt">RAW Bayer 10-bit<br>3840×2160 max</div>
+    <span class="pipe-arrow">&#x25B6;</span>
+  </div>
+  <div class="pipe-node" style="background:rgba(38,198,218,0.04);">
+    <div class="p-icon">&#x26A1;</div>
+    <div class="p-name">MIPI CSI DPHY</div>
+    <div class="p-drv">phy-rockchip-inno-csidphy</div>
+    <div class="p-fmt">4-lane MIPI CSI-2<br>1×4 full mode</div>
+    <span class="pipe-arrow">&#x25B6;</span>
+  </div>
+  <div class="pipe-node" style="background:rgba(124,77,255,0.04);">
+    <div class="p-icon">&#x1F4E1;</div>
+    <div class="p-name">ISP 2.1 Pipeline</div>
+    <div class="p-drv">drivers/media/platform/rockchip/rkisp1/</div>
+    <div class="p-fmt">3A · Demosaic · 3DNR<br>输出: NV12 1280×720</div>
+    <span class="pipe-arrow">&#x25B6;</span>
+  </div>
+  <div class="pipe-node" style="background:rgba(102,187,106,0.04);">
+    <div class="p-icon">&#x1F4C1;</div>
+    <div class="p-name">V4L2 / Media Controller</div>
+    <div class="p-drv">/dev/media0 · /dev/video0</div>
+    <div class="p-fmt">ioctl: REQBUFS/QBUF<br>DQBUF/STREAMON</div>
+    <span class="pipe-arrow">&#x25B6;</span>
+  </div>
+  <div class="pipe-node" style="background:rgba(38,198,218,0.04);">
+    <div class="p-icon">&#x1F527;</div>
+    <div class="p-name">GStreamer 1.20</div>
+    <div class="p-drv">v4l2src ! videoconvert ! appsink</div>
+    <div class="p-fmt">NV12 → BGR<br>色彩空间转换</div>
+    <span class="pipe-arrow">&#x25B6;</span>
+  </div>
+  <div class="pipe-node" style="background:rgba(255,167,38,0.04);">
+    <div class="p-icon">&#x1F441;</div>
+    <div class="p-name">OpenCV 4.5.5</div>
+    <div class="p-drv">cv2.VideoCapture(CAP_GSTREAMER)</div>
+    <div class="p-fmt">BGR Mat<br>(720,1280,3) uint8</div>
+    <span class="pipe-arrow">&#x25B6;</span>
+  </div>
+  <div class="pipe-node" style="background:rgba(239,83,80,0.04);">
+    <div class="p-icon">&#x1F9E0;</div>
+    <div class="p-name">RKNN Runtime 1.5.0</div>
+    <div class="p-drv">librknnrt.so → NPU Driver v0.8.2</div>
+    <div class="p-fmt">preprocess 640×640<br>INT8 inference</div>
+    <span class="pipe-arrow">&#x25B6;</span>
+  </div>
+  <div class="pipe-node" style="background:rgba(171,71,188,0.04);">
+    <div class="p-icon">&#x270F;</div>
+    <div class="p-name">后处理</div>
+    <div class="p-drv">decode boxes + NMS + draw</div>
+    <div class="p-fmt">[x1,y1,x2,y2,conf,cls]</div>
+    <span class="pipe-arrow">&#x25B6;</span>
+  </div>
+  <div class="pipe-node" style="background:rgba(102,187,106,0.04);">
+    <div class="p-icon">&#x1F4FA;</div>
+    <div class="p-name">VOP2 → MIPI DSI</div>
+    <div class="p-drv">rockchip-drm · dw-mipi-dsi</div>
+    <div class="p-fmt">~4 FPS 本地显示</div>
+  </div>
+</div>
+
+<!-- ===== 3. LAYERED DRIVER STACK ===== -->
+<div class="section-title">3. 分层驱动栈 <small>来源: Linux Mainline Kernel v6.x + Rockchip BSP 4.19</small></div>
+
+<div class="layer-stack">
+  <div class="layer-row">
+    <div class="layer-tag" style="background:rgba(66,165,245,0.06); color:var(--blue);">Application</div>
+    <div class="layer-content">
+      <span class="layer-chip" style="background:var(--orange-bg); color:#ffa726; border:1px solid var(--orange-border);">main_gst_realtime.py</span>
+      <span class="layer-chip" style="background:var(--orange-bg); color:#ffa726; border:1px solid var(--orange-border);">main_gst_rtmp_hls.py</span>
+    </div>
+  </div>
+  <div class="layer-row">
+    <div class="layer-tag" style="background:rgba(255,167,38,0.06); color:var(--orange);">AI Runtime</div>
+    <div class="layer-content">
+      <span class="layer-chip" style="background:var(--red-bg); color:var(--red); border:1px solid var(--red-border);">rknn_toolkit_lite2 1.5.0</span>
+      <span class="layer-chip" style="background:var(--red-bg); color:var(--red); border:1px solid var(--red-border);">librknnrt.so</span>
+      <span class="layer-chip" style="background:var(--red-bg); color:var(--red); border:1px solid var(--red-border);">/usr/bin/rknn_server</span>
+    </div>
+  </div>
+  <div class="layer-row">
+    <div class="layer-tag" style="background:rgba(38,198,218,0.06); color:var(--cyan);">Media Framework</div>
+    <div class="layer-content">
+      <span class="layer-chip" style="background:var(--cyan-bg); color:var(--cyan); border:1px solid var(--cyan-border);">GStreamer 1.20</span>
+      <span class="layer-chip" style="background:var(--cyan-bg); color:var(--cyan); border:1px solid var(--cyan-border);">OpenCV 4.5.5</span>
+      <span class="layer-chip" style="background:var(--cyan-bg); color:var(--cyan); border:1px solid var(--cyan-border);">FFmpeg 4.1.3</span>
+    </div>
+  </div>
+  <div class="layer-row">
+    <div class="layer-tag" style="background:rgba(102,187,106,0.06); color:var(--green);">V4L2 / DRM-KMS</div>
+    <div class="layer-content">
+      <span class="layer-chip" style="background:var(--green-bg); color:var(--green); border:1px solid var(--green-border);">VIDEO_V4L2</span>
+      <span class="layer-chip" style="background:var(--green-bg); color:var(--green); border:1px solid var(--green-border);">MEDIA_CONTROLLER</span>
+      <span class="layer-chip" style="background:var(--green-bg); color:var(--green); border:1px solid var(--green-border);">VB2 DMA-contig</span>
+      <span class="layer-chip" style="background:var(--green-bg); color:var(--green); border:1px solid var(--green-border);">DRM_ROCKCHIP</span>
+    </div>
+  </div>
+  <div class="layer-row">
+    <div class="layer-tag" style="background:rgba(124,77,255,0.06); color:var(--purple);">Kernel Drivers</div>
+    <div class="layer-content">
+      <span class="layer-chip" style="background:var(--purple-bg); color:var(--purple); border:1px solid var(--purple-border);">rkisp1 (ISP 2.1)</span>
+      <span class="layer-chip" style="background:var(--purple-bg); color:var(--purple); border:1px solid var(--purple-border);">rkcif (VICAP)</span>
+      <span class="layer-chip" style="background:var(--purple-bg); color:var(--purple); border:1px solid var(--purple-border);">imx415 (sensor)</span>
+      <span class="layer-chip" style="background:var(--purple-bg); color:var(--purple); border:1px solid var(--purple-border);">phy-rockchip-inno-csidphy</span>
+      <span class="layer-chip" style="background:var(--purple-bg); color:var(--purple); border:1px solid var(--purple-border);">rockchip-drm (VOP2)</span>
+      <span class="layer-chip" style="background:var(--purple-bg); color:var(--purple); border:1px solid var(--purple-border);">dw-mipi-dsi</span>
+      <span class="layer-chip" style="background:var(--purple-bg); color:var(--purple); border:1px solid var(--purple-border);">rockchip-npu (v0.8.2)</span>
+    </div>
+  </div>
+  <div class="layer-row">
+    <div class="layer-tag" style="background:rgba(239,83,80,0.06); color:var(--red);">Hardware IP</div>
+    <div class="layer-content">
+      <span class="layer-chip" style="background:var(--red-bg); color:var(--red); border:1px solid var(--red-border);">ISP 2.1 @ 0xFDFE0000</span>
+      <span class="layer-chip" style="background:var(--red-bg); color:var(--red); border:1px solid var(--red-border);">VICAP @ 0xFDF80000</span>
+      <span class="layer-chip" style="background:var(--red-bg); color:var(--red); border:1px solid var(--red-border);">VOP2 @ 0xFE040000</span>
+      <span class="layer-chip" style="background:var(--red-bg); color:var(--red); border:1px solid var(--red-border);">NPU @ 0xFD900000</span>
+      <span class="layer-chip" style="background:var(--red-bg); color:var(--red); border:1px solid var(--red-border);">CSI DPHY</span>
+      <span class="layer-chip" style="background:var(--red-bg); color:var(--red); border:1px solid var(--red-border);">DSI DPHY</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 4. DETAILED SUBSYSTEM CARDS ===== -->
+<div class="section-title">4. 关键子系统深度拆解</div>
+
+<div class="detail-grid">
+
+  <!-- Camera Subsystem -->
+  <div class="card">
+    <h3><span class="dot" style="background:var(--blue);"></span>Camera 采集子系统 &mdash; ISP2.1 + VICAP</h3>
+    <div class="callout" style="background:var(--blue-bg); border-color:var(--blue); color:#90caf9;">
+      <strong>来源:</strong> RK3568 TRM Part2 Ch.12 (ISP), Ch.27 (CSI Host), Ch.28 (DPHY); Linux mainline rkisp1 + rkcif drivers (Michael Riesch, v15 Nov 2025)
+    </div>
+    <table class="kv">
+      <tr><td class="k">ISP 2.1</td><td class="v">内置 MIPI CSI-2 Host，独立于 VICAP。支持 3A (AF/AE/AWB)、3DNR、HDR、LSC、DPC。虚拟 sditf 链路连接 VICAP。</td></tr>
+      <tr><td class="k">VICAP</td><td class="v">独立采集单元，DVP 并行 + MIPI CSI-2 双输入。Ping-pong DMA 缓冲。在 RK356X 上与 ISP 为独立 IP（不同于 RK3588 的硬件连接）。</td></tr>
+      <tr><td class="k">CSI DPHY</td><td class="v">Innosilicon combo PHY，4 data + 2 clock lanes。支持 1×4 full mode 或 2×2 split mode（split 需 GRF 寄存器配置，主线尚未支持）。</td></tr>
+      <tr><td class="k">设备节点</td><td class="v">/dev/video0 (rkisp_mainpath), /dev/video1 (rkisp_selfpath), /dev/video2~6 (raw/stat/params), /dev/video7 (rkisp-statistics), /dev/video8 (rkisp-input-params), /dev/media0</td></tr>
+      <tr><td class="k">Media拓扑</td><td class="v">imx415 (sensor) → csi2_rx (host) → rkisp_input → rkisp_mainpath → /dev/video0<br>VICAP 路径: sensor → csi2_rx_host → rkcif_mipi → /dev/videoX</td></tr>
+    </table>
+    <div class="code-block"><span class="cmt"># ISP pipeline setup (Radxa ROCK3 Model A, IMX219, mainline rkisp1)</span>
+media-ctl -d <span class="str">"platform:rkisp1"</span> \
+  <span class="kw">--set-v4l2</span> <span class="str">'"rkisp1_isp":0 [fmt:SRGGB10_1X10/3280x2464]'</span>
+media-ctl -d <span class="str">"platform:rkisp1"</span> \
+  <span class="kw">--set-v4l2</span> <span class="str">'"rkisp1_isp":2 [fmt:YUYV8_2X8/3200x2400]'</span>
+
+<span class="cmt"># 主线内核源码路径</span>
+<span class="cmt"># drivers/media/platform/rockchip/rkisp1/</span>
+<span class="cmt"># drivers/media/platform/rockchip/rkcif/   (VICAP)</span>
+<span class="cmt"># drivers/phy/rockchip/phy-rockchip-inno-csidphy.c</span></div>
+  </div>
+
+  <!-- VOP2 Display -->
+  <div class="card">
+    <h3><span class="dot" style="background:var(--green);"></span>显示子系统 &mdash; VOP2 (Video Output Processor v2)</h3>
+    <div class="callout" style="background:var(--green-bg); border-color:var(--green); color:#a5d6a7;">
+      <strong>来源:</strong> RK3568 TRM Part2 Ch.44; Linux mainline drivers/gpu/drm/rockchip/
+    </div>
+    <table class="kv">
+      <tr><td class="k">寄存器基址</td><td class="v">0xFE040000 (64KB)</td></tr>
+      <tr><td class="k">窗口类型</td><td class="v">2×Cluster (AFBCD/YUV/RGB/Scaling/CSC/BCSH) + 2×ESmart + 2×Smart = 6 层叠加</td></tr>
+      <tr><td class="k">Video Port</td><td class="v">VP0: 4K@60 (HDMI/eDP) · VP1: 2K (MIPI DSI) · VP2: 1080P (LVDS/DSI)</td></tr>
+      <tr><td class="k">Overlay</td><td class="v">Pre-Overlay → Layer_Mux (6层) → Main_Overlay (Alpha Blending) → Post_Overlay (背景色)</td></tr>
+      <tr><td class="k">Post-Process</td><td class="v">BCSH (亮度/对比度/饱和度/色调) · Gamma校正 · 3D_LUT · HDR10/SDR互转</td></tr>
+      <tr><td class="k">DRM对象</td><td class="v">Plane(Window) → CRTC(VP) → Encoder(HDMI/eDP/MIPI) → Connector → Panel</td></tr>
+      <tr><td class="k">内核路径</td><td class="v">drivers/gpu/drm/rockchip/rockchip_drm_vop2.c · rockchip_drm_vop2_regs.h</td></tr>
+    </table>
+    <div class="code-block"><span class="cmt"># 板端 DRM 设备节点</span>
+/dev/dri/card0      <span class="cmt">← DRM primary node</span>
+/dev/dri/renderD128  <span class="cmt">← DRM render node</span>
+
+<span class="cmt"># OpenCV HighGUI 内部调用链</span>
+cv2.imshow() → HighGUI backend (GTK/Qt)
+  → DRM/KMS → rockchip-drm (VOP2)
+    → dw-mipi-dsi → LCD Panel</div>
+  </div>
+
+  <!-- NPU / RKNN -->
+  <div class="card">
+    <h3><span class="dot" style="background:var(--red);"></span>NPU 推理子系统</h3>
+    <div class="callout" style="background:var(--red-bg); border-color:var(--red); color:#ef9a9a;">
+      <strong>来源:</strong> RK3568 Datasheet V1.1 §1.2.2; RK3568 TRM Part2 NPU chapter; Rockchip RKNN SDK
+    </div>
+    <table class="kv">
+      <tr><td class="k">NPU 硬件</td><td class="v">0.8 TOPS (datasheet) / 1.0 TOPS (marketing) @ INT8。支持 INT8/INT16/FP16/BFP16 混合运算。独立电源域 VD_NPU。</td></tr>
+      <tr><td class="k">NPU 驱动</td><td class="v">CONFIG_ROCKCHIP_NPU · 内核驱动 v0.8.2 · /dev/rknpu</td></tr>
+      <tr><td class="k">RKNN Runtime</td><td class="v">librknnrt.so v1.5.0 — 用户态运行时，封装 NPU ioctl 调用</td></tr>
+      <tr><td class="k">rknn_server</td><td class="v">/usr/bin/rknn_server v1.5.0 — 板端守护进程，管理 NPU 资源分配</td></tr>
+      <tr><td class="k">RKNNLite API</td><td class="v">load_rknn(model.rknn) → init_runtime() → inference(inputs) → release()</td></tr>
+      <tr><td class="k">模型格式</td><td class="v">.rknn — 预编译量化模型 (INT8), 从 ONNX/PyTorch/TF 通过 rknn-toolkit2 (PC端) 转换</td></tr>
+      <tr><td class="k">YOLOv5 输出</td><td class="v">(1,255,80,80) stride=8 + (1,255,40,40) stride=16 + (1,255,20,20) stride=32<br>255 = 3×(80类别+4坐标+1置信度) = 3 anchors × 85</td></tr>
+    </table>
+    <div class="code-block"><span class="cmt"># NPU 软件栈</span>
+Application (Python)
+  → rknn_toolkit_lite2 1.5.0 (Python RKNNLite class)
+    → librknnrt.so 1.5.0 (/usr/lib/)
+      → rknn_server (/usr/bin/)
+        → NPU Driver v0.8.2 (CONFIG_ROCKCHIP_NPU)
+          → RK3568 NPU Hardware @ 0xFD900000</div>
+  </div>
+
+  <!-- Video CODEC + Streaming -->
+  <div class="card">
+    <h3><span class="dot" style="background:var(--pink);"></span>视频编解码 &amp; 推流子系统</h3>
+    <div class="callout" style="background:var(--pink-bg); border-color:var(--pink); color:#ce93d8;">
+      <strong>来源:</strong> RK3568 Datasheet §1.2.7; RK3568 TRM Part2 Video CODEC chapter
+    </div>
+    <table class="kv">
+      <tr><td class="k">Video Decoder</td><td class="v">H.265 HEVC/MVC Main10 L5.1: 4096×2304@60fps · H.264: 4K@60fps · VP9: 4K@60fps</td></tr>
+      <tr><td class="k">Video Encoder</td><td class="v">H.264/H.265: 1080p@60fps</td></tr>
+      <tr><td class="k">JPEG Codec</td><td class="v">硬件 JPEG 编解码器</td></tr>
+      <tr><td class="k">RGA</td><td class="v">2D 图形加速引擎 — 旋转/缩放/裁剪/格式转换 (CONFIG_ROCKCHIP_RGA)</td></tr>
+      <tr><td class="k">推流架构</td><td class="v">Python cv2.imencode('.jpg') → pipe → FFmpeg stdin → libx264 → FLV → RTMP → Nginx-rtmp → HLS (.m3u8/.ts) → Windows ffplay</td></tr>
+      <tr><td class="k">为何不用 Gst RTMP</td><td class="v">板端 GStreamer 有 rtmpsink 但缺少 flvmux 插件</td></tr>
+    </table>
+    <div class="code-block"><span class="cmt"># FFmpeg 推流 (测试源)</span>
+ffmpeg -re -f lavfi -i testsrc=size=640x480:rate=15 \
+  -c:v libx264 -preset ultrafast -tune zerolatency \
+  -f flv rtmp://127.0.0.1/live/mytest
+
+<span class="cmt"># Nginx RTMP 配置 (/etc/nginx/nginx.conf)</span>
+rtmp { server { listen <span class="num">1935</span>;
+  application live { live on; hls on;
+    hls_path /tmp/hls; hls_fragment 5s; } } }
+
+<span class="cmt"># Windows 拉流</span>
+ffplay http://192.168.0.230/hls/yolo.m3u8</div>
+  </div>
+
+</div>
+
+<!-- ===== 5. REGISTER ADDRESS MAP ===== -->
+<div class="section-title">5. RK3568 关键 IP 寄存器基址 <small>来源: RK3568 TRM Part1/Part2 Memory Map</small></div>
+<div class="ref-grid">
+  <div class="ref-item"><span class="r-name">VOP2</span> <span class="r-desc">0xFE040000</span></div>
+  <div class="ref-item"><span class="r-name">ISP 2.1</span> <span class="r-desc">0xFDFE0000</span></div>
+  <div class="ref-item"><span class="r-name">VICAP</span> <span class="r-desc">0xFDF80000</span></div>
+  <div class="ref-item"><span class="r-name">NPU</span> <span class="r-desc">0xFD900000</span></div>
+  <div class="ref-item"><span class="r-name">GPU (Mali-G52)</span> <span class="r-desc">0xFDE60000</span></div>
+  <div class="ref-item"><span class="r-name">Video Decoder</span> <span class="r-desc">0xFDC00000</span></div>
+  <div class="ref-item"><span class="r-name">Video Encoder</span> <span class="r-desc">0xFDC80000</span></div>
+  <div class="ref-item"><span class="r-name">JPEG Codec</span> <span class="r-desc">0xFDD00000</span></div>
+  <div class="ref-item"><span class="r-name">RGA2</span> <span class="r-desc">0xFDD60000</span></div>
+  <div class="ref-item"><span class="r-name">MIPI CSI DPHY</span> <span class="r-desc">0xFE830000 (CSI0) / 0xFE840000 (CSI1)</span></div>
+  <div class="ref-item"><span class="r-name">MIPI DSI DPHY</span> <span class="r-desc">0xFE860000 (DSI0) / 0xFE870000 (DSI1)</span></div>
+  <div class="ref-item"><span class="r-name">HDMI TX</span> <span class="r-desc">0xFDE80000</span></div>
+  <div class="ref-item"><span class="r-name">eDP TX</span> <span class="r-desc">0xFDEA0000</span></div>
+  <div class="ref-item"><span class="r-name">DDR Controller</span> <span class="r-desc">0xFD800000</span></div>
+  <div class="ref-item"><span class="r-name">eMMC</span> <span class="r-desc">0xFE310000</span></div>
+  <div class="ref-item"><span class="r-name">GMAC0</span> <span class="r-desc">0xFE2A0000</span></div>
+  <div class="ref-item"><span class="r-name">GMAC1</span> <span class="r-desc">0xFE010000</span></div>
+  <div class="ref-item"><span class="r-name">USB3.0 OTG0</span> <span class="r-desc">0xFCC00000</span></div>
+  <div class="ref-item"><span class="r-name">USB3.0 OTG1</span> <span class="r-desc">0xFD000000</span></div>
+  <div class="ref-item"><span class="r-name">PCIe 3.0 ×2</span> <span class="r-desc">0xFE260000</span></div>
+  <div class="ref-item"><span class="r-name">SATA 3.0</span> <span class="r-desc">0xFE210000 (SATA0) / ...</span></div>
+  <div class="ref-item"><span class="r-name">CRU</span> <span class="r-desc">0xFDD20000</span></div>
+  <div class="ref-item"><span class="r-name">PMU</span> <span class="r-desc">0xFD8F0000</span></div>
+  <div class="ref-item"><span class="r-name">DMAC0</span> <span class="r-desc">0xFE530000</span></div>
+  <div class="ref-item"><span class="r-name">DMAC1</span> <span class="r-desc">0xFE550000</span></div>
+  <div class="ref-item"><span class="r-name">GIC-400</span> <span class="r-desc">0xFD400000</span></div>
+  <div class="ref-item"><span class="r-name">SYSTEM_SRAM</span> <span class="r-desc">0xFDC20000 (64KB)</span></div>
+  <div class="ref-item"><span class="r-name">PMU_SRAM</span> <span class="r-desc">0xFD900000 (8KB)</span></div>
+  <div class="ref-item"><span class="r-name">BootROM</span> <span class="r-desc">0xFFFF0000</span></div>
+</div>
+
+<!-- ===== 6. KERNEL CONFIG ===== -->
+<div class="section-title">6. 内核配置项 <small>来源: Linux 4.19/5.10/6.x kernel Kconfig for RK3568</small></div>
+<div class="ref-grid">
+  <div class="ref-item"><span class="r-name">CONFIG_VIDEO_V4L2</span> <span class="r-desc">V4L2 核心框架</span></div>
+  <div class="ref-item"><span class="r-name">CONFIG_MEDIA_CONTROLLER</span> <span class="r-desc">Media Controller 拓扑</span></div>
+  <div class="ref-item"><span class="r-name">CONFIG_VIDEOBUF2_DMA_CONTIG</span> <span class="r-desc">DMA 连续缓冲区</span></div>
+  <div class="ref-item"><span class="r-name">CONFIG_VIDEO_IMX415</span> <span class="r-desc">IMX415 传感器驱动</span></div>
+  <div class="ref-item"><span class="r-name">CONFIG_VIDEO_ROCKCHIP_ISP</span> <span class="r-desc">Rockchip ISP 驱动 (mainline: rkisp1)</span></div>
+  <div class="ref-item"><span class="r-name">CONFIG_VIDEO_ROCKCHIP_CIF</span> <span class="r-desc">Rockchip VICAP 驱动 (mainline: rkcif)</span></div>
+  <div class="ref-item"><span class="r-name">CONFIG_ROCKCHIP_NPU</span> <span class="r-desc">NPU 驱动 (v0.8.2)</span></div>
+  <div class="ref-item"><span class="r-name">CONFIG_DRM_ROCKCHIP</span> <span class="r-desc">DRM/KMS + VOP2 驱动</span></div>
+  <div class="ref-item"><span class="r-name">CONFIG_ROCKCHIP_RGA</span> <span class="r-desc">RGA 硬件加速 (旋转/缩放/格式转换)</span></div>
+  <div class="ref-item"><span class="r-name">CONFIG_VIDEO_CODEC_ROCKCHIP</span> <span class="r-desc">硬件视频编解码驱动</span></div>
+  <div class="ref-item"><span class="r-name">CONFIG_PHY_ROCKCHIP_INNO_CSIDPHY</span> <span class="r-desc">Innosilicon CSI DPHY</span></div>
+  <div class="ref-item"><span class="r-name">CONFIG_FB_ROCKCHIP</span> <span class="r-desc">Framebuffer 驱动 (fb0, 旧版)</span></div>
+  <div class="ref-item"><span class="r-name">CONFIG_ROCKCHIP_MPP_SERVICE</span> <span class="r-desc">多媒体处理平台 (BSP 特有)</span></div>
+  <div class="ref-item"><span class="r-name">CONFIG_ROCKCHIP_GRF</span> <span class="r-desc">General Register Files (通用寄存器)</span></div>
+</div>
+
+</div>
+
+<div class="footer">
+  RK3568 AI Camera Project · Phase 0 芯片级全系统框架图 · 基于 Rockchip 官方 Datasheet/TRM + Linux Mainline Kernel<br>
+  Data sources: Rockchip RK3568 Datasheet V1.1 · TRM Part1/Part2 V1.1 · Linux Media Committers (rkisp1 + rkcif) · Linux DRM/Rockchip · 正点原子原理图 &amp; 硬件参考手册
+</div>
+
+</body>
+</html>

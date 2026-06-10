@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RK3568 AI Camera — Phase0 全链路框架图</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family:'Inter','Noto Sans SC',sans-serif;
+    background:#080c14; color:#c8ccd4;
+    line-height:1.6;
+  }
+
+  /* ===== HEADER ===== */
+  .hero {
+    background:linear-gradient(180deg, rgba(20,30,60,0.9) 0%, rgba(8,12,20,1) 100%);
+    border-bottom:1px solid rgba(255,255,255,0.06);
+    padding:56px 24px 40px; text-align:center;
+  }
+  .hero h1 { font-size:2.2em; font-weight:700; color:#e8eaed; letter-spacing:-0.02em; }
+  .hero h1 span { background:linear-gradient(135deg,#64b5f6,#42a5f5,#7c4dff); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+  .hero .sub { font-size:1.05em; color:#7e8a98; margin-top:8px; }
+  .hero .meta { margin-top:16px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+  .hero .meta span { padding:3px 14px; border-radius:14px; font-size:0.8em; font-weight:500; }
+  .meta .chip { background:rgba(66,165,245,0.1); color:#90caf9; border:1px solid rgba(66,165,245,0.2); }
+  .meta .os   { background:rgba(102,187,106,0.1); color:#a5d6a7; border:1px solid rgba(102,187,106,0.2); }
+  .meta .np   { background:rgba(239,83,80,0.1); color:#ef9a9a; border:1px solid rgba(239,83,80,0.2); }
+
+  /* ===== LAYOUT ===== */
+  .container { max-width:1400px; margin:0 auto; padding:32px 24px; }
+
+  .section-title {
+    font-size:1.25em; font-weight:600; color:#b0bec5;
+    margin:48px 0 20px; padding-left:14px;
+    border-left:3px solid #7c4dff;
+  }
+  .section-title small { font-size:0.7em; color:#546e7a; font-weight:400; margin-left:8px; }
+
+  .phase-guide {
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(220px,1fr));
+    gap:16px;
+    margin:8px 0 24px;
+  }
+  .guide-card {
+    background:linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%);
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:14px;
+    padding:18px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.18);
+  }
+  .guide-card .g-step {
+    display:inline-block;
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.72em;
+    padding:4px 10px;
+    border-radius:999px;
+    margin-bottom:10px;
+    color:#081018;
+    font-weight:600;
+  }
+  .guide-card .g-title {
+    font-size:1em;
+    font-weight:700;
+    color:#e8eaed;
+    margin-bottom:8px;
+  }
+  .guide-card .g-body {
+    font-size:0.85em;
+    color:#9fb0bf;
+  }
+  .g1 { background:#80cbc4; }
+  .g2 { background:#ffd54f; }
+  .g3 { background:#81d4fa; }
+  .g4 { background:#ef9a9a; }
+
+  .memory-board {
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(260px,1fr));
+    gap:14px;
+    margin:18px 0 8px;
+  }
+  .memory-item {
+    background:rgba(255,255,255,0.02);
+    border:1px solid rgba(255,255,255,0.06);
+    border-radius:12px;
+    padding:16px 18px;
+  }
+  .memory-item .m-key {
+    font-size:0.75em;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:#7c4dff;
+    margin-bottom:8px;
+    font-weight:700;
+  }
+  .memory-item .m-body {
+    color:#d7dde4;
+    font-size:0.92em;
+    line-height:1.75;
+  }
+
+  .overview-map {
+    background:rgba(255,255,255,0.02);
+    border:1px solid rgba(255,255,255,0.06);
+    border-radius:22px;
+    padding:28px 22px;
+    margin:22px 0 36px;
+    overflow-x:auto;
+  }
+  .overview-track {
+    min-width:1280px;
+    display:flex;
+    align-items:center;
+    gap:0;
+  }
+  .overview-node {
+    min-width:138px;
+    padding:14px 10px;
+    text-align:center;
+    border:1px solid rgba(255,255,255,0.12);
+    border-radius:0;
+    box-shadow:0 8px 24px rgba(0,0,0,0.18);
+  }
+  .overview-node:first-child { border-radius:12px 0 0 12px; }
+  .overview-node:last-child { border-radius:0 12px 12px 0; }
+  .overview-node .o-name {
+    font-size:0.9em;
+    font-weight:700;
+    color:#f1f5f9;
+    line-height:1.35;
+  }
+  .overview-node .o-sub {
+    margin-top:4px;
+    font-size:0.72em;
+    color:#c5d2df;
+    font-family:'JetBrains Mono',monospace;
+    line-height:1.35;
+  }
+  .overview-arrow {
+    min-width:72px;
+    text-align:center;
+    color:#9aa7b5;
+    font-size:0.78em;
+    font-family:'JetBrains Mono',monospace;
+  }
+  .o-blue   { background:rgba(25,78,168,0.72); }
+  .o-violet { background:rgba(65,44,140,0.72); }
+  .o-green  { background:rgba(33,94,53,0.72); }
+  .o-red    { background:rgba(122,43,43,0.72); }
+  .o-brown  { background:rgba(121,73,37,0.72); }
+
+  /* ===== MAIN SYSTEM MAP ===== */
+  .system-map { position:relative; margin:24px 0 48px; }
+
+  /* Layer labels */
+  .layer-label {
+    font-size:0.7em; font-weight:600; text-transform:uppercase; letter-spacing:0.12em;
+    padding:4px 0; text-align:center; border-radius:4px; margin-bottom:8px;
+  }
+
+  .pipeline-row {
+    display:flex; align-items:stretch; gap:0;
+    margin-bottom:2px; position:relative;
+  }
+  .pipeline-row .stage {
+    flex:1; padding:16px 12px; text-align:center;
+    border:1px solid rgba(255,255,255,0.06);
+    transition:all 0.2s;
+    position:relative;
+  }
+  .pipeline-row .stage:hover {
+    border-color:rgba(124,77,255,0.5);
+    transform:translateY(-1px);
+    z-index:2;
+    box-shadow:0 8px 32px rgba(0,0,0,0.4);
+  }
+
+  .stage .s-name { font-size:0.95em; font-weight:600; color:#e8eaed; margin-bottom:4px; }
+  .stage .s-drv  { font-size:0.72em; font-family:'JetBrains Mono',monospace; color:#78909c; }
+  .stage .s-path { font-size:0.72em; font-family:'JetBrains Mono',monospace; color:#66bb6a; margin-top:2px; }
+  .stage .s-fmt  { font-size:0.68em; color:#90a4ae; margin-top:4px; padding:2px 8px; background:rgba(255,255,255,0.03); border-radius:3px; display:inline-block; }
+
+  /* Arrow between stages */
+  .arrow-col {
+    width:36px; display:flex; align-items:center; justify-content:center;
+    color:#546e7a; font-size:1.2em; flex-shrink:0;
+  }
+
+  /* Color zones */
+  .zone-sensor { background:rgba(26,35,80,0.7); }
+  .zone-isp    { background:rgba(27,26,59,0.7); }
+  .zone-v4l2   { background:rgba(26,46,26,0.7); }
+  .zone-gst    { background:rgba(26,46,46,0.7); }
+  .zone-cv     { background:rgba(40,35,20,0.7); }
+  .zone-rknn   { background:rgba(62,26,26,0.7); }
+  .zone-post   { background:rgba(62,39,35,0.7); }
+  .zone-out    { background:rgba(26,26,62,0.7); }
+
+  /* Layer background bands */
+  .layer-hw     { background:rgba(255,255,255,0.015); }
+  .layer-kernel { background:rgba(255,255,255,0.025); }
+  .layer-user   { background:rgba(255,255,255,0.015); }
+  .layer-app    { background:rgba(255,255,255,0.025); }
+
+  /* ===== SUB-SYSTEM DETAIL CARDS ===== */
+  .detail-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(420px,1fr)); gap:20px; margin:20px 0; }
+  .detail-card {
+    background:rgba(255,255,255,0.02);
+    border:1px solid rgba(255,255,255,0.06);
+    border-radius:12px; padding:24px;
+  }
+  .detail-card h3 {
+    font-size:1em; font-weight:600; color:#e8eaed;
+    padding-bottom:12px; border-bottom:1px solid rgba(255,255,255,0.06);
+    margin-bottom:14px;
+  }
+  .detail-card h3 .dot {
+    display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:8px;
+  }
+  .dot-sensor { background:#42a5f5; }
+  .dot-isp    { background:#7c4dff; }
+  .dot-v4l2   { background:#66bb6a; }
+  .dot-gst    { background:#26c6da; }
+  .dot-cv     { background:#ffa726; }
+  .dot-rknn   { background:#ef5350; }
+  .dot-disp   { background:#42a5f5; }
+  .dot-stream { background:#ab47bc; }
+
+  .kv-table { width:100%; font-size:0.85em; }
+  .kv-table td { padding:5px 8px; vertical-align:top; }
+  .kv-table td:first-child { font-family:'JetBrains Mono',monospace; font-size:0.85em; color:#90caf9; white-space:nowrap; width:1%; }
+  .kv-table td:last-child  { color:#b0bec5; }
+
+  .code-snippet {
+    background:rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.08);
+    border-radius:8px; padding:14px 16px; margin:10px 0;
+    font-family:'JetBrains Mono',monospace; font-size:0.78em;
+    color:#a5d6a7; overflow-x:auto; white-space:pre; line-height:1.55;
+  }
+  .code-snippet .kw { color:#82aaff; }
+  .code-snippet .str { color:#c3e88d; }
+  .code-snippet .cmt { color:#546e7a; }
+  .code-snippet .fn  { color:#ffcb6b; }
+
+  .callout {
+    padding:14px 18px; border-radius:8px; margin:10px 0; font-size:0.85em;
+    border-left:3px solid;
+  }
+  .callout-note { background:rgba(66,165,245,0.06); border-color:#42a5f5; color:#90caf9; }
+  .callout-warn { background:rgba(255,167,38,0.06); border-color:#ffa726; color:#ffcc80; }
+  .callout-good { background:rgba(102,187,106,0.06); border-color:#66bb6a; color:#a5d6a7; }
+  .callout-phase { background:rgba(124,77,255,0.08); border-color:#7c4dff; color:#d1c4e9; }
+
+  /* ===== DATA FORMAT TIMELINE ===== */
+  .format-bar {
+    display:flex; align-items:center; gap:0; margin:20px 0;
+    background:rgba(255,255,255,0.02); border-radius:12px;
+    border:1px solid rgba(255,255,255,0.06); overflow:hidden;
+  }
+  .fmt-step {
+    flex:1; padding:20px 16px; text-align:center;
+    border-right:1px solid rgba(255,255,255,0.06);
+    position:relative;
+  }
+  .fmt-step:last-child { border-right:none; }
+  .fmt-step .f-name { font-size:0.85em; font-weight:600; color:#e8eaed; }
+  .fmt-step .f-detail { font-size:0.72em; color:#78909c; margin-top:4px; font-family:'JetBrains Mono',monospace; }
+  .fmt-step .f-size { font-size:0.68em; color:#66bb6a; margin-top:2px; }
+  .fmt-arrow {
+    width:0; height:0; position:absolute; right:-8px; top:50%; transform:translateY(-50%);
+    border-left:8px solid #546e7a; border-top:6px solid transparent; border-bottom:6px solid transparent;
+    z-index:1;
+  }
+
+  /* ===== KERNEL CONFIG TABLE ===== */
+  .kconfig-grid {
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(280px,1fr)); gap:8px;
+    margin:16px 0;
+  }
+  .kconfig-item {
+    background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05);
+    border-radius:6px; padding:10px 14px;
+    font-family:'JetBrains Mono',monospace; font-size:0.75em;
+  }
+  .kconfig-item .k-name { color:#90caf9; }
+  .kconfig-item .k-desc { color:#78909c; font-size:0.85em; margin-top:2px; }
+
+  /* ===== FOOTER ===== */
+  .footer {
+    text-align:center; padding:32px; font-size:0.78em; color:#546e7a;
+    border-top:1px solid rgba(255,255,255,0.04); margin-top:48px;
+  }
+
+  @media (max-width:900px) {
+    .pipeline-row { flex-wrap:wrap; }
+    .arrow-col { width:100%; transform:rotate(90deg); }
+    .detail-grid { grid-template-columns:1fr; }
+    .format-bar { flex-wrap:wrap; }
+    .fmt-step { flex:auto; min-width:50%; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ====== HERO ====== -->
+<div class="hero">
+  <h1>RK3568 <span>AI Camera</span> Phase0 全链路框架图</h1>
+  <div class="sub">Phase 0 深度版 — 从 IMX415 传感器到 NPU 推理到 HLS 推流，每一层的驱动、设备节点、API 调用</div>
+  <div class="meta">
+    <span class="chip">RK3568 + IMX415</span>
+    <span class="os">Buildroot 2018.02 · Linux 4.19.232 aarch64</span>
+    <span class="np">NPU v0.8.2 · RKNN 1.5.0 · YOLOv5s Int8</span>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ====== PHASE 0 READING GUIDE ====== -->
+<div class="section-title">0. 阶段0看图顺序 <small>先看懂系统地图，再进入后面阶段</small></div>
+<div class="phase-guide">
+  <div class="guide-card">
+    <div class="g-step g1">STEP 01</div>
+    <div class="g-title">先只看主链路</div>
+    <div class="g-body">只盯住一条线：IMX415 → /dev/video0 → GStreamer → OpenCV → RKNN → MIPI/HLS。现在先不要纠结驱动源码和 config 名字。</div>
+  </div>
+  <div class="guide-card">
+    <div class="g-step g2">STEP 02</div>
+    <div class="g-title">再看格式怎么变</div>
+    <div class="g-body">记住数据不是一直一样的：RAW Bayer → NV12 → BGR → Tensor → H.264/HLS。后面很多问题，本质都是格式和接口不匹配。</div>
+  </div>
+  <div class="guide-card">
+    <div class="g-step g3">STEP 03</div>
+    <div class="g-title">最后看四段拆解</div>
+    <div class="g-body">把复杂系统拆成四段：Camera、OpenCV 取帧、RKNN 推理、显示/推流。后面阶段2到阶段8，就是把这四段逐个吃透。</div>
+  </div>
+  <div class="guide-card">
+    <div class="g-step g4">STEP 04</div>
+    <div class="g-title">阶段0的目标</div>
+    <div class="g-body">阶段0不是调功能，不是改代码，而是能用自己的话把整条链路顺下来，并知道每一段大概负责什么。</div>
+  </div>
+</div>
+
+<div class="memory-board">
+  <div class="memory-item">
+    <div class="m-key">一句话总览</div>
+    <div class="m-body">这不是单点 AI Demo，而是一条完整的 AI Camera 系统链路。</div>
+  </div>
+  <div class="memory-item">
+    <div class="m-key">阶段0只记住</div>
+    <div class="m-body">Camera 进来后，先变成 <b>/dev/video0</b>；OpenCV 不是直接吃 Camera，而是通过 <b>GStreamer appsink</b> 拿帧；AI 真正跑在 <b>NPU + RKNN Runtime</b>；结果最后去 <b>MIPI 屏</b> 和 <b>HLS</b>。</div>
+  </div>
+  <div class="memory-item">
+    <div class="m-key">后面最容易混的点</div>
+    <div class="m-body">驱动层、用户态、应用层不是一回事。<b>/dev/video0</b> 是用户态入口，不是 Sensor 本身；<b>cv2.VideoCapture</b> 失败，不代表 Camera 坏了。</div>
+  </div>
+</div>
+
+<!-- ====== PHASE 0 MAIN MAP ====== -->
+<div class="section-title">0.5 数据链路全景 <small>阶段0主图，先看这一张</small></div>
+<div class="overview-map">
+  <div class="overview-track">
+    <div class="overview-node o-blue">
+      <div class="o-name">IMX415<br>MIPI Camera</div>
+      <div class="o-sub">RAW Bayer</div>
+    </div>
+    <div class="overview-arrow">MIPI CSI-2 →</div>
+
+    <div class="overview-node o-blue">
+      <div class="o-name">RK3568<br>MIPI CSI</div>
+      <div class="o-sub">Sensor 输入</div>
+    </div>
+    <div class="overview-arrow">RAW →</div>
+
+    <div class="overview-node o-violet">
+      <div class="o-name">RKISP<br>ISP Pipeline</div>
+      <div class="o-sub">RAW → NV12</div>
+    </div>
+    <div class="overview-arrow">NV12 1280×720 →</div>
+
+    <div class="overview-node o-violet">
+      <div class="o-name">V4L2<br>/dev/video0</div>
+      <div class="o-sub">用户态入口</div>
+    </div>
+    <div class="overview-arrow">v4l2src →</div>
+
+    <div class="overview-node o-green">
+      <div class="o-name">GStreamer<br>videoconvert</div>
+      <div class="o-sub">NV12 → BGR</div>
+    </div>
+    <div class="overview-arrow">appsink →</div>
+
+    <div class="overview-node o-green">
+      <div class="o-name">OpenCV<br>Mat 1280×720</div>
+      <div class="o-sub">BGR 帧</div>
+    </div>
+    <div class="overview-arrow">preprocess →</div>
+
+    <div class="overview-node o-red">
+      <div class="o-name">YOLOv5 RKNN<br>NPU 推理</div>
+      <div class="o-sub">RKNN Runtime</div>
+    </div>
+    <div class="overview-arrow">boxes+labels →</div>
+
+    <div class="overview-node o-brown">
+      <div class="o-name">画框后处理<br>cv::rectangle</div>
+      <div class="o-sub">结果叠加</div>
+    </div>
+    <div class="overview-arrow">display / stream →</div>
+
+    <div class="overview-node o-blue">
+      <div class="o-name">MIPI 屏显示</div>
+      <div class="o-sub">cv::imshow</div>
+    </div>
+    <div class="overview-arrow">or →</div>
+
+    <div class="overview-node o-blue">
+      <div class="o-name">FFmpeg → RTMP<br>→ Nginx → HLS</div>
+      <div class="o-sub">.m3u8 / .ts</div>
+    </div>
+    <div class="overview-arrow">→</div>
+
+    <div class="overview-node o-blue">
+      <div class="o-name">Windows 拉流</div>
+      <div class="o-sub">ffplay</div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 1. FULL SYSTEM MAP ====== -->
+<div class="section-title">1. 全系统分层架构 <small>Hardware → Kernel Drivers → Userspace Libraries → Application</small></div>
+
+<div class="system-map">
+
+  <!-- HARDWARE LAYER -->
+  <div class="layer-label" style="background:rgba(255,255,255,0.03); color:#78909c;">Hardware Layer</div>
+  <div class="pipeline-row layer-hw" style="border-radius:8px 8px 0 0;">
+    <div class="stage zone-sensor">
+      <div class="s-name">IMX415 Sensor</div>
+      <div class="s-drv">Sony 4K CMOS</div>
+      <div class="s-fmt">RAW Bayer 10-bit</div>
+    </div>
+    <div class="arrow-col">→</div>
+    <div class="stage zone-sensor">
+      <div class="s-name">MIPI CSI-2 PHY</div>
+      <div class="s-drv">4-lane MIPI</div>
+      <div class="s-fmt">CSI-2 packets</div>
+    </div>
+    <div class="arrow-col">→</div>
+    <div class="stage zone-isp">
+      <div class="s-name">RK3568 ISP</div>
+      <div class="s-drv">Rockchip ISP HW</div>
+      <div class="s-fmt">3A / Demosaic / Denoise</div>
+    </div>
+    <div class="arrow-col">→</div>
+    <div class="stage zone-out">
+      <div class="s-name">MIPI DSI LCD</div>
+      <div class="s-drv">DSI Controller</div>
+      <div class="s-fmt">RGB 显示</div>
+    </div>
+  </div>
+
+  <!-- KERNEL DRIVER LAYER -->
+  <div class="layer-label" style="background:rgba(255,255,255,0.03); color:#78909c;">Kernel Driver Layer</div>
+  <div class="pipeline-row layer-kernel">
+    <div class="stage zone-sensor">
+      <div class="s-name">IMX415 Driver</div>
+      <div class="s-drv">CONFIG_VIDEO_IMX415</div>
+      <div class="s-path">drivers/media/i2c/imx415.c</div>
+      <div class="s-fmt">v4l2_subdev</div>
+    </div>
+    <div class="arrow-col">→</div>
+    <div class="stage zone-sensor">
+      <div class="s-name">MIPI CSI Host</div>
+      <div class="s-drv">CONFIG_VIDEO_ROCKCHIP_CSI</div>
+      <div class="s-path">drivers/media/platform/rockchip/csi/</div>
+      <div class="s-fmt">mipi_csi2_rx</div>
+    </div>
+    <div class="arrow-col">→</div>
+    <div class="stage zone-isp">
+      <div class="s-name">RKISP Driver</div>
+      <div class="s-drv">CONFIG_VIDEO_ROCKCHIP_ISP</div>
+      <div class="s-path">drivers/media/platform/rockchip/isp/</div>
+      <div class="s-fmt">rkisp / rkisp_mainpath / rkisp_selfpath</div>
+    </div>
+    <div class="arrow-col">→</div>
+    <div class="stage zone-out">
+      <div class="s-name">DRM/KMS Driver</div>
+      <div class="s-drv">CONFIG_DRM_ROCKCHIP</div>
+      <div class="s-path">drivers/gpu/drm/rockchip/</div>
+      <div class="s-fmt">rockchip-drm / dw-mipi-dsi</div>
+    </div>
+  </div>
+
+  <!-- V4L2 / MEDIA CONTROLLER -->
+  <div class="layer-label" style="background:rgba(255,255,255,0.03); color:#78909c;">V4L2 / Media Controller Framework</div>
+  <div class="pipeline-row layer-kernel" style="border-radius:0 0 8px 8px;">
+    <div class="stage zone-v4l2" style="flex:2;">
+      <div class="s-name">Media Controller</div>
+      <div class="s-drv">CONFIG_MEDIA_CONTROLLER</div>
+      <div class="s-path">/dev/media0</div>
+      <div class="s-fmt">Entity: imx415 → csi2 → rkisp → video0</div>
+    </div>
+    <div class="arrow-col">→</div>
+    <div class="stage zone-v4l2">
+      <div class="s-name">V4L2 Core</div>
+      <div class="s-drv">CONFIG_VIDEO_V4L2</div>
+      <div class="s-path">VB2 DMA-contig / VMALLOC</div>
+      <div class="s-fmt">ioctl: QUERYCAP, S_FMT, REQBUFS, QBUF, DQBUF, STREAMON</div>
+    </div>
+    <div class="arrow-col">→</div>
+    <div class="stage zone-v4l2">
+      <div class="s-name">/dev/video0</div>
+      <div class="s-drv">rkisp_mainpath</div>
+      <div class="s-path">/dev/video-camera0 (symlink)</div>
+      <div class="s-fmt">NV12 1280×720</div>
+    </div>
+  </div>
+
+  <!-- USERSPACE MIDDLEWARE -->
+  <div class="layer-label" style="background:rgba(255,255,255,0.03); color:#78909c; margin-top:16px;">Userspace Middleware</div>
+  <div class="pipeline-row layer-user" style="border-radius:8px;">
+    <div class="stage zone-gst">
+      <div class="s-name">GStreamer 1.20.0</div>
+      <div class="s-drv">v4l2src → videoconvert → appsink</div>
+      <div class="s-fmt">NV12 → BGR 转换</div>
+    </div>
+    <div class="arrow-col">→</div>
+    <div class="stage zone-cv">
+      <div class="s-name">OpenCV 4.5.5</div>
+      <div class="s-drv">cv2.VideoCapture(CAP_GSTREAMER)</div>
+      <div class="s-fmt">BGR Mat (720,1280,3)</div>
+    </div>
+    <div class="arrow-col">→</div>
+    <div class="stage zone-rknn">
+      <div class="s-name">RKNN Runtime 1.5.0</div>
+      <div class="s-drv">librknnrt.so → NPU Driver v0.8.2</div>
+      <div class="s-fmt">int8 quantized tensors</div>
+    </div>
+    <div class="arrow-col">→</div>
+    <div class="stage zone-post">
+      <div class="s-name">FFmpeg 4.1.3</div>
+      <div class="s-drv">libx264 → FLV → RTMP</div>
+      <div class="s-fmt">H.264 / HLS .m3u8</div>
+    </div>
+  </div>
+
+  <!-- APPLICATION LAYER -->
+  <div class="layer-label" style="background:rgba(255,255,255,0.03); color:#78909c; margin-top:8px;">Application Layer</div>
+  <div class="pipeline-row layer-app" style="border-radius:0 0 8px 8px;">
+    <div class="stage zone-cv" style="flex:2;">
+      <div class="s-name">Python MVP Script</div>
+      <div class="s-drv">main_gst_realtime.py / main_gst_rtmp_hls.py</div>
+      <div class="s-path">/userdata/aidemo/06_yolov5_python/</div>
+    </div>
+    <div class="arrow-col">→</div>
+    <div class="stage zone-out">
+      <div class="s-name">MIPI DSI 本地显示</div>
+      <div class="s-drv">cv2.imshow() → DRM/KMS</div>
+      <div class="s-fmt">~4 FPS</div>
+    </div>
+    <div class="arrow-col">→</div>
+    <div class="stage zone-out">
+      <div class="s-name">HLS 网络推流</div>
+      <div class="s-drv">Nginx 1.12.2 + nginx-rtmp</div>
+      <div class="s-fmt">http://192.168.0.230/hls/yolo.m3u8</div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 2. DATA FORMAT TRANSFORMATION ====== -->
+<div class="section-title">2. 数据格式变换链 <small>从 RAW Bayer 到 H.264 推流</small></div>
+<div class="format-bar">
+  <div class="fmt-step">
+    <div class="f-name">RAW Bayer</div>
+    <div class="f-detail">10-bit per pixel</div>
+    <div class="f-size">Sensor → CSI-2</div>
+    <div class="fmt-arrow"></div>
+  </div>
+  <div class="fmt-step">
+    <div class="f-name">NV12</div>
+    <div class="f-detail">YUV 4:2:0 planar</div>
+    <div class="f-size">1280×720×1.5 = 1.38MB</div>
+    <div class="fmt-arrow"></div>
+  </div>
+  <div class="fmt-step">
+    <div class="f-name">BGR</div>
+    <div class="f-detail">OpenCV Mat uint8</div>
+    <div class="f-size">(720,1280,3) = 2.76MB</div>
+    <div class="fmt-arrow"></div>
+  </div>
+  <div class="fmt-step">
+    <div class="f-name">RGB 640×640</div>
+    <div class="f-detail">letterbox + normalize</div>
+    <div class="f-size">float32, (1,3,640,640)</div>
+    <div class="fmt-arrow"></div>
+  </div>
+  <div class="fmt-step">
+    <div class="f-name">NPU Tensors</div>
+    <div class="f-detail">INT8 quantized</div>
+    <div class="f-size">(1,255,80,80) + (1,255,40,40) + (1,255,20,20)</div>
+    <div class="fmt-arrow"></div>
+  </div>
+  <div class="fmt-step">
+    <div class="f-name">Detection Boxes</div>
+    <div class="f-detail">[x1,y1,x2,y2,conf,cls]</div>
+    <div class="f-size">NMS output, float32</div>
+    <div class="fmt-arrow"></div>
+  </div>
+  <div class="fmt-step">
+    <div class="f-name">Annotated BGR</div>
+    <div class="f-detail">cv::rectangle overlay</div>
+    <div class="f-size">(720,1280,3) + boxes</div>
+    <div class="fmt-arrow"></div>
+  </div>
+  <div class="fmt-step">
+    <div class="f-name">H.264 TS</div>
+    <div class="f-detail">libx264 → FLV → HLS</div>
+    <div class="f-size">.m3u8 + .ts segments</div>
+  </div>
+</div>
+
+<!-- ====== 3. DETAILED SUBSYSTEM CARDS ====== -->
+<div class="section-title">3. 各子系统深度拆解</div>
+
+<div class="detail-grid">
+
+  <!-- Camera → /dev/video0 -->
+  <div class="detail-card">
+    <h3><span class="dot dot-sensor"></span>段 A：Camera → /dev/video0</h3>
+    <div class="callout callout-phase">
+      阶段2只记一句：MIPI 屏上的官方 Camera 应用能出图，只能说明官方应用链路可跑；你能用 v4l2-ctl 从 /dev/video0 抓到帧，才说明用户态可控采集链路打通。
+    </div>
+    <div class="callout callout-note">
+      核心问题：Camera 数据从 MIPI 口进来后，Linux 怎么把它变成 /dev/video0？
+    </div>
+    <table class="kv-table">
+      <tr><td>传感器驱动</td><td>IMX415 (drivers/media/i2c/imx415.c) — v4l2_subdev，配置曝光/增益/帧率，输出 RAW Bayer</td></tr>
+      <tr><td>CSI Host 驱动</td><td>drivers/media/platform/rockchip/csi/ — MIPI CSI-2 RX 控制器，接收 4-lane CSI-2 数据</td></tr>
+      <tr><td>ISP 驱动</td><td>drivers/media/platform/rockchip/isp/ — rkisp_mainpath (主输出 NV12)、rkisp_selfpath (第二路)、rkisp-statistics (3A 统计)、rkisp-input-params (3A 参数)</td></tr>
+      <tr><td>Media Controller</td><td>/dev/media0 — 描述 imx415 → csi2_rx → rkisp_input → rkisp_mainpath → video0 的拓扑 entity/pad/link</td></tr>
+      <tr><td>VB2 缓冲区</td><td>videobuf2-dma-contig (DMA 连续内存) — mmap 模式 3 缓冲区</td></tr>
+      <tr><td>用户态接口</td><td>/dev/video0 — ioctl(VIDIOC_QUERYCAP/S_FMT/REQBUFS/QBUF/DQBUF/STREAMON)</td></tr>
+    </table>
+    <div class="code-snippet"><span class="cmt"># 列出所有 video 节点</span>
+v4l2-ctl <span class="kw">--list-devices</span>
+<span class="cmt"># rkisp_mainpath (platform:rkisp0):
+#   /dev/video0
+#   /dev/video-camera0     ← 字符链接
+#   /dev/media0            ← Media Controller</span>
+
+<span class="cmt"># 查看当前格式</span>
+v4l2-ctl -d /dev/video0 <span class="kw">--all</span>
+<span class="cmt"># Format: NV12 1280×720
+# 单帧大小: 1,382,400 bytes</span></div>
+    <div class="code-snippet"><span class="cmt"># 抓取一帧验证</span>
+v4l2-ctl -d /dev/video0 \
+  <span class="kw">--set-fmt-video</span>=width=1280,height=720,pixelformat=NV12 \
+  <span class="kw">--stream-mmap</span>=3 \
+  <span class="kw">--stream-count</span>=1 \
+  <span class="kw">--stream-to</span>=/tmp/frame.yuv</div>
+  </div>
+
+  <!-- GStreamer → OpenCV -->
+  <div class="detail-card">
+    <h3><span class="dot dot-gst"></span>段 B：GStreamer → OpenCV</h3>
+    <div class="callout callout-phase">
+      阶段4只记一句：OpenCV 在这里不是直接碰 Camera 驱动，而是从 GStreamer 的 appsink 出口取到已经转换好的 BGR 帧。
+    </div>
+    <div class="callout callout-warn">
+      核心问题：为什么 cv2.VideoCapture(0) 直接打开失败？
+    </div>
+    <table class="kv-table">
+      <tr><td>失败原因</td><td>RKISP 输出是 V4L2 multiplanar (mplane) 设备；OpenCV 默认 V4L2 后端不能稳健处理 mplane 节点；默认 GStreamer 后端不自动生成正确 pipeline</td></tr>
+      <tr><td>解决方案</td><td>显式构造 GStreamer pipeline 字符串，传入 cv2.VideoCapture(pipeline, cv2.CAP_GSTREAMER)</td></tr>
+      <tr><td>v4l2src</td><td>GStreamer V4L2 source element — 从 /dev/video0 读帧，内部用 ioctl QBUF/DQBUF</td></tr>
+      <tr><td>格式协商</td><td>video/x-raw,format=NV12,width=1280,height=720 — Caps filter 指定输入格式</td></tr>
+      <tr><td>videoconvert</td><td>GStreamer 色彩空间转换 element — NV12 (YUV 4:2:0) → BGR (OpenCV 原生格式)</td></tr>
+      <tr><td>appsink</td><td>GStreamer AppSink element — drop=1 (满队列丢帧) / sync=false (不等时钟) — 将 GstBuffer 传到 Python 层</td></tr>
+    </table>
+    <div class="code-snippet"><span class="kw">import</span> cv2
+
+<span class="cmt"># 成功：显式 GStreamer pipeline</span>
+pipeline = (
+    <span class="str">'v4l2src device=/dev/video0 '</span>
+    <span class="str">'! video/x-raw,format=NV12,width=1280,height=720 '</span>
+    <span class="str">'! videoconvert '</span>
+    <span class="str">'! video/x-raw,format=BGR '</span>
+    <span class="str">'! appsink drop=1 sync=false'</span>
+)
+cap = cv2.VideoCapture(pipeline, cv2.CAP_GSTREAMER)
+ret, frame = cap.read()
+<span class="cmt"># frame.shape = (720, 1280, 3)  ← BGR uint8</span>
+
+<span class="cmt"># 失败：OpenCV 直接打开</span>
+<span class="cmt"># cap = cv2.VideoCapture(0)       ← 报错: can't open camera</span>
+<span class="cmt"># cap = cv2.VideoCapture(0, cv2.CAP_V4L2)  ← 同样失败</span></div>
+  </div>
+
+  <!-- OpenCV → RKNN / NPU -->
+  <div class="detail-card">
+    <h3><span class="dot dot-rknn"></span>段 C：OpenCV → RKNN → NPU</h3>
+    <div class="callout callout-phase">
+      阶段5只记一句：Python 代码只是调度者，真正干 AI 推理的是 RKNN Runtime 下面的 NPU。
+    </div>
+    <div class="callout callout-note">
+      核心问题：AI 推理到底在哪个硬件上怎么跑的？模型文件是什么格式？
+    </div>
+    <table class="kv-table">
+      <tr><td>NPU 硬件</td><td>RK3568 内置 NPU，1.0 TOPS，通过内核驱动 v0.8.2 暴露</td></tr>
+      <tr><td>NPU 驱动</td><td>CONFIG_ROCKCHIP_NPU — /dev/rknpu (或类似设备节点)</td></tr>
+      <tr><td>RKNN Runtime</td><td>librknnrt.so v1.5.0 — 用户态运行时库，封装 NPU ioctl 调用</td></tr>
+      <tr><td>rknn_server</td><td>/usr/bin/rknn_server — 板端守护进程，管理 NPU 资源分配</td></tr>
+      <tr><td>rknn-toolkit-lite2</td><td>Python wheel 1.5.0 — RKNNLite 类封装 load_rknn / init_runtime / inference / release</td></tr>
+      <tr><td>模型文件</td><td>yolov5s_relu_tk2_RK356X_i8.rknn — 预编译 INT8 量化 RKNN 模型 (针对 RK356X)</td></tr>
+      <tr><td>输出张量</td><td>3 个分支: (1,255,80,80) stride=8 / (1,255,40,40) stride=16 / (1,255,20,20) stride=32</td></tr>
+    </table>
+    <div class="code-snippet"><span class="kw">from</span> rknnlite.api <span class="kw">import</span> RKNNLite
+
+<span class="cmt"># 1. 创建 RKNN 对象</span>
+rknn = RKNNLite()
+
+<span class="cmt"># 2. 加载预编译 RKNN 模型</span>
+rknn.<span class="fn">load_rknn</span>(<span class="str">'yolov5s_relu_tk2_RK356X_i8.rknn'</span>)
+
+<span class="cmt"># 3. 初始化 NPU 运行时</span>
+rknn.<span class="fn">init_runtime</span>()
+
+<span class="cmt"># 4. 前处理: BGR→RGB, letterbox→640×640, normalize</span>
+input_data = preprocess(frame)  <span class="cmt"># → (1, 3, 640, 640) float32</span>
+
+<span class="cmt"># 5. NPU 推理</span>
+outputs = rknn.<span class="fn">inference</span>(inputs=[input_data])
+<span class="cmt"># outputs[0].shape = (1, 255, 80, 80)</span>
+<span class="cmt"># outputs[1].shape = (1, 255, 40, 40)</span>
+<span class="cmt"># outputs[2].shape = (1, 255, 20, 20)</span>
+
+<span class="cmt"># 6. 后处理: 解码框 + NMS</span>
+boxes = postprocess(outputs)
+
+<span class="cmt"># 7. 释放</span>
+rknn.<span class="fn">release</span>()</div>
+  </div>
+
+  <!-- Post-processing + Display + Streaming -->
+  <div class="detail-card">
+    <h3><span class="dot dot-disp"></span>段 D：后处理 → 显示 + 推流</h3>
+    <div class="callout callout-phase">
+      阶段7和阶段8只记一句：画框、旋转、MIPI 显示、FFmpeg 编码、HLS 推流，都是推理之后的输出链路，不属于 NPU 本体。
+    </div>
+    <div class="callout callout-good">
+      核心问题：检测结果怎么同时显示在板端屏幕和推给 Windows？
+    </div>
+    <table class="kv-table">
+      <tr><td>后处理</td><td>解码 3 个 RKNN 输出 → Sigmoid → 置信度过滤 → NMS → 坐标映射回原图 → cv2.rectangle 画框 → cv2.putText 标签</td></tr>
+      <tr><td>MIPI 显示</td><td>cv2.imshow() → OpenCV HighGUI → DRM/KMS (/dev/dri/card0) → dw-mipi-dsi → LCD，~4 FPS</td></tr>
+      <tr><td>方向独立控制</td><td>ROTATE=none (模型输入) / DISPLAY_ROTATE=ccw (MIPI 屏) / STREAM_ROTATE=ccw (HLS 推流)，三者独立</td></tr>
+      <tr><td>FFmpeg 推流</td><td>Python cv2.imencode('.jpg') → pipe → FFmpeg stdin → libx264 编码 → FLV 封装 → RTMP → nginx</td></tr>
+      <tr><td>Nginx 配置</td><td>rtmp { listen 1935; application live { hls on; hls_path /tmp/hls; } } — 切片生成 .m3u8 + .ts</td></tr>
+      <tr><td>Windows 拉流</td><td>ffplay http://192.168.0.230/hls/yolo.m3u8 — ~5 FPS</td></tr>
+      <tr><td>为什么不用纯 GStreamer RTMP</td><td>板端 GStreamer 有 rtmpsink 但缺少 flvmux 插件</td></tr>
+    </table>
+    <div class="code-snippet"><span class="cmt"># 板端：一键启动完整演示 (MIPI + HLS)</span>
+<span class="kw">cd</span> /userdata/aidemo/06_yolov5_python
+SHOW_MIPI=1 FRAMES=0 ./start_yolov5_hls_demo.sh
+
+<span class="cmt"># Windows：拉流</span>
+ffplay http://192.168.0.230/hls/yolo.m3u8
+
+<span class="cmt"># 方向独立控制示例</span>
+ROTATE=none DISPLAY_ROTATE=ccw STREAM_ROTATE=ccw \
+  ./start_yolov5_hls_demo.sh</div>
+  </div>
+</div>
+
+<!-- ====== 4. KERNEL CONFIG OPTIONS ====== -->
+<div class="section-title">4. 涉及的内核配置 <small>Buildroot Linux 4.19.232 — 推断的关键 config 选项</small></div>
+<div class="kconfig-grid">
+  <div class="kconfig-item">
+    <div class="k-name">CONFIG_VIDEO_V4L2</div>
+    <div class="k-desc">V4L2 核心框架</div>
+  </div>
+  <div class="kconfig-item">
+    <div class="k-name">CONFIG_MEDIA_CONTROLLER</div>
+    <div class="k-desc">Media Controller 拓扑</div>
+  </div>
+  <div class="kconfig-item">
+    <div class="k-name">CONFIG_VIDEOBUF2_DMA_CONTIG</div>
+    <div class="k-desc">DMA 连续缓冲区</div>
+  </div>
+  <div class="kconfig-item">
+    <div class="k-name">CONFIG_VIDEO_IMX415</div>
+    <div class="k-desc">IMX415 传感器驱动</div>
+  </div>
+  <div class="kconfig-item">
+    <div class="k-name">CONFIG_VIDEO_ROCKCHIP_CSI</div>
+    <div class="k-desc">Rockchip MIPI CSI 主机驱动</div>
+  </div>
+  <div class="kconfig-item">
+    <div class="k-name">CONFIG_VIDEO_ROCKCHIP_ISP</div>
+    <div class="k-desc">Rockchip ISP 驱动（含 rkisp_mainpath/selfpath）</div>
+  </div>
+  <div class="kconfig-item">
+    <div class="k-name">CONFIG_ROCKCHIP_NPU</div>
+    <div class="k-desc">NPU 加速器驱动 v0.8.2</div>
+  </div>
+  <div class="kconfig-item">
+    <div class="k-name">CONFIG_DRM_ROCKCHIP</div>
+    <div class="k-desc">Rockchip DRM/KMS 显示驱动</div>
+  </div>
+  <div class="kconfig-item">
+    <div class="k-name">CONFIG_ROCKCHIP_RGA</div>
+    <div class="k-desc">RGA 硬件加速 (旋转/缩放/格式转换)</div>
+  </div>
+  <div class="kconfig-item">
+    <div class="k-name">CONFIG_VIDEO_CODEC</div>
+    <div class="k-desc">硬件视频编解码</div>
+  </div>
+  <div class="kconfig-item">
+    <div class="k-name">CONFIG_FB_ROCKCHIP</div>
+    <div class="k-desc">Framebuffer 驱动 (fb0)</div>
+  </div>
+  <div class="kconfig-item">
+    <div class="k-name">CONFIG_ROCKCHIP_MPP_SERVICE</div>
+    <div class="k-desc">多媒体处理平台服务</div>
+  </div>
+</div>
+
+<!-- ====== 5. BOARD-SIDE FILE MAP ====== -->
+<div class="section-title">5. 板端关键路径速查</div>
+<div class="detail-grid">
+  <div class="detail-card">
+    <h3>设备节点</h3>
+    <table class="kv-table">
+      <tr><td>/dev/video0</td><td>rkisp_mainpath — 主采集通道 (NV12 1280×720)</td></tr>
+      <tr><td>/dev/video1</td><td>rkisp_selfpath — 第二路输出</td></tr>
+      <tr><td>/dev/video2~6</td><td>rkisp raw/stat/params 子节点</td></tr>
+      <tr><td>/dev/video7</td><td>rkisp-statistics — 3A 统计</td></tr>
+      <tr><td>/dev/video8</td><td>rkisp-input-params — 3A 参数</td></tr>
+      <tr><td>/dev/media0</td><td>Media Controller 拓扑入口</td></tr>
+      <tr><td>/dev/dri/card0</td><td>DRM/KMS 主显示</td></tr>
+      <tr><td>/dev/fb0</td><td>Framebuffer (旧 API)</td></tr>
+    </table>
+  </div>
+  <div class="detail-card">
+    <h3>AI 推理文件</h3>
+    <table class="kv-table">
+      <tr><td>/usr/lib/librknnrt.so</td><td>RKNN Runtime 库 v1.5.0</td></tr>
+      <tr><td>/usr/bin/rknn_server</td><td>NPU 守护进程 v1.5.0</td></tr>
+      <tr><td>/usr/bin/start_rknn.sh</td><td>启动 rknn_server</td></tr>
+      <tr><td>/userdata/aidemo/01_lenet/</td><td>最小 NPU 验证 (LeNet)</td></tr>
+      <tr><td>/userdata/aidemo/06_yolov5_python/</td><td>YOLOv5 + MIPI + HLS 完整演示</td></tr>
+      <tr><td>/userdata/aidemo/11_facedet_scrfd_npu/</td><td>SCRFD 人脸检测</td></tr>
+      <tr><td>/userdata/ai_stage/</td><td>RKNN 临时文件 / 升级暂存</td></tr>
+      <tr><td>*.rknn</td><td>yolov5s_relu_tk2_RK356X_i8.rknn (INT8)</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ====== 6. PERFORMANCE BASELINE ====== -->
+<div class="section-title">6. 当前性能基线</div>
+<div class="kconfig-grid">
+  <div class="kconfig-item">
+    <div class="k-name">YOLOv5s 本地显示</div>
+    <div class="k-desc">3.8 ~ 4.1 FPS (MIPI DSI 实时)</div>
+  </div>
+  <div class="kconfig-item">
+    <div class="k-name">YOLOv5s + HLS 推流</div>
+    <div class="k-desc">4.9 ~ 5.1 FPS (含 FFmpeg 编码)</div>
+  </div>
+  <div class="kconfig-item">
+    <div class="k-name">SCRFD 人脸检测</div>
+    <div class="k-desc">6.6 FPS (模型更小)</div>
+  </div>
+  <div class="kconfig-item">
+    <div class="k-name">推理分辨率</div>
+    <div class="k-desc">Camera 1280×720 → 模型 640×640</div>
+  </div>
+  <div class="kconfig-item">
+    <div class="k-name">主要瓶颈</div>
+    <div class="k-desc">CPU 后处理 (解码+NMS)，非 NPU</div>
+  </div>
+</div>
+
+</div>
+
+<div class="footer">
+  RK3568 AI Camera Project · Phase 0 全链路框架图 · 2026-06-01
+</div>
+
+</body>
+</html>

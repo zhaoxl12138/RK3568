@@ -41,8 +41,8 @@ Windows 拉流地址：http://192.168.0.230/hls/yolo.m3u8
 
 ## 关联笔记
 
-- [[AI Camera项目讲解稿]]
-- [[Python MVP演示手册]]
+- [[02-AI Camera项目讲解稿]]
+- [[03-Python MVP演示手册]]
 - [[01-一个月带问题复盘计划]]
 
 #项目讲解 #面试表达 #AICamera

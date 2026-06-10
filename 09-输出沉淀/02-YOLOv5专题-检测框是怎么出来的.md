@@ -54,7 +54,7 @@ RKNN 输出的是多个尺度的候选框特征，后处理阶段再做 bbox dec
 ## 关联笔记
 
 - [[YOLOv5 Python最小推理记录]]
-- [[RKNN专题-RKNN运行机制]]
-- [[01-从零到Python MVP学习路线]]
+- [[03-RKNN专题-RKNN运行机制]]
+- [[02-从零到Python MVP学习路线]]
 
 #YOLOv5 #前处理 #后处理 #NMS #RKNN

@@ -43,6 +43,6 @@ NPU driver：0.8.2
 
 - [[官方AI例程运行记录]]
 - [[YOLOv5 Python最小推理记录]]
-- [[00-概念索引]]
+- [[01-概念索引]]
 
 #RKNN #NPU #RKNNLite #librknnrt

@@ -27,7 +27,7 @@ WSL2 是 Windows 里的 Linux 运行机制，Ubuntu 20.04 是装在这个机制�
 
 ## 我当前的 WSL 环境
 
-当前环境见 [[WSL2开发环境现状]]。
+当前环境见 [[03-WSL2开发环境现状]]。
 
 重点信息：
 
@@ -152,9 +152,9 @@ wsl --shutdown
 
 ## 相关笔记
 
-- [[WSL2开发环境现状]]
-- [[Ubuntu与SDK编译注意事项]]
-- [[RK3568 YOLOv8n AI Camera项目]]
+- [[03-WSL2开发环境现状]]
+- [[01-Ubuntu与SDK编译注意事项]]
+- [[01-RK3568 YOLOv8n AI Camera项目]]
 
 #WSL2 #VSCode #Ubuntu #开发环境
 

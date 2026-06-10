@@ -315,9 +315,9 @@ YOLOv5 Python MVP 已完成 Camera -> RKNN -> MIPI -> RTMP/HLS -> Windows 拉流
 
 ## 关联
 
-- [[00-AI视觉系统主线]]
+- [[01-AI视觉系统主线]]
 - [[OpenCV读取Camera记录]]
 - [[官方AI例程运行记录]]
-- [[下一步任务看板]]
+- [[01-下一步任务看板]]
 
 #主线 #Camera #OpenCV #RKNN #AI视觉

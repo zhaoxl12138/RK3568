@@ -60,7 +60,7 @@ OpenCV Mat
 ## 关联笔记
 
 - [[OpenCV读取Camera记录]]
-- [[00-概念索引]]
-- [[01-从零到Python MVP学习路线]]
+- [[01-概念索引]]
+- [[02-从零到Python MVP学习路线]]
 
 #GStreamer #OpenCV #V4L2 #NV12 #BGR

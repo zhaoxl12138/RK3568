@@ -60,7 +60,7 @@ RKISP 完成 ISP 处理后，通过 V4L2 框架把主采集路径暴露成 /dev/
 ## 关联笔记
 
 - [[V4L2命令行抓帧记录]]
-- [[00-概念索引]]
-- [[01-从零到Python MVP学习路线]]
+- [[01-概念索引]]
+- [[02-从零到Python MVP学习路线]]
 
 #V4L2 #Camera #RKISP #devvideo0

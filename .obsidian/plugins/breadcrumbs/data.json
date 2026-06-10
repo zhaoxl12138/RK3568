@@ -165,7 +165,8 @@
         "folder": "",
         "next_field": "next",
         "up_field": "up"
-      }
+      },
+      "week_start": "monday"
     },
     "traverse_note": {
       "default_field": "up"
