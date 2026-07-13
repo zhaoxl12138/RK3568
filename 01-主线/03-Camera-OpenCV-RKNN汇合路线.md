@@ -26,6 +26,8 @@ YOLOv5 RKNN Python MVP 已经跑通。
 本文件主要用于解释 Camera、OpenCV、RKNN 三条链路如何汇合，不再作为当前下一步任务清单。
 ```
 
+跨模块汇合的完成条件，统一参考 [[AI Camera分阶段验收标准|07-专项笔记 / 系统 / 分阶段验收标准]] 的阶段 6。
+
 把已经跑通的 Camera、OpenCV、RKNN 链路合成后续 AI Camera 项目路线。
 
 不是继续单独验证 Camera，也不是单独跑 AI demo，而是开始建立真实项目闭环：
