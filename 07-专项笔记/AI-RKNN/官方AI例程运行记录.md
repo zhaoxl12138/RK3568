@@ -1,10 +1,10 @@
 # 官方AI例程运行记录
 
-## 当前目标
+## 历史决策：当时目标
 
 先跑通官方最小 AI 例程，不直接上 YOLO。
 
-当前状态：最小 `01_lenet` 已跑通。
+本页实测状态：最小 `01_lenet` 已跑通。
 
 这个例程的价值：
 
@@ -147,7 +147,7 @@ rknpu2:        1.5.0
 如果只安装 1.5.0 的 rknn_toolkit_lite2，但板端运行库仍是 1.3.0，可能出现版本不兼容。
 ```
 
-下一步策略：
+历史决策：当时的下一步策略：
 
 - 优先从资料包提取 `rknn_toolkit_lite2-1.5.0-cp38-cp38-linux_aarch64.whl`。
 - 同步准备 `rknpu2-1.5.0` 中 RK356X Linux aarch64 的 `librknnrt.so` 和 `rknn_server`。

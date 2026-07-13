@@ -104,15 +104,15 @@ WSL 本地 py_compile 语法检查通过。
 原因：
 
 ```text
-当前 Codex 不能直接通过 SSH 登录板端，OpenSSH 返回 Permission denied。
+本页实测时 Codex 不能直接通过 SSH 登录板端，OpenSSH 返回 Permission denied。
 MobaXterm 里可以登录，但 Codex 不能直接接管 MobaXterm 会话。
 ```
 
-当前状态：
+历史决策：当时的任务判断：
 
 ```text
-这组待办不是当前主线任务。
-当前主线是复盘已经跑通的 YOLOv5 Python MVP，并把 Camera、OpenCV、RKNN、MIPI、HLS 链路讲清楚。
+这组待办不是当时的主线任务。
+当时主线是复盘已经跑通的 YOLOv5 Python MVP，并把 Camera、OpenCV、RKNN、MIPI、HLS 链路讲清楚。
 ```
 
 ## 板端复测命令

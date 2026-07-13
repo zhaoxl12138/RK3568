@@ -199,14 +199,14 @@ Camera -> YOLOv5 RKNN -> RTMP/HLS -> Windows拉流
 
 这已经是 AI Camera 项目的第一版网络输出闭环。
 
-## 当前问题
+## 本页实测状态：已知问题
 
 - RTMP 直接用 Windows FFmpeg/ffprobe 拉流暂未成功，但 HLS 拉流已成功。
 - 当前链路使用 FFmpeg `libx264` 软件编码，后续可尝试硬件编码。
 - 当前 HLS 延迟天然比 RTSP/RTMP 直拉高，不是最终低延迟方案。
 - RKNN runtime warning 仍然会刷屏，不影响功能。
 
-## 下一步
+## 历史决策：当时的下一步
 
 已完成：
 
@@ -261,7 +261,7 @@ rtmp_url rtmp://127.0.0.1/live/yolo_demo
 saved True /tmp/yolov5_rtmp_last.jpg
 ```
 
-下一步：
+历史决策：当时的下一步：
 
 ```text
 整理 README 和演示说明

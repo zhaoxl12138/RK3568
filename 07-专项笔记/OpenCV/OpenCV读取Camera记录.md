@@ -61,7 +61,7 @@ cv2 version 4.5.5
 结论：
 
 ```text
-板端 Python OpenCV 可用，当前阶段不需要先搭交叉编译环境。
+板端 Python OpenCV 可用，当时阶段不需要先搭交叉编译环境。
 ```
 
 ## 第一次尝试：默认 OpenCV 打开失败
@@ -242,10 +242,10 @@ WSL 项目实验脚本：
 
 - 不要直接相信 `cv2.VideoCapture(0)` 一定能打开板端 Camera。
 - RK3568 的 Camera 是 RKISP/mplane 链路，OpenCV 默认打开方式可能失败。
-- 当前稳定方案是显式写 GStreamer pipeline。
+- 本页实测稳定方案是显式写 GStreamer pipeline。
 - OpenCV 读到的 `frame.shape = (720, 1280, 3)`，说明已经从 NV12 转成 BGR 三通道图像。
 
-下一步：
+历史决策：当时的下一步：
 
 ```text
 把这个 Python 验证脚本固化成项目实验代码。

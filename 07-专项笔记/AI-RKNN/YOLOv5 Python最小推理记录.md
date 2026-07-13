@@ -241,15 +241,15 @@ Obsidian：05-实验与证据/实验产物/assets/yolov5_bus_result.jpg
 
 已经跑通。
 
-现在还没有接 Camera，不代表项目完成；它只说明 YOLOv5 RKNN 推理和后处理链路单独成立。
+在该验证点还没有接 Camera，不代表项目完成；它只说明 YOLOv5 RKNN 推理和后处理链路单独成立。
 
-下一步要做的是：
+历史决策：当时的下一步是：
 
 ```text
 Camera -> 单帧 -> YOLOv5 RKNN -> JPG
 ```
 
-再下一步才是：
+历史决策：当时再后一步是：
 
 ```text
 Camera -> YOLOv5 RKNN -> MIPI屏实时显示
@@ -311,7 +311,7 @@ Obsidian：05-实验与证据/实验产物/assets/yolov5_camera_result.jpg
 OpenCV 打印的 Cannot query video position 是实时流无法查询进度的普通警告，不影响采集和检测。
 ```
 
-当前结论：
+本页实测结论：
 
 ```text
 Camera -> 单帧 -> YOLOv5 RKNN -> 检测框 -> JPG
@@ -319,7 +319,7 @@ Camera -> 单帧 -> YOLOv5 RKNN -> 检测框 -> JPG
 
 已经跑通。
 
-下一步：
+历史决策：当时的下一步：
 
 ```text
 Camera -> YOLOv5 RKNN -> cv2.imshow -> MIPI屏实时显示
