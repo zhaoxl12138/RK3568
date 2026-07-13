@@ -4,30 +4,29 @@
 
 ```text
 文件名保留 YOLOv8n，是因为这是最终目标项目。
-当前实际完成版本是 YOLOv5 RKNN Python MVP。
-本文件同时记录最终目标和当前版本，不代表当前已经完成 YOLOv8n。
+项目版本基线是 YOLOv5 RKNN Python MVP。
+本文件同时记录最终目标和稳定版本，不代表已经完成 YOLOv8n。
 ```
 
-本文件只描述最终要做成的项目，不承担学习路线功能。
+本文件负责项目基线、实现结构、验证结果、已知限制和升级方向，不承担学习路线或全局任务管理。
 
-学习路线见 [[01-AI视觉系统主线]]。
-
-当前任务见 [[01-下一步任务看板]]。
-
-从零复盘路线见 [[02-从零到Python MVP学习路线]]。
+- 项目入口：[[00-项目可视化入口]]
+- 学习路线：[[01-AI视觉系统主线]]、[[02-从零到Python MVP学习路线]]
+- 实时进展与唯一任务：[[01-下一步任务看板]]
+- 验证证据：[[01-实验产物索引|05-实验与证据 / 实验产物索引]]
 
 ## 版本基线
 
-| 项目 | 当前状态 |
+| 项目 | 项目版本基线 |
 |---|---|
 | Camera 输入 | 已验证：IMX415 -> RKISP/V4L2 -> GStreamer |
 | AI 推理 | 已验证：YOLOv5 RKNN Python MVP |
 | 本地显示 | 已验证：MIPI 屏实时显示 |
 | 网络输出 | 已验证：RTMP -> Nginx -> HLS -> Windows 播放 |
-| YOLOv8n | 最终目标，当前未完成 |
-| C++ 工程化 | 骨架已建立，暂不作为当前复盘主线 |
+| YOLOv8n | 最终目标，未完成 |
+| C++ 工程化 | 骨架已建立，不属于稳定版本 |
 
-项目验证证据集中在 [[01-实验产物索引|05-实验与证据 / 实验产物索引]]；当前任务集中在 [[01-下一步任务看板]]。
+项目验证证据集中在 [[01-实验产物索引|05-实验与证据 / 实验产物索引]]；实时进展只在 [[01-下一步任务看板]] 维护。
 
 ## 项目目标
 
@@ -65,7 +64,7 @@ Camera -> V4L2/GStreamer -> OpenCV -> YOLOv8n -> NCNN/RKNN -> RTSP/RTMP -> Linux
 - `config`: 配置文件
 - `app`: 主程序入口
 
-## 当前路线决策
+## 历史决策：实现路线
 
 ```text
 现在用 Python 冲完整闭环，后面用 C++ 做项目升级。
@@ -85,14 +84,14 @@ C++ 骨架已经建立，但暂时不继续作为主线推进。
 YOLOv8 后置，因为官方 YOLOv8 例程在 Linux5.10 资料中，当前板端系统是 4.19。
 ```
 
-当前学习策略：
+当时的学习策略：
 
 ```text
 功能已经跑通 Python MVP。
-下一步先按 [[02-从零到Python MVP学习路线]] 从头复盘原理，再继续升级 YOLOv8n 或 C++。
+先按 [[02-从零到Python MVP学习路线]] 从头复盘原理，再考虑升级 YOLOv8n 或 C++。
 ```
 
-## 当前工程骨架
+## 本页实测状态：C++ 工程骨架
 
 代码仓库：
 
@@ -106,7 +105,7 @@ YOLOv8 后置，因为官方 YOLOv8 例程在 Linux5.10 资料中，当前板端
 CameraSource -> Detector -> DisplaySink -> StreamSink
 ```
 
-当前文件：
+实测涉及文件：
 
 ```text
 CMakeLists.txt
@@ -115,7 +114,7 @@ src/
 docs/C++17-CMake项目骨架设计.md
 ```
 
-当前状态：
+本页实测状态：
 
 ```text
 骨架已创建，WSL 主机编译和运行已通过。
@@ -135,7 +134,7 @@ cmake --build build
 processed_frames 1
 ```
 
-OpenCV C++ 接入状态：
+本页实测状态：OpenCV C++ 接入
 
 ```text
 WSL 已安装 libopencv-dev。
@@ -164,17 +163,17 @@ processed_frames 1
 - [[SCRFD源码拆解与复用点]]
 
 #项目 #YOLOv8n #RKNN #Camera #RTSP
-# 2026-05-31 项目当前版本
+## 项目版本基线（2026-05-31）
 
-当前项目名先按实际成果描述为：
+该版本按实际成果描述为：
 
 ```text
 RK3568 YOLOv5 RKNN AI Camera Python MVP
 ```
 
-说明：最终目标仍可升级到 YOLOv8n，但当前在 Buildroot 4.19 出厂系统上，已跑通的是官方 YOLOv5 RKNN 模型。
+说明：最终目标仍可升级到 YOLOv8n，但该基线在 Buildroot 4.19 出厂系统上跑通的是官方 YOLOv5 RKNN 模型。
 
-当前已完成能力：
+该版本已验证能力：
 
 - IMX415 MIPI Camera 实时采集。
 - GStreamer pipeline 输入 OpenCV。
@@ -186,20 +185,20 @@ RK3568 YOLOv5 RKNN AI Camera Python MVP
 - Windows `ffplay` 拉流显示。
 - 一键启动脚本和 WSL 部署脚本。
 
-当前板端启动：
+该版本板端启动：
 
 ```bash
 cd /userdata/aidemo/06_yolov5_python
 SHOW_MIPI=1 FRAMES=0 ./start_yolov5_hls_demo.sh
 ```
 
-当前 Windows 拉流：
+该版本 Windows 拉流：
 
 ```powershell
 ffplay http://192.168.0.230/hls/yolo.m3u8
 ```
 
-当前默认方向：
+该版本默认方向：
 
 ```text
 ROTATE=none
@@ -207,13 +206,19 @@ DISPLAY_ROTATE=ccw
 STREAM_ROTATE=ccw
 ```
 
-当前项目定位：
+该版本项目定位：
 
 ```text
 这已经不是单个 AI demo，而是一个 AI Camera 系统最小闭环。
 ```
 
-下一步：
+## 已知限制
+
+- 稳定版本仍是 Buildroot 4.19 上的 YOLOv5 RKNN Python MVP，未完成 YOLOv8n 或 Linux 5.10 迁移。
+- C++17/CMake 只验证了工程骨架和 OpenCV 图片输入，未完成 C++ RKNN AI Camera 闭环。
+- 演示性能以 [[03-Python MVP演示手册]] 的实测数据为准，不代表最终性能。
+
+## 升级方向
 
 - 固化 README 和演示步骤。
 - 整理代码结构。

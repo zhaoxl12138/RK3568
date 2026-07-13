@@ -1,8 +1,9 @@
 # Python MVP演示手册
 
-这份文档用于复现已经跑通的 Python AI Camera 闭环。
+这份文档负责复现与验证已经跑通的 YOLOv5 Python AI Camera 闭环，不负责维护全局任务或宣称 YOLOv8n、C++、Linux 5.10 已完成。
 
-如果目的是从零学习原理，先看 [[02-从零到Python MVP学习路线]]。
+- 从哪里进入：先确认 [[01-RK3568 YOLOv8n AI Camera项目|项目版本基线]]；学习原理看 [[02-从零到Python MVP学习路线]]。
+- 完成后去哪里：把复现证据归入 [[01-实验产物索引|05-实验与证据 / 实验产物索引]]；实时进展回到 [[01-下一步任务看板|06-任务 / 下一步任务看板]]。
 
 ## 演示链路
 
@@ -107,7 +108,7 @@ ffplay http://192.168.0.230/hls/yolo_test.m3u8
 ffmpeg -y -i http://192.168.0.230/hls/yolo.m3u8 -t 2 -c copy E:\RK3568\yolo_pull_test.mp4
 ```
 
-## 当前默认方向
+## 项目版本基线：默认方向
 
 ```text
 ROTATE=none
@@ -136,7 +137,7 @@ DISPLAY 是 Linux 图形环境变量，容易和 OpenCV/Qt 冲突。
 
 ## 分辨率和比例
 
-MIPI 屏当前按竖屏处理：
+本页实测状态：MIPI 屏按竖屏处理：
 
 ```bash
 SHOW_MIPI=1 DISPLAY_WIDTH=720 DISPLAY_HEIGHT=1280 ./start_yolov5_hls_demo.sh
@@ -148,7 +149,7 @@ SHOW_MIPI=1 DISPLAY_WIDTH=720 DISPLAY_HEIGHT=1280 ./start_yolov5_hls_demo.sh
 STREAM_WIDTH=640 STREAM_HEIGHT=360 STREAM_FPS=5 ./start_yolov5_hls_demo.sh
 ```
 
-当前推流端已经使用等比例缩放补边，避免 Windows 画面被强制拉伸。
+本页实测状态：推流端已使用等比例缩放补边，避免 Windows 画面被强制拉伸。
 
 ## 常见问题
 
@@ -227,11 +228,11 @@ YOLOv5 + RTMP/HLS 输出：约 4.9 - 5.0 FPS
 
 这说明链路已通，但不是最终性能。
 
-## 当前结论
+## 本页实测结论
 
 Python MVP 已经完成第一轮完整闭环。
 
-下一步：
+升级方向：
 
 ```text
 按 [[02-从零到Python MVP学习路线]] 把每个阶段原理补齐。
