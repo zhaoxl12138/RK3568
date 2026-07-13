@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RK3568 Linux Camera 配置全流程</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg:#080c14;
+    --surface:rgba(255,255,255,0.02);
+    --surface-strong:rgba(255,255,255,0.04);
+    --border:rgba(255,255,255,0.06);
+    --text:#c8ccd4;
+    --dim:#78909c;
+    --bright:#e8eaed;
+    --blue:#42a5f5;
+    --purple:#7c4dff;
+    --green:#66bb6a;
+    --red:#ef5350;
+    --orange:#ffa726;
+    --cyan:#26c6da;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family:'Inter','Noto Sans SC',sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    line-height:1.7;
+  }
+
+  .hero {
+    padding:56px 24px 28px;
+    background:linear-gradient(180deg, rgba(18,28,54,0.92) 0%, rgba(8,12,20,1) 100%);
+    border-bottom:1px solid var(--border);
+    text-align:center;
+  }
+
+  .hero h1 {
+    font-size:2.05em;
+    color:var(--bright);
+    font-weight:700;
+    letter-spacing:-0.02em;
+  }
+
+  .hero h1 span {
+    background:linear-gradient(135deg,var(--blue),var(--purple));
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    background-clip:text;
+  }
+
+  .hero .sub {
+    margin-top:10px;
+    font-size:1.02em;
+    color:#95a5b4;
+  }
+
+  .hero .helper {
+    max-width:980px;
+    margin:18px auto 0;
+    padding:14px 18px;
+    border-radius:14px;
+    background:rgba(66,165,245,0.08);
+    border:1px solid rgba(66,165,245,0.16);
+    color:#bbcad8;
+    font-size:0.92em;
+    text-align:left;
+  }
+
+  .top-links,
+  .bottom-links {
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-top:16px;
+    justify-content:center;
+  }
+
+  .top-links a,
+  .bottom-links a {
+    color:#cfe1ff;
+    text-decoration:none;
+    padding:8px 12px;
+    border-radius:999px;
+    border:1px solid rgba(124,77,255,0.24);
+    background:rgba(124,77,255,0.08);
+    font-size:0.84em;
+    transition:all 0.2s;
+  }
+
+  .top-links a:hover,
+  .bottom-links a:hover {
+    background:rgba(124,77,255,0.16);
+    border-color:rgba(124,77,255,0.4);
+  }
+
+  .nav-tip {
+    margin-top:12px;
+    color:#7f90a0;
+    font-size:0.82em;
+  }
+
+  .container {
+    max-width:1300px;
+    margin:0 auto;
+    padding:30px 24px 60px;
+  }
+
+  .section-title {
+    font-size:1.24em;
+    font-weight:700;
+    color:var(--bright);
+    margin-bottom:14px;
+    padding-left:14px;
+    border-left:3px solid var(--purple);
+  }
+
+  .overview {
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(240px,1fr));
+    gap:14px;
+    margin-bottom:28px;
+  }
+
+  .overview-card {
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:18px;
+  }
+
+  .overview-card .k {
+    font-size:0.72em;
+    color:var(--purple);
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    margin-bottom:8px;
+    font-weight:700;
+  }
+
+  .overview-card .v {
+    color:#d7e0e8;
+    font-size:0.95em;
+  }
+
+  .step-rail {
+    display:flex;
+    gap:12px;
+    overflow-x:auto;
+    padding:6px 2px 12px;
+    margin-bottom:18px;
+  }
+
+  .step-btn {
+    min-width:180px;
+    padding:14px 14px 12px;
+    border-radius:16px;
+    border:1px solid var(--border);
+    background:var(--surface);
+    color:var(--text);
+    cursor:pointer;
+    text-align:left;
+    transition:all 0.22s;
+    flex-shrink:0;
+  }
+
+  .step-btn:hover {
+    transform:translateY(-2px);
+    border-color:rgba(255,255,255,0.16);
+    background:rgba(255,255,255,0.04);
+  }
+
+  .step-btn.active {
+    background:linear-gradient(180deg, rgba(124,77,255,0.16) 0%, rgba(124,77,255,0.08) 100%);
+    border-color:rgba(124,77,255,0.42);
+    box-shadow:0 8px 28px rgba(124,77,255,0.18);
+  }
+
+  .step-btn .idx {
+    display:inline-block;
+    padding:4px 10px;
+    border-radius:999px;
+    background:rgba(255,255,255,0.08);
+    color:#d9d2ff;
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.72em;
+    margin-bottom:10px;
+  }
+
+  .step-btn .label {
+    font-size:0.92em;
+    color:var(--bright);
+    font-weight:700;
+    line-height:1.45;
+  }
+
+  .detail {
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:20px;
+    padding:26px;
+  }
+
+  .detail-step {
+    font-size:0.8em;
+    color:var(--purple);
+    font-weight:700;
+    letter-spacing:0.06em;
+    margin-bottom:8px;
+  }
+
+  .detail-title {
+    font-size:1.56em;
+    color:var(--bright);
+    font-weight:700;
+    margin-bottom:14px;
+  }
+
+  .detail-grid {
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0,1fr));
+    gap:16px;
+    margin-top:18px;
+  }
+
+  .detail-card {
+    background:rgba(0,0,0,0.18);
+    border:1px solid rgba(255,255,255,0.05);
+    border-radius:14px;
+    padding:16px 18px;
+    min-width:0;
+  }
+
+  .detail-card.wide {
+    grid-column:1 / -1;
+  }
+
+  .detail-card .k {
+    font-size:0.73em;
+    color:var(--dim);
+    margin-bottom:8px;
+    letter-spacing:0.04em;
+  }
+
+  .detail-card .v {
+    font-size:0.94em;
+    color:#e0e7ee;
+    line-height:1.82;
+    word-break:break-word;
+    overflow-wrap:anywhere;
+  }
+
+  .list {
+    padding-left:18px;
+  }
+
+  .list li + li {
+    margin-top:6px;
+  }
+
+  .code {
+    margin-top:18px;
+    background:rgba(0,0,0,0.35);
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:14px;
+    padding:16px 18px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.8em;
+    color:#b8e2a7;
+    white-space:pre-wrap;
+    word-break:break-word;
+    overflow-wrap:anywhere;
+  }
+
+  .summary {
+    margin-top:28px;
+    background:linear-gradient(180deg, rgba(66,165,245,0.08) 0%, rgba(124,77,255,0.08) 100%);
+    border:1px solid rgba(124,77,255,0.2);
+    border-radius:18px;
+    padding:22px;
+  }
+
+  .summary-title {
+    color:var(--bright);
+    font-weight:700;
+    margin-bottom:10px;
+    font-size:1.05em;
+  }
+
+  .footer {
+    margin-top:26px;
+    padding-top:20px;
+    border-top:1px solid var(--border);
+    color:var(--dim);
+    text-align:center;
+    font-size:0.88em;
+  }
+
+  @media (max-width:980px) {
+    .detail-grid {
+      grid-template-columns:1fr;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="hero">
+  <h1>RK3568 <span>Linux Camera 配置全流程</span></h1>
+  <div class="sub">从 Camera 手册、原理图、设备树、Sensor 驱动到 /dev/video0 和 OpenCV</div>
+  <div class="helper">
+    这一页只回答一件事：从 Camera 手册开始，Linux 是怎么一步步把 Sensor 接进系统，最后变成用户态可访问的 <code>/dev/video0</code>，再进入 GStreamer 和 OpenCV。
+  </div>
+  <div class="top-links">
+    <a href="./10-Phase0-可视化总入口.html">可视化总入口</a>
+    <a href="./12-Phase0-数据流动画.html">上一页：数据流动画</a>
+    <a href="./14-Phase0-驱动层全链路框架图.html">下一页：驱动层全链路框架图</a>
+    <a href="./12-Phase0-数据流动画.html">Phase0 数据流动画</a>
+    <a href="./14-Phase0-驱动层全链路框架图.html">Phase0 驱动层全链路框架图</a>
+    <a href="./15-Phase0-RK3568全系统框架图.html">Phase0 RK3568 全系统框架图</a>
+  </div>
+  <div class="nav-tip">建议顺序：静态总图 → 数据流动画 → 当前页 → 驱动层全链路框架图</div>
+</div>
+
+<div class="container">
+  <div class="section-title">主线概览</div>
+  <div class="overview">
+    <div class="overview-card">
+      <div class="k">你现在该怎么用这一页</div>
+      <div class="v">按步骤从上往下点。先建立“手册 -> 硬件 -> DTS -> 驱动 -> /dev/video0 -> OpenCV”的连续认知，再回头补每一层细节。</div>
+    </div>
+    <div class="overview-card">
+      <div class="k">你最终要理解</div>
+      <div class="v">为什么一个 Camera 最后会变成 Linux 里的 <code>/dev/video0</code>，以及为什么 OpenCV 拿到的已经不是 Sensor 原始数据。</div>
+    </div>
+    <div class="overview-card">
+      <div class="k">这一页刻意不展开</div>
+      <div class="v">寄存器细节、复杂驱动 API、不同 SDK 差异。这一页先保主链路，不把新手淹没在细节里。</div>
+    </div>
+  </div>
+
+  <div class="section-title">配置步骤</div>
+  <div class="step-rail" id="stepRail"></div>
+
+  <div class="detail" id="detailPanel"></div>
+
+  <div class="summary">
+    <div class="summary-title">页尾总结</div>
+    <div>
+      一句话收尾：
+      <br>先从手册和原理图确认 Sensor 能力与板级连接，再用 DTS 把硬件关系告诉 Linux，用 Sensor 驱动和 mode 表把图像流配起来，
+      之后通过 V4L2 subdev、Media Controller、CSI、RKISP 形成完整 Camera pipeline，最终在用户态得到 <code>/dev/video0</code>，
+      再继续进入 GStreamer、OpenCV、RKNN、显示和推流。
+    </div>
+  </div>
+
+  <div class="bottom-links">
+    <a href="./10-Phase0-可视化总入口.html">返回可视化总入口</a>
+    <a href="./12-Phase0-数据流动画.html">返回上一页：数据流动画</a>
+    <a href="./14-Phase0-驱动层全链路框架图.html">继续下一页：驱动层全链路框架图</a>
+    <a href="./12-Phase0-数据流动画.html">返回数据流动画页</a>
+    <a href="./14-Phase0-驱动层全链路框架图.html">返回驱动层框架图页</a>
+    <a href="./15-Phase0-RK3568全系统框架图.html">查看 RK3568 全系统框架图</a>
+  </div>
+
+  <div class="footer">本页用于学习复盘，具体 GPIO、clock、endpoint、驱动路径等必须以当前 RK3568 SDK、开发板 DTS 和实际脚本为准。</div>
+</div>
+
+<script>
+const steps = [
+  {
+    title: '1. Camera 手册：先确认 Sensor 能输出什么',
+    plain: '拿到手册后，不是先把所有寄存器都看完，而是先提取会影响 bringup 的硬件能力和接口信息。',
+    todo: '确认 Sensor 型号、输出类型、控制接口、数据接口、供电、时钟、GPIO、lane 数、I2C 地址、支持分辨率和 Bayer Pattern。',
+    input: 'Sensor datasheet / module 文档',
+    output: '一份 Camera bringup 必要参数清单',
+    refs: [
+      'Camera 手册 / 模组手册',
+      '需要提取：RAW8/10/12、MIPI CSI-2、I2C 地址、MCLK、reset/pwdn、lane 数、Bayer pattern'
+    ],
+    expected: '你能把会影响 DTS 和驱动配置的字段单独整理出来。',
+    mistakes: 'I2C 能读到 Sensor ID，不代表 MIPI 已经正常出图。',
+    pass: '能说清手册里哪些参数最终会落到 DTS、mode 表和驱动里。',
+    notes: '核心认知：I2C 是控制通道，MIPI CSI 是图像数据通道。',
+    code: null
+  },
+  {
+    title: '2. 原理图：确认 Sensor 接到 RK3568 哪里',
+    plain: '手册告诉你 Sensor 需要什么，原理图告诉你开发板实际上怎么接。',
+    todo: '确认 I2C bus、I2C 地址、reset-gpio、pwdn-gpio、MCLK、MIPI CSI 接口、lane 数和供电 rail。',
+    input: '开发板原理图 / 核心板资料',
+    output: '一张整理好的 Camera bringup 连接表',
+    refs: [
+      '开发板原理图',
+      '核心板引脚复用表',
+      '电源和时钟连接关系'
+    ],
+    expected: '你能写出类似 i2c4 / 0x1a / 24MHz / 4-lane / CSI2 DPHY0 这类映射结果。',
+    mistakes: '只看手册，不看实际板级连接；知道 Sensor 型号却不知道接在哪个 I2C 和哪路 MIPI。',
+    pass: '能把手册参数和板级连接整成一张 Camera bringup 表。',
+    notes: 'lane 数和 lane 顺序最终会直接影响设备树和链路是否能通。',
+    code: `示例整理结果
+IMX415
+I2C bus: i2c4
+I2C address: 0x1a
+MCLK: 24MHz
+reset-gpio: GPIOx_x
+pwdn-gpio: GPIOx_x
+MIPI: CSI2 DPHY0
+lane: 4-lane
+输出格式: RAW10`
+  },
+  {
+    title: '3. 设备树 DTS：告诉 Linux 板子上接了什么 Camera',
+    plain: 'DTS 不是驱动代码，它的职责是把硬件连接关系告诉内核。',
+    todo: '配置 compatible、reg、clocks、reset/pwdn gpio、供电、port/endpoint、remote-endpoint、data-lanes。',
+    input: '原理图整理结果 + 板级 DTS 结构',
+    output: '一个能正确描述 Camera 连接关系的 DTS 节点',
+    refs: [
+      '板级 DTS',
+      'Camera 节点',
+      'endpoint / remote-endpoint / data-lanes'
+    ],
+    expected: '内核知道这个 Sensor 挂在哪个 I2C 上、用什么 clock/gpio/supply，并且如何连到 CSI/ISP。',
+    mistakes: '把 DTS 当驱动；endpoint 没连对，Media Controller 拓扑就不完整。',
+    pass: '能解释 DTS 在 Camera bringup 里解决的是硬件描述问题。',
+    notes: 'GPIO、clock、endpoint 名称都必须以当前 RK3568 SDK 和开发板 DTS 为准。',
+    code: `&i2c4 {
+    status = "okay";
+
+    imx415: imx415@1a {
+        compatible = "sony,imx415";
+        reg = <0x1a>;
+        clocks = <&cru CLK_CIF_OUT>;
+        clock-names = "xvclk";
+        reset-gpios = <&gpioX RK_PX GPIO_ACTIVE_LOW>;
+        pwdn-gpios = <&gpioX RK_PX GPIO_ACTIVE_HIGH>;
+        avdd-supply = <&vcc_camera_avdd>;
+
+        port {
+            imx415_out: endpoint {
+                remote-endpoint = <&mipi_in_ucam0>;
+                data-lanes = <1 2 3 4>;
+            };
+        };
+    };
+};`
+  },
+  {
+    title: '4. Sensor 驱动：让 Sensor 按指定模式出流',
+    plain: 'Sensor 驱动主要负责通过 I2C 控制 Sensor 本身，不负责整条图像处理链。',
+    todo: '完成上电、复位、读 chip id、初始化寄存器、配置分辨率/帧率/曝光/增益，并注册为 V4L2 subdev。',
+    input: 'Sensor 手册 + DTS + 模组初始化表',
+    output: '一个能让 Sensor 正常 probe 并按指定模式出流的驱动',
+    refs: [
+      'drivers/media/i2c/...（典型路径，需以当前 SDK 为准）',
+      'probe / power on / chip id / reg list'
+    ],
+    expected: 'dmesg 里能看到 Sensor probe 成功，且没有明显 I2C/clock/gpio 错误。',
+    mistakes: '以为 Sensor 驱动负责去马赛克、降噪、转 NV12、显示、YOLO。',
+    pass: '能说清 Sensor 驱动和 ISP 驱动的职责边界。',
+    notes: 'Sensor Driver = 控制 Sensor 按指定模式出流。',
+    code: null
+  },
+  {
+    title: '5. Mode 表：定义 Sensor 支持哪些分辨率和格式',
+    plain: 'mode 表决定 Sensor 以什么分辨率、帧率、RAW 格式和链路参数出流。',
+    todo: '准备 mode 结构和对应寄存器表，保证分辨率、lane rate、pixel rate、RAW 格式和 Bayer pattern 匹配。',
+    input: 'Sensor 手册 / 厂商初始化表 / BSP 参考',
+    output: '可选的 Sensor mode 列表和寄存器表',
+    refs: [
+      'mode 结构体',
+      '寄存器初始化表',
+      'RAW10 / RAW12 / Bayer pattern'
+    ],
+    expected: '驱动能根据当前 mode 输出正确的数据格式和时序。',
+    mistakes: '只改 DTS 不改 mode 表；RAW10/RAW12 配错；Bayer pattern 配错导致偏色。',
+    pass: '能解释 mode 表解决的是“Sensor 以什么格式出流”的问题。',
+    notes: '现实项目里常常是拿官方或模组厂的初始化表适配，而不是从零手算全部寄存器。',
+    code: `struct imx415_mode {
+    u32 width;
+    u32 height;
+    u32 hts_def;
+    u32 vts_def;
+    u32 exp_def;
+    u32 max_fps;
+    u32 bus_fmt;
+    const struct regval *reg_list;
+};`
+  },
+  {
+    title: '6. V4L2 Subdev：Sensor 不是 /dev/video0',
+    plain: '在 Linux Camera 架构里，Sensor 通常先被注册成 V4L2 subdev，也就是多设备链路中的一个子设备。',
+    todo: '把 Sensor 注册进 V4L2 / Media Controller 框架，让它成为完整 Camera pipeline 的一部分。',
+    input: '已能工作的 Sensor 驱动',
+    output: '一个注册成功的 V4L2 subdev',
+    refs: [
+      'v4l2_i2c_subdev_init',
+      'media_entity_pads_init',
+      'v4l2_async_register_subdev'
+    ],
+    expected: 'Sensor 出现在 media graph 里，而不是直接生成 /dev/video0。',
+    mistakes: '以为 Sensor 驱动会直接创建 /dev/video0。',
+    pass: '能解释为什么 Sensor 是 subdev，而不是最终 video node。',
+    notes: '最终的 /dev/video0 通常来自 ISP mainpath 或 video capture 节点，不是 Sensor 本体。',
+    code: `v4l2_i2c_subdev_init(&sensor->subdev, client, &imx415_subdev_ops);
+media_entity_pads_init(&sensor->subdev.entity, ...);
+v4l2_async_register_subdev(&sensor->subdev);`
+  },
+  {
+    title: '7. Media Controller：把 Sensor、CSI、ISP、Video Node 连成一张图',
+    plain: '一颗 Camera 在 Linux 里不是一个孤立设备，而是一整条 pipeline。Media Controller 负责描述这张图。',
+    todo: '检查 entity、pad、link 是否完整，确认拓扑确实从 Sensor 连到了 rkisp_mainpath / /dev/video0。',
+    input: '已注册的 Sensor / CSI / ISP / video node',
+    output: '一张完整的 media graph',
+    refs: [
+      'media-ctl -p -d /dev/media0',
+      'entity / pad / link / enabled'
+    ],
+    expected: '你能在 /dev/media0 的输出里看到 imx415 -> csi -> rkisp -> mainpath 这类方向。',
+    mistakes: '把 /dev/media0 当图像节点；不看拓扑就直接调 /dev/video0。',
+    pass: '能看懂 media-ctl 输出的大致链路方向。',
+    notes: '核心认知：/dev/media0 看结构，/dev/video0 取图像。',
+    code: `media-ctl -p -d /dev/media0`
+  },
+  {
+    title: '8. RKISP：把 RAW 处理成用户态可取的视频帧',
+    plain: 'Sensor 输出 RAW Bayer，OpenCV 不能直接用。RKISP 负责把 RAW 处理成 NV12 / YUV 这类视频帧。',
+    todo: '确认 RKISP 节点、输出通道和格式能力，理解 mainpath / selfpath / statistics 等节点角色。',
+    input: '来自 Sensor/CSI 的 RAW 数据流',
+    output: 'NV12 / YUV 等能被用户态消费的 video frame',
+    refs: [
+      'v4l2-ctl --list-devices',
+      'v4l2-ctl -d /dev/video0 --all',
+      'v4l2-ctl -d /dev/video0 --list-formats-ext'
+    ],
+    expected: '能看到 rkisp_mainpath 对应 /dev/video0，默认格式和支持范围也能枚举出来。',
+    mistakes: '以为 /dev/video0 就是 IMX415 本身。',
+    pass: '能说清 Sensor Driver、RKISP Driver 和 /dev/video0 三者的关系。',
+    notes: '常见输出节点包括 rkisp_mainpath、rkisp_selfpath、statistics、input-params。',
+    code: `v4l2-ctl --list-devices
+v4l2-ctl -d /dev/video0 --all
+v4l2-ctl -d /dev/video0 --list-formats-ext`
+  },
+  {
+    title: '9. V4L2：用户态从 /dev/video0 抓一帧',
+    plain: '这一关是验证用户态真的能把图像从 /dev/video0 拿出来。',
+    todo: '用 v4l2-ctl 检查格式能力、设置分辨率/像素格式、抓一帧到 yuv 文件，再验证文件大小。',
+    input: '/dev/video0',
+    output: '一帧可验证的 YUV/NV12 原始图像文件',
+    refs: [
+      'v4l2-ctl --all',
+      'v4l2-ctl --list-formats-ext',
+      'v4l2-ctl --stream-mmap',
+      'stat -c%s /tmp/frame.yuv'
+    ],
+    expected: '如果是 1280x720 NV12，大小约等于 1280 × 720 × 1.5 = 1,382,400 bytes。',
+    mistakes: '抓到 yuv 不能双击直接看；RAW、NV12、BGR 不是同一个格式。',
+    pass: '能用 v4l2-ctl 从 /dev/video0 抓出一帧，并解释文件大小。',
+    notes: 'V4L2 取帧流程：open -> QUERYCAP -> S_FMT -> REQBUFS -> QBUF -> STREAMON -> DQBUF -> QBUF -> STREAMOFF。',
+    code: `v4l2-ctl -d /dev/video0 --all
+
+v4l2-ctl -d /dev/video0 --list-formats-ext
+
+v4l2-ctl -d /dev/video0 \
+  --set-fmt-video=width=1280,height=720,pixelformat=NV12 \
+  --stream-mmap=3 \
+  --stream-count=1 \
+  --stream-to=/tmp/frame.yuv
+
+stat -c%s /tmp/frame.yuv`
+  },
+  {
+    title: '10. GStreamer：把 NV12 转成 OpenCV 可用的 BGR',
+    plain: 'GStreamer 是用户态多媒体管道，不是驱动。它负责把 /dev/video0 里的帧取出来并做格式转换。',
+    todo: '理解 v4l2src、caps、videoconvert、appsink 各自负责什么，并验证 pipeline 能工作。',
+    input: '/dev/video0 输出的 NV12 帧',
+    output: '可交给 OpenCV 的 BGR 帧',
+    refs: [
+      'gst-launch-1.0',
+      'v4l2src',
+      'videoconvert',
+      'appsink'
+    ],
+    expected: '你能逐段解释 pipeline：读帧、协商格式、转格式、交给应用。',
+    mistakes: 'GStreamer 不是 Camera 驱动；cv2.VideoCapture(0) 失败不一定是 Camera 坏了。',
+    pass: '能解释 v4l2src、caps、videoconvert、appsink 的作用。',
+    notes: '显式 GStreamer pipeline 往往更适合 RKISP 这类 V4L2 节点。',
+    code: `gst-launch-1.0 v4l2src device=/dev/video0 \
+  ! video/x-raw,format=NV12,width=1280,height=720 \
+  ! videoconvert \
+  ! video/x-raw,format=BGR \
+  ! fakesink`
+  },
+  {
+    title: '11. OpenCV：应用层拿到 BGR Mat',
+    plain: 'OpenCV 并不直接控制 Sensor。它拿到的是 GStreamer 转换好的 BGR 图像帧。',
+    todo: '通过 cv2.VideoCapture(pipeline, cv2.CAP_GSTREAMER) 读取一帧，检查 shape 和 dtype。',
+    input: 'GStreamer appsink 输出的 BGR 帧',
+    output: 'OpenCV BGR Mat',
+    refs: [
+      'Python + cv2',
+      'cv2.CAP_GSTREAMER',
+      'frame.shape / dtype'
+    ],
+    expected: '常见现象是 frame.shape = (720, 1280, 3)，dtype = uint8。',
+    mistakes: '以为 OpenCV 拿到的是 MIPI 原始数据或 RAW Bayer。',
+    pass: '能解释 OpenCV、GStreamer、V4L2 三者关系。',
+    notes: '到这一步，程序站在应用层，面对的是图像矩阵，不是硬件总线。',
+    code: `import cv2
+
+cap = cv2.VideoCapture(pipeline, cv2.CAP_GSTREAMER)
+ret, frame = cap.read()
+
+print(frame.shape)
+print(frame.dtype)`
+  },
+  {
+    title: '12. RKNN：把 OpenCV 图像送到 NPU 做 AI 推理',
+    plain: 'OpenCV 负责拿图和处理图像，RKNN 负责调用 Rockchip NPU，YOLO 是目标检测模型。',
+    todo: '理解 OpenCV -> 前处理 -> model input tensor -> RKNNLite -> RKNN Runtime -> NPU -> output tensors 这条链路。',
+    input: 'OpenCV BGR frame',
+    output: 'YOLO 输出张量',
+    refs: [
+      'RKNNLite',
+      'RKNN Runtime',
+      'NPU Driver',
+      'YOLO output tensors'
+    ],
+    expected: '你能把 OpenCV、RKNN、NPU、YOLO 四者关系讲清楚。',
+    mistakes: '以为 Python 在 CPU 上自己把 YOLO 算完；把模型跑通等同于 Camera 链路跑通。',
+    pass: '能清楚说明模型链路和 Camera 链路是两条相关但不相同的验证链。',
+    notes: '具体 dtype / layout 以当前 RKNN 模型和脚本为准。',
+    code: `OpenCV BGR frame
+-> 前处理
+-> model input tensor
+-> RKNNLite
+-> RKNN Runtime
+-> NPU Driver
+-> RK3568 NPU
+-> YOLO output tensors`
+  },
+  {
+    title: '13. 输出：MIPI 屏显示和 HLS 网络拉流',
+    plain: '推理结果不是终点。检测结果要画回原图，再输出给人看。',
+    todo: '理解本地显示链路和网络推流链路分别是什么，以及 CSI / DSI / RTMP / HLS 之间的区别。',
+    input: '已经画框后的图像帧',
+    output: '本地屏显示结果和网络视频流',
+    refs: [
+      'OpenCV frame -> DRM/KMS -> VOP2 -> MIPI DSI LCD',
+      'OpenCV frame -> FFmpeg -> RTMP -> Nginx -> HLS -> Windows ffplay'
+    ],
+    expected: '你能区分 MIPI CSI 和 MIPI DSI，也能区分 RTMP 和 HLS。',
+    mistakes: '把 CSI 和 DSI 混为一谈；把 HLS 当成 Camera 原始数据。',
+    pass: '能说明显示链路和推流链路分别是什么。',
+    notes: 'RTMP 是推流入口，HLS 是播放出口；HLS 是编码切片后的网络视频流。',
+    code: `板端：
+SHOW_MIPI=1 FRAMES=0 ./start_yolov5_hls_demo.sh
+
+Windows：
+ffplay http://192.168.0.230/hls/yolo.m3u8`
+  }
+];
+
+const stepRail = document.getElementById('stepRail');
+const detailPanel = document.getElementById('detailPanel');
+let currentStep = 0;
+
+steps.forEach((step, idx) => {
+  const button = document.createElement('button');
+  button.className = 'step-btn';
+  button.dataset.idx = idx;
+  button.innerHTML = `
+    <div class="idx">STEP ${String(idx + 1).padStart(2, '0')}</div>
+    <div class="label">${step.title}</div>
+  `;
+  button.addEventListener('click', () => {
+    currentStep = idx;
+    render();
+  });
+  stepRail.appendChild(button);
+});
+
+function renderList(items) {
+  return `<ul class="list">${items.map(item => `<li>${item}</li>`).join('')}</ul>`;
+}
+
+function render() {
+  document.querySelectorAll('.step-btn').forEach(btn => {
+    btn.classList.toggle('active', Number(btn.dataset.idx) === currentStep);
+  });
+
+  const step = steps[currentStep];
+  detailPanel.innerHTML = `
+    <div class="detail-step">STEP ${currentStep + 1} / ${steps.length}</div>
+    <div class="detail-title">${step.title}</div>
+    <div class="detail-grid">
+      <div class="detail-card wide">
+        <div class="k">人话解释</div>
+        <div class="v">${step.plain}</div>
+      </div>
+      <div class="detail-card">
+        <div class="k">本步骤要做什么</div>
+        <div class="v">${step.todo}</div>
+      </div>
+      <div class="detail-card">
+        <div class="k">输入是什么</div>
+        <div class="v">${step.input}</div>
+      </div>
+      <div class="detail-card">
+        <div class="k">输出是什么</div>
+        <div class="v">${step.output}</div>
+      </div>
+      <div class="detail-card">
+        <div class="k">正常现象</div>
+        <div class="v">${step.expected}</div>
+      </div>
+      <div class="detail-card">
+        <div class="k">常见误区</div>
+        <div class="v">${step.mistakes}</div>
+      </div>
+      <div class="detail-card">
+        <div class="k">过关标准</div>
+        <div class="v">${step.pass}</div>
+      </div>
+      <div class="detail-card wide">
+        <div class="k">需要看什么文件 / 手册 / 命令</div>
+        <div class="v">${renderList(step.refs)}</div>
+      </div>
+      <div class="detail-card wide">
+        <div class="k">补充提醒</div>
+        <div class="v">${step.notes}</div>
+      </div>
+    </div>
+    ${step.code ? `<div class="code">${step.code}</div>` : ''}
+  `;
+}
+
+render();
+</script>
+</body>
+</html>

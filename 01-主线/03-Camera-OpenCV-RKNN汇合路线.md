@@ -1,6 +1,23 @@
 # Camera-OpenCV-RKNN汇合路线
 
-## 当前目标
+本文件不是“今天先做什么”的主线。
+
+它只回答一个问题：
+
+```text
+为什么 Camera、OpenCV、RKNN 这三条链路最后能汇到同一个 AI Camera 项目里？
+```
+
+只在两个场景下打开：
+
+- 你走到阶段6，想专门理解为什么 Camera、OpenCV、RKNN 能汇合。
+- 你后面复盘项目时，想回头看当时的历史决策和汇合路径。
+
+如果你现在只是想知道“今天先学什么”，回到：
+
+- [[02-从零到Python MVP学习路线|01-主线 / 从零到Python MVP学习路线]]
+
+## 当前定位
 
 当前状态：
 
@@ -17,7 +34,7 @@ YOLOv5 RKNN Python MVP 已经跑通。
 Camera -> OpenCV Mat -> 前处理 -> RKNN 推理 -> 后处理 -> 显示/推流
 ```
 
-## 已经跑通的链路
+## 三条已跑通的链路
 
 ### 链路一：Camera 到 OpenCV
 
@@ -108,7 +125,7 @@ E:\RK3568\face_stage\result\scrfd_result_rotated.jpg
 - 需要保持官方源码里的旋转逻辑，否则画面横置，人脸检测可能失败。
 - 当前已经验证 Camera 实时帧可以进入 RKNN 检测模型。
 
-## 汇合后的真实项目结构
+## 汇合后会变成什么
 
 后续项目里的每一帧大致会走这个流程：
 
@@ -134,9 +151,9 @@ camera_capture
 -> streamer
 ```
 
-## 当前缺口
+## 当时为什么还要单独拆开看
 
-### 1. Camera 输入缺口
+### 1. Camera 输入这一层
 
 官方很多 AI 例程直接写：
 
@@ -159,7 +176,7 @@ pipeline = (
 cap = cv2.VideoCapture(pipeline, cv2.CAP_GSTREAMER)
 ```
 
-### 2. 模型前处理缺口
+### 2. 模型前处理这一层
 
 不同模型输入尺寸不同：
 
@@ -174,7 +191,7 @@ cap = cv2.VideoCapture(pipeline, cv2.CAP_GSTREAMER)
 原始 Camera 帧 -> 模型要求的输入尺寸和格式
 ```
 
-### 3. 后处理缺口
+### 3. 后处理这一层
 
 RKNN 输出通常不是直接能看的图像。
 
@@ -185,7 +202,7 @@ RKNN 输出通常不是直接能看的图像。
 - 分割：mask resize、颜色叠加。
 - 关键点：坐标还原、画点。
 
-### 4. 工程化缺口
+### 4. 工程化这一层
 
 目前仍是 Python demo 阶段。
 
@@ -299,7 +316,7 @@ Camera 实时帧 -> RKNN 模型 -> 后处理 -> 画框输出
 先整理实验代码和记录，再进入下一个技术点。
 ```
 
-当前状态：
+现在回头看：
 
 ```text
 YOLOv5 Python MVP 已完成 Camera -> RKNN -> MIPI -> RTMP/HLS -> Windows 拉流。

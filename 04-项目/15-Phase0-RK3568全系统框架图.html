@@ -36,6 +36,22 @@
   .hero .sub { font-size:1em; color:var(--text-dim); margin-top:8px; }
   .hero .src { margin-top:12px; font-size:0.78em; color:var(--text-dim); }
   .hero .src a { color:var(--blue); text-decoration:none; }
+  .hero .nav {
+    margin-top:18px;
+    display:flex;
+    justify-content:center;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .hero .nav a {
+    text-decoration:none;
+    color:#d7e4ff;
+    background:rgba(124,77,255,0.08);
+    border:1px solid rgba(124,77,255,0.2);
+    padding:8px 12px;
+    border-radius:999px;
+    font-size:0.84em;
+  }
 
   .container { max-width:1480px; margin:0 auto; padding:32px 24px; }
 
@@ -178,6 +194,12 @@
     <a href="https://www.rock-chips.com/" target="_blank">RK3568 TRM Part1/Part2 V1.1</a> ·
     <a href="https://gitlab.freedesktop.org/linux-media/media-committers" target="_blank">Linux Media Committers</a> ·
     <a href="https://github.com/torvalds/linux/tree/master/drivers/gpu/drm/rockchip" target="_blank">Linux DRM/Rockchip</a>
+  </div>
+  <div class="nav">
+    <a href="./10-Phase0-可视化总入口.html">可视化总入口</a>
+    <a href="./14-Phase0-驱动层全链路框架图.html">上一页：驱动层全链路框架图</a>
+    <a href="./12-Phase0-数据流动画.html">返回数据流动画</a>
+    <a href="./13-Phase0-Camera配置全流程.html">返回 Camera 配置全流程</a>
   </div>
 </div>
 
@@ -655,6 +677,7 @@ ffplay http://192.168.0.230/hls/yolo.m3u8</div>
 </div>
 
 <div class="footer">
+  返回可视化总入口：10-Phase0-可视化总入口.html<br>
   RK3568 AI Camera Project · Phase 0 芯片级全系统框架图 · 基于 Rockchip 官方 Datasheet/TRM + Linux Mainline Kernel<br>
   Data sources: Rockchip RK3568 Datasheet V1.1 · TRM Part1/Part2 V1.1 · Linux Media Committers (rkisp1 + rkcif) · Linux DRM/Rockchip · 正点原子原理图 &amp; 硬件参考手册
 </div>

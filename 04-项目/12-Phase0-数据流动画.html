@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RK3568 AI Camera - Phase0 数据流动画演示</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg:#080c14;
+    --surface:rgba(255,255,255,0.02);
+    --surface-strong:rgba(255,255,255,0.04);
+    --border:rgba(255,255,255,0.06);
+    --text:#c8ccd4;
+    --dim:#78909c;
+    --bright:#e8eaed;
+    --blue:#42a5f5;
+    --purple:#7c4dff;
+    --green:#66bb6a;
+    --red:#ef5350;
+    --orange:#ffa726;
+    --cyan:#26c6da;
+    --pink:#ab47bc;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family:'Inter','Noto Sans SC',sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    overflow-x:hidden;
+  }
+
+  .topbar {
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    z-index:100;
+    background:rgba(8,12,20,0.92);
+    backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--border);
+    padding:14px 24px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+  }
+
+  .topbar h1 {
+    font-size:1.1em;
+    font-weight:600;
+    color:var(--bright);
+  }
+
+  .topbar h1 span {
+    background:linear-gradient(135deg,var(--blue),var(--purple));
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    background-clip:text;
+  }
+
+  .controls {
+    display:flex;
+    gap:10px;
+    align-items:center;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+  }
+
+  .controls button {
+    padding:8px 18px;
+    border-radius:8px;
+    border:1px solid var(--border);
+    background:var(--surface);
+    color:var(--text);
+    cursor:pointer;
+    font-size:0.85em;
+    font-weight:500;
+    transition:all 0.2s;
+  }
+
+  .controls button:hover {
+    border-color:rgba(255,255,255,0.2);
+    background:rgba(255,255,255,0.05);
+  }
+
+  .controls button.active {
+    background:var(--purple);
+    border-color:var(--purple);
+    color:#fff;
+  }
+
+  .controls button:disabled {
+    opacity:0.45;
+    cursor:not-allowed;
+  }
+
+  .step-indicator {
+    font-size:0.85em;
+    color:var(--dim);
+    min-width:100px;
+    text-align:right;
+  }
+
+  .quick-nav {
+    display:flex;
+    gap:10px;
+    align-items:center;
+    flex-wrap:wrap;
+  }
+
+  .quick-nav a {
+    color:#d7e4ff;
+    text-decoration:none;
+    padding:8px 12px;
+    border-radius:8px;
+    border:1px solid var(--border);
+    background:var(--surface);
+    font-size:0.82em;
+    font-weight:500;
+  }
+
+  .main {
+    padding:100px 24px 60px;
+    max-width:1240px;
+    margin:0 auto;
+    position:relative;
+    z-index:1;
+  }
+
+  .helper-note {
+    margin:0 0 18px;
+    padding:14px 18px;
+    border-radius:12px;
+    border:1px solid var(--border);
+    background:rgba(66,165,245,0.08);
+    color:#b7c9d8;
+    line-height:1.8;
+    font-size:0.9em;
+  }
+
+  .pipeline-container {
+    position:relative;
+    margin:40px 0;
+  }
+
+  .pipeline {
+    display:flex;
+    align-items:center;
+    gap:0;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:8px;
+    position:relative;
+    overflow:hidden;
+  }
+
+  .node {
+    flex:1;
+    padding:24px 8px;
+    text-align:center;
+    position:relative;
+    border-radius:10px;
+    transition:all 0.6s cubic-bezier(0.4,0,0.2,1);
+    z-index:1;
+    min-width:0;
+    cursor:pointer;
+  }
+
+  .node:hover {
+    background:rgba(255,255,255,0.035);
+  }
+
+  .node .n-icon {
+    font-size:1.9em;
+    margin-bottom:6px;
+    transition:transform 0.6s;
+    display:block;
+  }
+
+  .node .n-label {
+    font-size:0.84em;
+    font-weight:600;
+    color:var(--bright);
+    transition:color 0.6s;
+    line-height:1.35;
+  }
+
+  .node .n-sub {
+    font-size:0.66em;
+    color:var(--dim);
+    font-family:'JetBrains Mono',monospace;
+    margin-top:4px;
+    transition:color 0.6s;
+    line-height:1.35;
+  }
+
+  .node.active {
+    transform:scale(1.08);
+    z-index:5;
+    box-shadow:0 0 40px rgba(124,77,255,0.3), 0 0 80px rgba(124,77,255,0.1);
+    background:rgba(124,77,255,0.12);
+  }
+
+  .node.active .n-icon {
+    transform:scale(1.15);
+  }
+
+  .node.done {
+    opacity:0.7;
+  }
+
+  .connector {
+    width:32px;
+    height:2px;
+    flex-shrink:0;
+    position:relative;
+    background:rgba(255,255,255,0.08);
+    transition:all 0.6s;
+  }
+
+  .connector.flow {
+    background:var(--purple);
+    box-shadow:0 0 8px rgba(124,77,255,0.5);
+  }
+
+  .connector::after {
+    content:'';
+    position:absolute;
+    right:-2px;
+    top:-3px;
+    width:8px;
+    height:8px;
+    border-radius:50%;
+    background:inherit;
+    opacity:0;
+    transition:opacity 0.3s;
+  }
+
+  .connector.flow::after {
+    opacity:1;
+  }
+
+  .connector.flow::before {
+    content:'';
+    position:absolute;
+    left:0;
+    top:-2px;
+    width:6px;
+    height:6px;
+    border-radius:50%;
+    background:#fff;
+    animation:flowDot 0.8s linear infinite;
+  }
+
+  @keyframes flowDot {
+    0% { left:0; opacity:1; }
+    100% { left:calc(100% - 6px); opacity:0.3; }
+  }
+
+  .data-badge {
+    position:absolute;
+    top:-48px;
+    left:50%;
+    transform:translateX(-50%);
+    padding:6px 16px;
+    border-radius:20px;
+    font-size:0.75em;
+    font-family:'JetBrains Mono',monospace;
+    white-space:nowrap;
+    background:rgba(0,0,0,0.7);
+    border:1px solid var(--purple);
+    color:var(--bright);
+    z-index:10;
+    opacity:0;
+    transition:all 0.5s;
+    pointer-events:none;
+  }
+
+  .data-badge.show {
+    opacity:1;
+  }
+
+  .detail-panel {
+    margin-top:32px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:28px;
+    position:relative;
+    min-height:220px;
+  }
+
+  .detail-panel .dp-step {
+    font-size:0.78em;
+    color:var(--purple);
+    font-weight:600;
+    letter-spacing:0.06em;
+    margin-bottom:6px;
+  }
+
+  .detail-panel .dp-title {
+    font-size:1.42em;
+    font-weight:700;
+    color:var(--bright);
+    margin-bottom:16px;
+  }
+
+  .detail-panel .dp-body {
+    font-size:0.94em;
+    color:#b0bec5;
+    line-height:1.9;
+  }
+
+  .dp-beginner {
+    margin-top:18px;
+    padding:18px;
+    border-radius:12px;
+    border:1px solid rgba(124,77,255,0.18);
+    background:linear-gradient(180deg, rgba(124,77,255,0.08) 0%, rgba(124,77,255,0.03) 100%);
+  }
+
+  .dp-beginner-title {
+    font-size:0.9em;
+    font-weight:700;
+    color:#d7c7ff;
+    margin-bottom:12px;
+    letter-spacing:0.04em;
+  }
+
+  .dp-beginner-plain {
+    margin-bottom:14px;
+    padding:14px 16px;
+    border-radius:10px;
+    background:rgba(0,0,0,0.18);
+    border:1px solid rgba(255,255,255,0.04);
+  }
+
+  .dp-beginner-plain .dp-k {
+    font-size:0.72em;
+    color:#9fa8da;
+    margin-bottom:6px;
+    letter-spacing:0.04em;
+  }
+
+  .dp-beginner-plain .dp-v {
+    font-size:0.95em;
+    color:#f0ecff;
+    line-height:1.8;
+  }
+
+  .dp-beginner-grid,
+  .dp-grid {
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(240px,1fr));
+    gap:14px;
+    margin-top:14px;
+  }
+
+  .dp-item {
+    background:rgba(0,0,0,0.2);
+    border:1px solid rgba(255,255,255,0.05);
+    border-radius:10px;
+    padding:14px 16px;
+    min-width:0;
+  }
+
+  .dp-item .dp-k {
+    font-size:0.72em;
+    color:var(--dim);
+    margin-bottom:6px;
+    letter-spacing:0.04em;
+  }
+
+  .dp-item .dp-v {
+    font-size:0.9em;
+    color:var(--bright);
+    line-height:1.75;
+    word-break:break-word;
+    overflow-wrap:anywhere;
+  }
+
+  .dp-code {
+    background:rgba(0,0,0,0.35);
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:10px;
+    padding:14px 16px;
+    margin-top:16px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.78em;
+    color:#a5d6a7;
+    overflow-x:auto;
+    white-space:pre-wrap;
+    word-break:break-word;
+    overflow-wrap:anywhere;
+    line-height:1.65;
+  }
+
+  .progress-bar {
+    width:100%;
+    height:3px;
+    background:var(--border);
+    border-radius:2px;
+    margin-top:24px;
+    overflow:hidden;
+  }
+
+  .progress-fill {
+    height:100%;
+    background:linear-gradient(90deg,var(--blue),var(--purple),var(--red));
+    border-radius:2px;
+    transition:width 0.6s;
+  }
+
+  .page-footer {
+    margin:28px 0 0;
+    padding:18px 20px;
+    border-top:1px solid var(--border);
+    color:var(--dim);
+    font-size:0.88em;
+    text-align:center;
+  }
+
+  #particles {
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    pointer-events:none;
+    z-index:0;
+  }
+
+  @media (max-width:900px) {
+    .topbar {
+      align-items:flex-start;
+      flex-direction:column;
+    }
+
+    .pipeline {
+      flex-wrap:wrap;
+    }
+
+    .connector {
+      width:100%;
+      height:16px;
+    }
+
+    .connector::after {
+      display:none;
+    }
+
+    .node {
+      flex:auto;
+      min-width:25%;
+      padding:16px 4px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="particles"></canvas>
+
+<div class="topbar">
+  <h1>RK3568 <span>AI Camera</span> - Phase0 数据流动画演示</h1>
+  <div class="quick-nav">
+    <a href="./10-Phase0-可视化总入口.html">可视化总入口</a>
+    <a href="./13-Phase0-Camera配置全流程.html">下一页：Camera 配置全流程</a>
+    <a href="./14-Phase0-驱动层全链路框架图.html">深度版框架图</a>
+  </div>
+  <div class="controls">
+    <button id="btnAuto" class="active" onclick="toggleAuto()">⏵ 自动播放</button>
+    <button id="btnPrev" onclick="stepPrev()">⏮ 上一步</button>
+    <button id="btnNext" onclick="stepNext()">⏭ 下一步</button>
+    <button id="btnReset" onclick="stepReset()">↺ 重置</button>
+    <span class="step-indicator" id="stepLabel">0 / 12</span>
+  </div>
+</div>
+
+<div class="main">
+  <div class="helper-note">
+    本页是 Obsidian 笔记的可视化辅助页面，用于阶段0复盘；具体实验记录和技术细节以 Markdown 笔记为准。页面里出现的 <code>/userdata/...</code> 等路径为板端路径，仓库内文件和本机路径请以实际环境为准。<br>
+    本页按硬件层 -> 驱动层 -> Linux框架层 -> 用户态应用层 -> AI推理层 -> 输出层的顺序理解。
+  </div>
+
+  <div class="pipeline-container">
+    <div class="data-badge" id="dataBadge"></div>
+    <div class="pipeline" id="pipeline"></div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  </div>
+
+  <div class="detail-panel" id="detailPanel"></div>
+
+  <div class="page-footer">
+    返回可视化总入口：10-Phase0-可视化总入口.html<br>
+    返回 Obsidian 主入口：00-RK3568学习主入口.md
+  </div>
+</div>
+
+<script>
+const steps = [
+  {
+    nodeIdx: 0,
+    title: '从 Camera 硬件到应用层：先看总地图',
+    body: 'Camera 到应用层不是一步完成，而是分层完成。先把整条链路分成三段：硬件层负责把真实光学场景变成原始图像数据；Linux 驱动和媒体框架层负责把这条硬件链路组织起来，并向用户态暴露标准入口；用户态应用层负责取帧、转格式、做 AI 推理、显示和推流。',
+    badge: 'Hardware -> Driver -> App -> AI -> Output',
+    beginner: {
+      plain: '先把整条链路看成分层系统，不要一上来就把它理解成“跑 YOLO demo”。',
+      layer: '总览层',
+      role: '建立从硬件到应用的完整地图',
+      input: '真实场景、整板硬件、Linux 系统',
+      output: '你脑子里对整条链路的分层认知',
+      operation: '先记住硬件层、Linux 驱动/框架层、用户态应用层这三大层，再往下逐层展开',
+      expected: '你能说出 /dev/media0 看结构，/dev/video0 取图像，OpenCV 和 RKNN 都在用户态后半段',
+      common_mistakes: '把 MIPI、V4L2、OpenCV、RKNN 混成同一层；或者把 OpenCV 误认为在直接操作 Sensor',
+      pass: '能不用看图，顺着“硬件 -> 驱动 -> 用户态 -> AI -> 输出”讲完一遍'
+    },
+    details: [
+      { k:'硬件层', v:'IMX415 -> MIPI CSI -> RK3568 ISP' },
+      { k:'Linux 驱动/框架层', v:'Sensor Driver -> CSI Driver -> ISP Driver -> V4L2 -> Media Controller -> /dev/video0' },
+      { k:'用户态应用层', v:'v4l2-ctl -> GStreamer -> OpenCV -> RKNN -> FFmpeg -> HLS' },
+      { k:'关键入口 1', v:'/dev/media0：看拓扑结构' },
+      { k:'关键入口 2', v:'/dev/video0：取图像帧' },
+      { k:'关键认知', v:'OpenCV 不直接控制 Sensor，它处理的是用户态已经拿到的图像帧' }
+    ],
+    code: null
+  },
+  {
+    nodeIdx: 1,
+    title: 'IMX415 Sensor',
+    body: 'IMX415 是真正负责采集图像的硬件。它把光信号转换成 RAW Bayer 原始图像数据，再通过配置好的工作模式持续出流。Sensor Driver 的职责不是做图像算法，而是通过 I2C 写寄存器，把分辨率、帧率、曝光、增益、时钟、lane 配置到正确状态。',
+    badge: 'Sensor -> RAW Bayer',
+    beginner: {
+      plain: 'IMX415 是“拍图的人”，不是“处理图的人”。它只负责把真实画面变成原始图像数据。',
+      layer: '硬件层 + Sensor Driver',
+      role: '采集真实光学场景并按配置稳定出流',
+      input: '光线、镜头成像、I2C 配置、时钟和复位信号',
+      output: 'RAW Bayer 原始图像数据流',
+      operation: '先看原理图和设备树，再看 dmesg 里 probe、chip id、reset、clock、gpio 是否正常',
+      expected: '能看到 Sensor probe 成功，设备树参数对齐，日志里没有明显 I2C/clock/gpio 报错',
+      common_mistakes: 'I2C 能读到 chip id，不等于 MIPI 已经正常出图',
+      pass: '能说清 Sensor Driver 负责配置 Sensor 出流，不负责图像算法'
+    },
+    details: [
+      { k:'Sensor 型号', v:'IMX415 (Sony 4K CMOS)' },
+      { k:'驱动路径', v:'drivers/media/i2c/imx415.c（典型路径，需以当前 SDK 确认）' },
+      { k:'输出数据', v:'RAW Bayer' },
+      { k:'控制通道', v:'I2C' },
+      { k:'要确认的硬件点', v:'MIPI lane / I2C bus / reset gpio / pwdn gpio / mclk' },
+      { k:'常看日志', v:'dmesg | grep -i imx' }
+    ],
+    code: null
+  },
+  {
+    nodeIdx: 2,
+    title: 'MIPI CSI DPHY',
+    body: 'MIPI CSI 是 Sensor 到 SoC 的高速图像数据通道。它负责把 Sensor 持续送出的高速串行图像数据可靠送进芯片内部。I2C 是控制通道，MIPI CSI 是数据通道，这两者必须分开理解。',
+    badge: 'MIPI CSI -> Sensor Data Lane',
+    beginner: {
+      plain: 'MIPI CSI 是“高速图像公路”，不是 Linux 用户态接口。',
+      layer: '硬件层 / PHY 层',
+      role: '把 Sensor 的高速图像数据送进 SoC',
+      input: 'Sensor 输出的高速差分图像信号',
+      output: '送到 CSI/ISP 一侧的图像数据流',
+      operation: '重点查 lane 数、lane rate、时钟、日志里的 csi/mipi 报错',
+      expected: '没有明显 PHY/CSI 报错，后续 ISP/V4L2 节点能正常起来',
+      common_mistakes: '能 probe 成功就以为一定能出图',
+      pass: '能区分 I2C 控制通道和 MIPI 数据通道'
+    },
+    details: [
+      { k:'通道类型', v:'MIPI CSI-2 高速数据通道' },
+      { k:'典型驱动路径', v:'drivers/phy/rockchip/...（典型路径，需以当前 SDK 确认）' },
+      { k:'关键参数', v:'lane 数 / lane rate / 时钟 / 端口映射' },
+      { k:'检查方式', v:'看 dmesg 里的 csi / mipi 相关报错' },
+      { k:'常见问题', v:'lane 配置不匹配、时序不稳、Sensor 已 probe 但没有真正出图' },
+      { k:'关键区分', v:'I2C 通了，不等于 MIPI 通了' }
+    ],
+    code: null
+  },
+  {
+    nodeIdx: 3,
+    title: 'ISP 2.1 Pipeline',
+    body: 'ISP 是图像信号处理器。Sensor 输出的是 RAW Bayer，不能直接给 OpenCV 用；ISP 负责把 RAW 经过去马赛克、3A、降噪、色彩校正、缩放等处理，变成用户态更容易消费的 YUV/NV12 这类视频帧。',
+    badge: 'RAW Bayer -> ISP -> NV12',
+    beginner: {
+      plain: 'ISP 是“把原始图像修成可用视频帧”的那一层。',
+      layer: '硬件 IP + 内核驱动协同层',
+      role: '把 RAW Bayer 处理成更适合系统和应用继续使用的图像帧',
+      input: 'RAW Bayer 原始图像数据',
+      output: 'NV12 / YUV 等视频帧',
+      operation: '通过 v4l2-ctl 和 media-ctl 看 rkisp 节点和拓扑位置',
+      expected: '能看到 rkisp_mainpath 或类似 ISP 输出节点',
+      common_mistakes: '把 ISP 当成普通软件库；或者以为 RAW 可以直接拿给 OpenCV 用',
+      pass: '能说清为什么 RAW Bayer 通常要先经过 ISP 才能变成 NV12'
+    },
+    details: [
+      { k:'模块定位', v:'SoC 内部图像信号处理链路' },
+      { k:'典型驱动路径', v:'drivers/media/platform/rockchip/...（典型路径，需以当前 SDK 确认）' },
+      { k:'输入', v:'RAW Bayer' },
+      { k:'输出', v:'常见为 YUV / NV12' },
+      { k:'检查方式', v:'v4l2-ctl --list-devices / media-ctl -p' },
+      { k:'你要记住', v:'RAW 不是 OpenCV 直接喜欢的格式，通常要先过 ISP' }
+    ],
+    code: null
+  },
+  {
+    nodeIdx: 4,
+    title: 'V4L2 / Media Controller',
+    body: 'V4L2 是 Linux 用户态访问 Camera/Video 设备的标准接口；/dev/video0 是真正给用户态取帧的入口。/dev/media0 则负责描述 sensor -> csi -> isp -> video node 的拓扑关系。你可以把它理解成：一个看结构，一个拿数据。',
+    badge: '/dev/media0 + /dev/video0',
+    beginner: {
+      plain: 'V4L2 是 Linux 给用户态开的“取图接口”；Media Controller 是“看整条 Camera 拓扑结构的接口”。',
+      layer: 'Linux 框架层',
+      role: '把底层 Camera 链路组织起来，并向用户态暴露标准入口',
+      input: '来自 Sensor/CSI/ISP 的图像链路',
+      output: '/dev/media0 和 /dev/video0 这类用户态可见节点',
+      operation: '先列节点，再看拓扑，再确认哪个 video 节点真的是主采集口',
+      expected: '能看到 /dev/media0、/dev/video0、rkisp_mainpath 或类似节点',
+      common_mistakes: '/dev/media0 不能直接取图；/dev/video0 也不是 sensor 本体',
+      pass: '能说出 /dev/media0 看结构，/dev/video0 取图像'
+    },
+    details: [
+      { k:'取图像入口', v:'/dev/video0' },
+      { k:'看拓扑入口', v:'/dev/media0' },
+      { k:'常用命令', v:'ls /dev/video* / ls /dev/media* / v4l2-ctl --list-devices / media-ctl -p' },
+      { k:'常见节点', v:'rkisp_mainpath、rkisp_selfpath、statistics、input-params' },
+      { k:'关键认知', v:'/dev/video0 通常是 ISP 输出，不是 sensor 本体' },
+      { k:'取帧前提', v:'先看 media 拓扑，再看 video 节点能力' }
+    ],
+    code: 'ls /dev/video*\nls /dev/media*\nv4l2-ctl --list-devices\nmedia-ctl -p -d /dev/media0'
+  },
+  {
+    nodeIdx: 5,
+    title: 'V4L2 用户态取帧流程',
+    body: '如果你想真正理解“应用是怎么从 /dev/video0 拿到帧”的，就要把 ioctl 顺序记住：open -> QUERYCAP -> S_FMT -> REQBUFS -> QBUF -> STREAMON -> DQBUF -> 处理帧 -> 再次 QBUF -> STREAMOFF。v4l2-ctl 本质上就是把这些步骤替你跑了一遍。',
+    badge: 'open -> ioctl -> mmap -> frame.yuv',
+    beginner: {
+      plain: '这一关是“真正把图像帧从 Linux 节点里拿出来”。',
+      layer: 'Linux 框架层 / 用户态采集层',
+      role: '让用户态程序从 /dev/video0 取到真实图像帧',
+      input: '/dev/video0 暴露的采集节点',
+      output: 'YUV/NV12 原始帧文件或内存中的帧缓冲',
+      operation: '先看格式能力，再指定格式，再抓一帧，再验证大小和内容',
+      expected: '能拿到大小正确的 /tmp/frame.yuv，1280 × 720 NV12 约为 1,382,400 bytes',
+      common_mistakes: '抓到 yuv 不代表能双击直接看；RAW/NV12/BGR 不是一回事',
+      pass: '能独立抓到一帧，并解释单帧大小为什么是 width × height × 1.5'
+    },
+    details: [
+      { k:'ioctl 顺序', v:'QUERYCAP -> S_FMT -> REQBUFS -> QBUF -> STREAMON -> DQBUF' },
+      { k:'典型格式', v:'1280x720 NV12' },
+      { k:'单帧大小', v:'1280 × 720 × 1.5 = 1,382,400 bytes' },
+      { k:'命令工具', v:'v4l2-ctl' },
+      { k:'输出文件', v:'/tmp/frame.yuv' },
+      { k:'验证方式', v:'stat / ffplay / YUV 工具查看' }
+    ],
+    code: 'v4l2-ctl -d /dev/video0 --all\nv4l2-ctl -d /dev/video0 --list-formats-ext\nv4l2-ctl -d /dev/video0 \\\n  --set-fmt-video=width=1280,height=720,pixelformat=NV12 \\\n  --stream-mmap=3 \\\n  --stream-count=1 \\\n  --stream-to=/tmp/frame.yuv\nstat -c%s /tmp/frame.yuv'
+  },
+  {
+    nodeIdx: 6,
+    title: 'GStreamer',
+    body: 'GStreamer 是用户态多媒体管道。它负责把 /dev/video0 里的 NV12 帧取出来，再通过 caps 和 videoconvert 转成 OpenCV 更顺手的 BGR。appsink 则是 GStreamer 和 Python/OpenCV 之间的出口。',
+    badge: 'v4l2src -> caps -> videoconvert -> appsink',
+    beginner: {
+      plain: 'GStreamer 像一条“视频装配流水线”，一段一段把帧处理成后面程序想要的样子。',
+      layer: '用户态库层',
+      role: '从 V4L2 节点读帧并完成格式转换',
+      input: '/dev/video0 提供的 NV12 帧',
+      output: '送给 Python/OpenCV 的 BGR 帧',
+      operation: '逐段解释 pipeline：v4l2src 读帧，caps 限格式，videoconvert 转格式，appsink 交给程序',
+      expected: '你能把 pipeline 每一段都解释清楚',
+      common_mistakes: '把 GStreamer 当驱动；或者不理解 appsink 是程序拿帧的出口',
+      pass: '能逐段讲清 pipeline 在做什么'
+    },
+    details: [
+      { k:'v4l2src', v:'从 /dev/video0 读取视频帧' },
+      { k:'caps', v:'指定输入格式，如 NV12 / 分辨率' },
+      { k:'videoconvert', v:'把 NV12 这类格式转成 BGR' },
+      { k:'appsink', v:'把帧交给 Python/OpenCV' },
+      { k:'关键认知', v:'GStreamer 是用户态库，不是驱动' },
+      { k:'项目路线', v:'当前项目用它来避开 OpenCV 默认后端对 RKISP 节点的不适配' }
+    ],
+    code: 'v4l2src device=/dev/video0 ! video/x-raw,format=NV12,width=1280,height=720 ! videoconvert ! video/x-raw,format=BGR ! appsink drop=1 sync=false'
+  },
+  {
+    nodeIdx: 7,
+    title: 'OpenCV',
+    body: 'OpenCV 是应用层图像处理库。在当前项目里，它不是直接碰 Camera 驱动，而是通过 GStreamer appsink 拿到 BGR Mat，再继续做显示、保存、前处理、画框等工作。',
+    badge: 'appsink -> BGR Mat',
+    beginner: {
+      plain: 'OpenCV 是“拿到已经可用的图像帧之后，再做图像处理”的库。',
+      layer: '应用层',
+      role: '处理 BGR 图像帧，并把它继续送给显示、保存或 AI 前处理',
+      input: 'GStreamer appsink 送出的 BGR Mat',
+      output: '可显示、可保存、可继续推给 RKNN 的图像数据',
+      operation: '用 CAP_GSTREAMER 打开 pipeline，确认能正常读到 frame',
+      expected: '能看到 ret=True，且 frame 有正常 shape 和内容',
+      common_mistakes: 'cv2.VideoCapture(0) 失败，就误判为 Camera 整体坏了',
+      pass: '能解释为什么当前项目用 cv2.CAP_GSTREAMER'
+    },
+    details: [
+      { k:'输入', v:'BGR Mat' },
+      { k:'常见调用', v:'cv2.VideoCapture(..., cv2.CAP_GSTREAMER)' },
+      { k:'当前验证点', v:'能拿到 shape=(H,W,3) 的 BGR 帧' },
+      { k:'它负责什么', v:'显示、保存、前处理、画框等 CPU 侧处理' },
+      { k:'不直接负责什么', v:'不直接控制 Sensor，不直接做底层驱动配置' },
+      { k:'项目事实', v:'cv2.VideoCapture(0) 失败，不代表 Camera 坏了' }
+    ],
+    code: 'import cv2\n\npipeline = (\n    "v4l2src device=/dev/video0 "\n    "! video/x-raw,format=NV12,width=1280,height=720 "\n    "! videoconvert "\n    "! video/x-raw,format=BGR "\n    "! appsink drop=1 sync=false"\n)\ncap = cv2.VideoCapture(pipeline, cv2.CAP_GSTREAMER)\nret, frame = cap.read()'
+  },
+  {
+    nodeIdx: 8,
+    title: 'RKNN / NPU',
+    body: 'YOLO 是模型，NPU 是硬件，RKNN Runtime / RKNNLite 是调用这块硬件的软件层。Python 代码并不是自己手搓 YOLO 计算，而是把 OpenCV 准备好的输入交给 RKNN Runtime，再由它调度 NPU 做推理。',
+    badge: 'OpenCV -> RKNN Runtime -> NPU',
+    beginner: {
+      plain: 'RKNN 是“让软件去调用 NPU 硬件”的这一层，不是模型本身。',
+      layer: 'AI 推理层',
+      role: '把前处理后的模型输入送给 NPU，并拿回推理输出',
+      input: 'OpenCV 处理后的模型输入张量',
+      output: 'YOLO 推理输出张量',
+      operation: '先区分模型、运行时、硬件三者，再看当前脚本怎么组织输入和输出',
+      expected: '你能说清 YOLO / RKNN Runtime / NPU 三者谁是什么',
+      common_mistakes: '把 YOLO、RKNN、NPU 混成一个东西；或者把模型跑通误认为整条 Camera 链路就跑通了',
+      pass: '能讲清 OpenCV、RKNN、NPU、YOLO 四者关系'
+    },
+    details: [
+      { k:'硬件', v:'RK3568 内置 NPU' },
+      { k:'运行时', v:'RKNN Runtime / RKNNLite' },
+      { k:'模型文件', v:'.rknn 预编译模型' },
+      { k:'输入', v:'OpenCV 前处理后的 model input tensor（具体 dtype/layout 需以当前脚本确认）' },
+      { k:'输出', v:'YOLO 多尺度输出张量（具体 shape 以当前模型和脚本为准）' },
+      { k:'关键认知', v:'模型跑通不等于 Camera 链路跑通，反过来也一样' }
+    ],
+    code: 'from rknnlite.api import RKNNLite\n\nrknn = RKNNLite()\nrknn.load_rknn("model.rknn")\nrknn.init_runtime()\n# 具体 resize / color convert / layout / dtype\n# 需以当前项目脚本为准\noutputs = rknn.inference(inputs=[input_tensor])\nrknn.release()'
+  },
+  {
+    nodeIdx: 9,
+    title: '后处理',
+    body: 'NPU 输出的不是直接能看的检测框，而是一堆张量。后处理负责把张量解码成人能理解的检测结果，包括坐标还原、置信度过滤、NMS、最后再用 OpenCV 画框和打标签。',
+    badge: 'tensors -> boxes -> NMS -> draw',
+    beginner: {
+      plain: '后处理是“把模型张量翻译成人能看懂的框和标签”。',
+      layer: '应用层 / AI 结果解释层',
+      role: '把推理结果转成最终可视化检测结果',
+      input: 'NPU 返回的输出张量',
+      output: '最终的检测框、类别、置信度和画框图像',
+      operation: '理解解码、过滤、NMS、画框这四步的顺序',
+      expected: '你知道最后看到的框是后处理和 OpenCV 画出来的',
+      common_mistakes: '以为 NPU 会直接输出“已经画好框的图”',
+      pass: '能说清推理输出和最终画框不是一回事'
+    },
+    details: [
+      { k:'典型动作', v:'置信度过滤 / 坐标还原 / NMS / 画框 / 打标签' },
+      { k:'谁在做', v:'通常由 CPU + OpenCV 在用户态完成' },
+      { k:'输入', v:'模型输出张量' },
+      { k:'输出', v:'最终可视化检测框和标签' },
+      { k:'关键认知', v:'检测框不是 NPU 直接画出来的' },
+      { k:'常见瓶颈', v:'后处理可能占掉不少 CPU 时间' }
+    ],
+    code: 'boxes = decode_outputs(outputs)\nboxes = filter_by_score(boxes)\nboxes = nms(boxes)\nfor box in boxes:\n    cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)\n    cv2.putText(frame, label, (x1, y1 - 5), font, 0.5, color, 1)'
+  },
+  {
+    nodeIdx: 10,
+    title: 'MIPI DSI 显示',
+    body: 'MIPI CSI 是 Camera 输入链路，MIPI DSI 是屏幕输出链路。两者都叫 MIPI，但方向完全不同。当前项目里，画框后的图像再经过显示链路送到本地 MIPI 屏上显示。',
+    badge: 'display -> DRM/KMS -> DSI LCD',
+    beginner: {
+      plain: 'MIPI DSI 是“把处理结果送到屏上”的一条输出链，不是 Camera 输入链。',
+      layer: '输出层',
+      role: '把板端处理后的图像送到本地 LCD 显示',
+      input: '已经画框后的图像帧',
+      output: 'MIPI 屏上的可见画面',
+      operation: '重点区分 CSI 和 DSI，不要因为都叫 MIPI 就混掉',
+      expected: '本地屏上能看到处理后的实时画面',
+      common_mistakes: '把 CSI 和 DSI 当成一回事',
+      pass: '能说清 Camera 输入链和屏幕输出链是两条不同链路'
+    },
+    details: [
+      { k:'输入方向', v:'Camera -> SoC：CSI' },
+      { k:'输出方向', v:'SoC -> LCD：DSI' },
+      { k:'显示链路', v:'OpenCV frame -> DRM/KMS -> VOP2 -> MIPI DSI LCD' },
+      { k:'关键区分', v:'CSI 和 DSI 不是同一条链路' },
+      { k:'用户感知', v:'本地屏可以直接看到板端处理结果' },
+      { k:'你要记住', v:'输入链和输出链都可能各自出问题' }
+    ],
+    code: 'cv2.imshow("RK3568 AI Camera", frame)\nkey = cv2.waitKey(1)'
+  },
+  {
+    nodeIdx: 11,
+    title: 'FFmpeg / RTMP / HLS',
+    body: '推流的本质是：把画框后的图像重新编码成网络可播放的视频流，再通过网络给 Windows 端拉取播放。RTMP 更像推流入口，HLS 更像播放出口。Nginx-rtmp 负责把 RTMP 切成 .m3u8 + .ts。FFmpeg 输入究竟是 JPEG pipe 还是 rawvideo pipe，需以当前脚本确认。',
+    badge: 'FFmpeg -> RTMP -> HLS -> Windows',
+    beginner: {
+      plain: '这一层是“把板端结果送出去，让别的设备能看”。',
+      layer: '输出层 / 网络视频层',
+      role: '把板端图像编码并通过网络输出给外部播放器',
+      input: '板端处理后的图像帧',
+      output: 'RTMP 流 / HLS 播放地址',
+      operation: '先启动板端脚本，再在 Windows 侧用 ffplay 拉 HLS',
+      expected: 'Windows 侧能打开 m3u8 地址并看到实时画面',
+      common_mistakes: '把 HLS 当成原始 Camera 数据；或者把 RTMP 和 HLS 当成同一个东西',
+      pass: '能说清 RTMP 是推流入口，HLS 是播放出口'
+    },
+    details: [
+      { k:'推流入口', v:'RTMP' },
+      { k:'播放出口', v:'HLS (.m3u8 + .ts)' },
+      { k:'服务组件', v:'Nginx-rtmp' },
+      { k:'板端地址', v:'http://192.168.0.230/hls/yolo.m3u8（以当前环境为准）' },
+      { k:'当前需确认', v:'FFmpeg 输入是 JPEG pipe 还是 rawvideo pipe，需以当前脚本确认' },
+      { k:'关键认知', v:'HLS 不是原始 Camera 数据，而是编码切片后的网络视频输出' }
+    ],
+    code: 'SHOW_MIPI=1 FRAMES=0 ./start_yolov5_hls_demo.sh\nffplay http://192.168.0.230/hls/yolo.m3u8'
+  }
+];
+
+const nodes = [
+  { icon:'🗺️', label:'总览\n地图', sub:'hardware -> driver -> app' },
+  { icon:'📷', label:'IMX415\nSensor', sub:'RAW Bayer' },
+  { icon:'🧬', label:'MIPI CSI\nDPHY', sub:'data lane' },
+  { icon:'🪄', label:'ISP 2.1\nPipeline', sub:'RAW -> NV12' },
+  { icon:'🎛️', label:'V4L2 &\nMedia Ctrl', sub:'/dev/video0 / media0' },
+  { icon:'🧾', label:'V4L2\n取帧', sub:'ioctl + mmap' },
+  { icon:'🧱', label:'GStreamer', sub:'v4l2src -> appsink' },
+  { icon:'🖼️', label:'OpenCV', sub:'BGR Mat' },
+  { icon:'🧠', label:'RKNN /\nNPU', sub:'runtime -> inference' },
+  { icon:'✅', label:'后处理', sub:'decode + NMS + draw' },
+  { icon:'🖥️', label:'MIPI DSI\n显示', sub:'display output' },
+  { icon:'🌐', label:'FFmpeg /\nRTMP / HLS', sub:'stream output' }
+];
+
+const pipeline = document.getElementById('pipeline');
+const detailPanel = document.getElementById('detailPanel');
+const dataBadge = document.getElementById('dataBadge');
+const progressFill = document.getElementById('progressFill');
+const stepLabel = document.getElementById('stepLabel');
+
+nodes.forEach((n, i) => {
+  if (i > 0) {
+    const conn = document.createElement('div');
+    conn.className = 'connector';
+    conn.dataset.idx = i - 1;
+    pipeline.appendChild(conn);
+  }
+
+  const div = document.createElement('div');
+  div.className = 'node';
+  div.dataset.idx = i;
+  div.innerHTML = `<span class="n-icon">${n.icon}</span><div class="n-label">${n.label.replace(/\n/g,'<br>')}</div><div class="n-sub">${n.sub}</div>`;
+  div.addEventListener('click', () => jumpToStep(i));
+  pipeline.appendChild(div);
+});
+
+let currentStep = -1;
+let autoTimer = null;
+let isAuto = true;
+
+function getColor(i) {
+  const colors = ['var(--purple)','var(--blue)','var(--cyan)','var(--purple)','var(--green)','var(--green)','var(--cyan)','var(--orange)','var(--red)','var(--orange)','var(--blue)','var(--pink)'];
+  return colors[i] || 'var(--purple)';
+}
+
+function escapeHtml(text) {
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function renderBeginner(beginner) {
+  if (!beginner) return '';
+  return `
+    <div class="dp-beginner">
+      <div class="dp-beginner-title">新手理解层</div>
+      <div class="dp-beginner-plain">
+        <div class="dp-k">人话解释</div>
+        <div class="dp-v">${escapeHtml(beginner.plain)}</div>
+      </div>
+      <div class="dp-beginner-grid">
+        <div class="dp-item"><div class="dp-k">所属层级</div><div class="dp-v">${escapeHtml(beginner.layer)}</div></div>
+        <div class="dp-item"><div class="dp-k">本层职责</div><div class="dp-v">${escapeHtml(beginner.role)}</div></div>
+        <div class="dp-item"><div class="dp-k">输入</div><div class="dp-v">${escapeHtml(beginner.input)}</div></div>
+        <div class="dp-item"><div class="dp-k">输出</div><div class="dp-v">${escapeHtml(beginner.output)}</div></div>
+        <div class="dp-item"><div class="dp-k">我该怎么操作</div><div class="dp-v">${escapeHtml(beginner.operation)}</div></div>
+        <div class="dp-item"><div class="dp-k">正常现象</div><div class="dp-v">${escapeHtml(beginner.expected)}</div></div>
+        <div class="dp-item"><div class="dp-k">常见误区</div><div class="dp-v">${escapeHtml(beginner.common_mistakes)}</div></div>
+        <div class="dp-item"><div class="dp-k">过关标准</div><div class="dp-v">${escapeHtml(beginner.pass)}</div></div>
+      </div>
+    </div>
+  `;
+}
+
+function renderDetails(details) {
+  if (!details || details.length === 0) return '';
+  return `<div class="dp-grid">${details.map(d => `
+    <div class="dp-item">
+      <div class="dp-k">${escapeHtml(d.k)}</div>
+      <div class="dp-v">${escapeHtml(d.v)}</div>
+    </div>
+  `).join('')}</div>`;
+}
+
+function updateUI() {
+  document.querySelectorAll('.node').forEach(el => {
+    const idx = parseInt(el.dataset.idx, 10);
+    el.classList.remove('active','done');
+    if (idx < currentStep) el.classList.add('done');
+    if (idx === currentStep) el.classList.add('active');
+  });
+
+  document.querySelectorAll('.connector').forEach(el => {
+    const idx = parseInt(el.dataset.idx, 10);
+    el.classList.toggle('flow', idx < currentStep);
+  });
+
+  if (currentStep >= 0 && currentStep < steps.length) {
+    const step = steps[currentStep];
+    dataBadge.textContent = step.badge;
+    dataBadge.className = 'data-badge show';
+
+    const activeNode = document.querySelector(`.node[data-idx="${step.nodeIdx}"]`);
+    if (activeNode) {
+      const nodeRect = activeNode.getBoundingClientRect();
+      const pipeRect = pipeline.getBoundingClientRect();
+      dataBadge.style.left = (nodeRect.left + nodeRect.width / 2 - pipeRect.left) + 'px';
+    }
+
+    detailPanel.innerHTML = `
+      <div class="dp-step">Step ${currentStep + 1} / ${steps.length}</div>
+      <div class="dp-title">${escapeHtml(step.title)}</div>
+      <div class="dp-body">${escapeHtml(step.body)}</div>
+      ${renderBeginner(step.beginner)}
+      ${renderDetails(step.details)}
+      ${step.code ? `<div class="dp-code">${escapeHtml(step.code)}</div>` : ''}
+    `;
+  } else {
+    dataBadge.className = 'data-badge';
+    detailPanel.innerHTML = `
+      <div class="dp-step">就绪</div>
+      <div class="dp-title">RK3568 AI Camera 全链路数据流动画</div>
+      <div class="dp-body">
+        点击“自动播放”开始，或点击任意节点直接跳到对应阶段。<br>
+        页面按硬件层、驱动层、Linux 框架层、用户态应用层、AI 推理层、输出层的顺序讲清楚 Camera 到 HLS 的完整路径。
+      </div>
+    `;
+  }
+
+  const pct = steps.length > 0 ? ((currentStep + 1) / steps.length * 100) : 0;
+  progressFill.style.width = pct + '%';
+  stepLabel.textContent = `${Math.max(0, currentStep + 1)} / ${steps.length}`;
+
+  document.getElementById('btnPrev').disabled = currentStep <= 0;
+  document.getElementById('btnNext').disabled = currentStep >= steps.length - 1;
+}
+
+function scheduleNextAutoStep(delay = 3500) {
+  if (!isAuto) return;
+  if (autoTimer) clearTimeout(autoTimer);
+  autoTimer = setTimeout(autoStep, delay);
+}
+
+function jumpToStep(stepIdx) {
+  if (stepIdx < 0 || stepIdx >= steps.length) return;
+  currentStep = stepIdx;
+  updateUI();
+  if (isAuto) scheduleNextAutoStep();
+}
+
+function stepNext() {
+  if (currentStep < steps.length - 1) {
+    currentStep++;
+    updateUI();
+  } else {
+    stopAuto();
+  }
+}
+
+function stepPrev() {
+  if (currentStep > -1) {
+    currentStep--;
+    updateUI();
+  }
+}
+
+function stepReset() {
+  currentStep = -1;
+  updateUI();
+  if (isAuto) scheduleNextAutoStep(1200);
+}
+
+function toggleAuto() {
+  if (isAuto) {
+    stopAuto();
+  } else {
+    startAuto();
+  }
+}
+
+function startAuto() {
+  isAuto = true;
+  document.getElementById('btnAuto').classList.add('active');
+  document.getElementById('btnAuto').textContent = '⏵ 自动播放';
+  if (currentStep >= steps.length - 1) currentStep = -1;
+  autoStep();
+}
+
+function stopAuto() {
+  isAuto = false;
+  document.getElementById('btnAuto').classList.remove('active');
+  document.getElementById('btnAuto').textContent = '⏸ 手动模式';
+  if (autoTimer) {
+    clearTimeout(autoTimer);
+    autoTimer = null;
+  }
+}
+
+function autoStep() {
+  if (!isAuto) return;
+
+  if (currentStep < steps.length - 1) {
+    stepNext();
+    scheduleNextAutoStep(3600);
+  } else {
+    if (autoTimer) clearTimeout(autoTimer);
+    autoTimer = setTimeout(() => {
+      currentStep = -1;
+      updateUI();
+      scheduleNextAutoStep(1400);
+    }, 3800);
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ') {
+    e.preventDefault();
+    stepNext();
+  }
+  if (e.key === 'ArrowLeft') {
+    e.preventDefault();
+    stepPrev();
+  }
+  if (e.key === 'r') stepReset();
+  if (e.key === 'p') toggleAuto();
+});
+
+const canvas = document.getElementById('particles');
+const ctx = canvas.getContext('2d');
+let particles = [];
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+for (let i = 0; i < 40; i++) {
+  particles.push({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    r: Math.random() * 1.5 + 0.5,
+    vx: (Math.random() - 0.5) * 0.3,
+    vy: (Math.random() - 0.5) * 0.3,
+    alpha: Math.random() * 0.4 + 0.1
+  });
+}
+
+function animateParticles() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  particles.forEach(p => {
+    p.x += p.vx;
+    p.y += p.vy;
+    if (p.x < 0) p.x = canvas.width;
+    if (p.x > canvas.width) p.x = 0;
+    if (p.y < 0) p.y = canvas.height;
+    if (p.y > canvas.height) p.y = 0;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(124,77,255,${p.alpha})`;
+    ctx.fill();
+  });
+  requestAnimationFrame(animateParticles);
+}
+
+animateParticles();
+updateUI();
+startAuto();
+</script>
+</body>
+</html>
