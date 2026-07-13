@@ -7,7 +7,6 @@ const ARCHIVE_INDEX = '99-归档/00-归档说明.md';
 const TASK_BOARD = '06-任务/01-下一步任务看板.md';
 const IGNORED_WALK_DIRS = new Set(['.git', 'node_modules']);
 const WIKILINK_PATTERN = /!?\[\[([^\]]+)\]\]/g;
-const MARKDOWN_LINK_PATTERN = /!?\[[^\]]*\]\(([^)]+)\)/g;
 
 function toVaultPath(filePath) {
   return filePath.split(path.sep).join('/');
@@ -24,6 +23,10 @@ function normalizeTarget(target) {
 function isActiveDocument(filePath) {
   const [topLevel] = filePath.split('/');
   return topLevel !== '.obsidian' && topLevel !== 'docs' && topLevel !== ARCHIVE_DIR;
+}
+
+function isValidatedDocument(filePath) {
+  return filePath.split('/')[0] !== 'docs';
 }
 
 function isOrphanExempt(filePath) {
@@ -62,6 +65,69 @@ function markdownLinkTarget(rawTarget) {
     if (closingBracket !== -1) return trimmed.slice(1, closingBracket);
   }
   return trimmed.split(/\s+["']/u, 1)[0];
+}
+
+function stripFencedCode(contents) {
+  let fence;
+
+  return contents.split('\n').map((line) => {
+    if (!fence) {
+      const opening = line.match(/^ {0,3}(`{3,}|~{3,})/u);
+      if (!opening) return line;
+      fence = { character: opening[1][0], length: opening[1].length };
+      return '';
+    }
+
+    const trimmed = line.trimStart();
+    const closingRun = trimmed.match(/^(`+|~+)/u)?.[1];
+    if (
+      closingRun
+      && closingRun[0] === fence.character
+      && closingRun.length >= fence.length
+      && trimmed.slice(closingRun.length).trim() === ''
+    ) {
+      fence = undefined;
+    }
+    return '';
+  }).join('\n');
+}
+
+function markdownLinkDestinations(contents) {
+  const destinations = [];
+
+  for (let index = 0; index < contents.length - 1; index += 1) {
+    if (contents[index] !== ']' || contents[index + 1] !== '(') continue;
+
+    const start = index + 2;
+    let depth = 1;
+    let escaped = false;
+    for (let cursor = start; cursor < contents.length; cursor += 1) {
+      const character = contents[cursor];
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+      if (character === '\\') {
+        escaped = true;
+        continue;
+      }
+      if (character === '(') depth += 1;
+      if (character !== ')') continue;
+
+      depth -= 1;
+      if (depth === 0) {
+        destinations.push(contents.slice(start, cursor));
+        index = cursor;
+        break;
+      }
+    }
+  }
+
+  return destinations;
+}
+
+function unescapeMarkdownDestination(target) {
+  return target.replace(/\\([\\()])/gu, '$1');
 }
 
 function addIssue(collection, seen, issue) {
@@ -118,31 +184,32 @@ function createWikilinkResolver(allFiles) {
 
   return (rawTarget, source) => {
     const target = normalizeTarget(rawTarget);
+    const hasExplicitPath = /[\\/]/u.test(rawTarget);
     const sourceDir = path.posix.dirname(source);
-    const candidates = [target];
-    if (!path.posix.extname(target)) candidates.push(`${target}.md`);
-    if (sourceDir !== '.') {
-      candidates.push(normalizeTarget(path.posix.join(sourceDir, target)));
-      if (!path.posix.extname(target)) {
-        candidates.push(normalizeTarget(path.posix.join(sourceDir, `${target}.md`)));
+    if (hasExplicitPath) {
+      const candidates = [target];
+      if (!path.posix.extname(target)) candidates.push(`${target}.md`);
+      if (sourceDir !== '.') {
+        candidates.push(normalizeTarget(path.posix.join(sourceDir, target)));
+        if (!path.posix.extname(target)) {
+          candidates.push(normalizeTarget(path.posix.join(sourceDir, `${target}.md`)));
+        }
       }
-    }
 
-    for (const candidate of candidates) {
-      if (exactFiles.has(candidate)) return candidate;
+      for (const candidate of candidates) {
+        if (exactFiles.has(candidate)) return candidate;
+      }
+      return undefined;
     }
 
     const basename = path.posix.basename(target);
     const basenameMatches = byBasename.get(basename) ?? [];
-    if (basenameMatches.length > 0) return basenameMatches[0];
-
-    const suffix = path.posix.extname(target) ? target : `${target}.md`;
-    return allFiles.find((filePath) => filePath === suffix || filePath.endsWith(`/${suffix}`));
+    return basenameMatches.length === 1 ? basenameMatches[0] : undefined;
   };
 }
 
 function resolveRelativeLink(rawTarget, source, allFiles) {
-  const decoded = decodeTarget(withoutFragment(rawTarget));
+  const decoded = decodeTarget(withoutFragment(unescapeMarkdownDestination(rawTarget)));
   if (!decoded) return undefined;
 
   const sourceDir = path.posix.dirname(source);
@@ -171,8 +238,9 @@ export async function scanVault(rootDir) {
   const seenBrokenRelative = new Set();
   const seenArchiveLinks = new Set();
 
-  for (const source of markdownFiles) {
-    const contents = await readFile(path.join(absoluteRoot, ...source.split('/')), 'utf8');
+  for (const source of markdownFiles.filter(isValidatedDocument)) {
+    const rawContents = await readFile(path.join(absoluteRoot, ...source.split('/')), 'utf8');
+    const contents = stripFencedCode(rawContents);
     const sourceIsActive = activeDocumentSet.has(source);
 
     for (const match of contents.matchAll(WIKILINK_PATTERN)) {
@@ -193,8 +261,8 @@ export async function scanVault(rootDir) {
       }
     }
 
-    for (const match of contents.matchAll(MARKDOWN_LINK_PATTERN)) {
-      const target = markdownLinkTarget(match[1]);
+    for (const rawTarget of markdownLinkDestinations(contents)) {
+      const target = markdownLinkTarget(rawTarget);
       if (!target || isIgnoredMarkdownTarget(target)) continue;
 
       const resolved = resolveRelativeLink(target, source, allFileSet);
@@ -235,10 +303,31 @@ function printHumanResult(result) {
   console.log(`Orphan active docs (warnings): ${result.orphanActiveDocs.length}`);
 }
 
+class CliUsageError extends Error {}
+
+function parseCliArgs(args) {
+  let json = false;
+  const positionalArgs = [];
+
+  for (const argument of args) {
+    if (argument === '--json') {
+      json = true;
+    } else if (argument.startsWith('-')) {
+      throw new CliUsageError(`Unknown option: ${argument}`);
+    } else {
+      positionalArgs.push(argument);
+    }
+  }
+
+  if (positionalArgs.length > 1) {
+    throw new CliUsageError('Expected at most one vault path');
+  }
+
+  return { json, rootDir: positionalArgs[0] ?? '.' };
+}
+
 async function runCli() {
-  const args = process.argv.slice(2);
-  const json = args.includes('--json');
-  const rootDir = args.find((argument) => argument !== '--json') ?? '.';
+  const { json, rootDir } = parseCliArgs(process.argv.slice(2));
   const result = await scanVault(rootDir);
 
   if (json) console.log(JSON.stringify(result, null, 2));
@@ -258,7 +347,12 @@ const isMainModule = process.argv[1]
 
 if (isMainModule) {
   runCli().catch((error) => {
-    console.error(error);
-    process.exitCode = 1;
+    if (error instanceof CliUsageError) {
+      console.error(error.message);
+      process.exitCode = 2;
+    } else {
+      console.error(error);
+      process.exitCode = 1;
+    }
   });
 }
