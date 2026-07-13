@@ -256,7 +256,30 @@ WSL 项目实验脚本：
 
 - [[V4L2命令行抓帧记录]]
 - [[01-下一步任务看板]]
-- [[01-下一步任务看板]]
 - [[01-实验产物索引]]
 
 #OpenCV #Camera #GStreamer #V4L2 #RK3568
+
+## 知识补充：为什么 pipeline 能救回 OpenCV
+
+### 状态：已验证 + 通用原理
+
+`cv2.VideoCapture(0)` 需要 OpenCV 自己选择设备、backend、格式和颜色转换；当前板端默认路径无法完成这组协商。显式 GStreamer pipeline 则把每个边界写出来：
+
+```text
+v4l2src -> NV12 caps -> videoconvert -> BGR caps -> appsink -> OpenCV
+```
+
+排障要分层：
+
+1. `v4l2-ctl` 先证明设备能出帧。
+2. `gst-launch-1.0` 证明 pipeline 和 caps 能协商。
+3. Python/OpenCV 只验证 appsink 是否能取到 BGR 矩阵。
+
+`caps` 是相邻元素对格式、宽高和帧率的契约；`appsink` 是从 GStreamer 回到应用的边界。若 caps 不匹配，问题通常是格式、分辨率、帧率或颜色转换，而不一定是 Camera 故障。
+
+## 阶段验收
+
+- 能解释默认 backend 失败与底层 V4L2 失败不是同一件事。
+- 能写出当前成功 pipeline，并说清每个元素的输入输出。
+- 能用固定图片或单帧先验证 OpenCV，再接实时推理。

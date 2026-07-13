@@ -247,3 +247,21 @@ Camera -> OpenCV -> RKNN -> Display/Stream
 ```
 
 #MIPI #Display #OpenCV #Framebuffer #DRM #AI视觉
+
+## 知识补充：显示链路与 Camera 链路的边界
+
+### 状态：已验证 + 通用原理
+
+Camera 的 MIPI CSI 是输入链路，屏幕的 MIPI DSI 是输出链路；两者都经过 SoC，但不会因为接口名称相同就直接相连。当前 Python MVP 的应用边界是：OpenCV 产生带检测框的图像，显示后端把图像送到 framebuffer/DRM 或厂家提供的显示接口。
+
+显示异常要单独排查：
+
+1. 先确认推理后的图像矩阵尺寸、通道和方向正确。
+2. 再确认显示设备、权限、分辨率和旋转参数。
+3. 最后确认 framebuffer/DRM/Qt/OpenCV 后端是否匹配。
+
+## 阶段验收
+
+- 能解释 `cv2.imshow`、framebuffer 和 DRM/KMS 不是同一层。
+- 能区分图像内容错误与显示方向/设备配置错误。
+- 能说明 Camera 输入、AI 处理、Display 输出在数据流中的先后关系。

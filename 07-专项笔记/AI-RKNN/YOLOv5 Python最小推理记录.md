@@ -464,3 +464,40 @@ RKNN runtime 的 warning 仍然会输出，而且不是普通 stderr 重定向�
 ```
 
 #YOLOv5 #RKNN #Python #目标检测
+
+## 知识补充：从图像到检测框
+
+### 状态：已验证 + 通用原理
+
+完整推理不是“调用一次 `inference` 就得到框”，而是：
+
+```text
+BGR frame
+-> resize / letterbox
+-> RGB 或模型要求的通道顺序
+-> NHWC/NCHW 排布
+-> dtype / quantization
+-> RKNN inference
+-> 输出 tensor 解码
+-> confidence filter
+-> NMS
+-> padding/scale 反变换
+-> 原图坐标框
+```
+
+常见错位原因：
+
+- 训练或转换要求 RGB，却把 BGR 直接送入模型。
+- 模型要求 NCHW，却传入 NHWC。
+- letterbox 后忘记去除 padding，导致框整体偏移。
+- 量化模型仍按浮点模型的范围和 dtype 送入。
+- NMS 前后的坐标尺度不一致。
+
+调试时先保存一张固定输入、前处理后的 tensor 摘要、原始输出 shape 和最终框，先让单图结果正确，再接 Camera 和显示。
+
+## 阶段验收
+
+- 能区分 Toolkit/转换阶段、板端 Runtime、NPU 驱动和 Python 应用。
+- 能说明模型输入 shape、颜色顺序、dtype 和量化配置的来源。
+- 能用固定图片复测框位置，再解释 Camera 场景的坐标回映。
+- 性能记录至少包含输入分辨率、推理耗时或帧率，不能只写“实时”。
