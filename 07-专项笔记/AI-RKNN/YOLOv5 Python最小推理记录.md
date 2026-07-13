@@ -226,7 +226,7 @@ write True /tmp/yolov5_bus_result.jpg
 ```text
 板端：/tmp/yolov5_bus_result.jpg
 Windows：E:\RK3568\yolo_stage\python_files\yolov5_bus_result.jpg
-Obsidian：08-附录/实验产物/assets/yolov5_bus_result.jpg
+Obsidian：05-实验与证据/实验产物/assets/yolov5_bus_result.jpg
 ```
 
 预览：
@@ -298,7 +298,7 @@ write True /tmp/yolov5_camera_result.jpg
 原始抓图：/tmp/yolov5_camera_raw.jpg
 检测结果：/tmp/yolov5_camera_result.jpg
 Windows：E:\RK3568\yolo_stage\python_files\yolov5_camera_result.jpg
-Obsidian：08-附录/实验产物/assets/yolov5_camera_result.jpg
+Obsidian：05-实验与证据/实验产物/assets/yolov5_camera_result.jpg
 ```
 
 预览：
@@ -365,7 +365,7 @@ saved True /tmp/yolov5_realtime_last.jpg
 ```text
 板端：/tmp/yolov5_realtime_last.jpg
 Windows：E:\RK3568\yolo_stage\python_files\yolov5_realtime_last.jpg
-Obsidian：08-附录/实验产物/assets/yolov5_realtime_last.jpg
+Obsidian：05-实验与证据/实验产物/assets/yolov5_realtime_last.jpg
 ```
 
 预览：
@@ -428,7 +428,7 @@ saved True /tmp/yolov5_realtime_clean_last.jpg
 ```text
 板端：/tmp/yolov5_realtime_clean_last.jpg
 Windows：E:\RK3568\yolo_stage\python_files\yolov5_realtime_clean_last.jpg
-Obsidian：08-附录/实验产物/assets/yolov5_realtime_clean_last.jpg
+Obsidian：05-实验与证据/实验产物/assets/yolov5_realtime_clean_last.jpg
 ```
 
 预览：

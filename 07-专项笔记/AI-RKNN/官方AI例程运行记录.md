@@ -425,7 +425,7 @@ saved True /tmp/scrfd_realtime_last.jpg
 ```text
 板端: /tmp/scrfd_realtime_last.jpg
 Windows: E:\RK3568\face_stage\result\scrfd_realtime_last.jpg
-Obsidian: 08-附录/实验产物/assets/scrfd_realtime_last.jpg
+Obsidian: 05-实验与证据/实验产物/assets/scrfd_realtime_last.jpg
 ```
 
 ### 第四次结果（MIPI屏实时显示）
