@@ -99,6 +99,59 @@ function markdownLinkDestinations(contents) {
     if (contents[index] !== ']' || contents[index + 1] !== '(') continue;
 
     const start = index + 2;
+    let firstCharacter = start;
+    while (contents[firstCharacter] === ' ' || contents[firstCharacter] === '\t') {
+      firstCharacter += 1;
+    }
+
+    if (contents[firstCharacter] === '<') {
+      let angleEnd = -1;
+      let escaped = false;
+      for (let cursor = firstCharacter + 1; cursor < contents.length; cursor += 1) {
+        const character = contents[cursor];
+        if (character === '\n' || character === '\r') break;
+        if (escaped) {
+          escaped = false;
+          continue;
+        }
+        if (character === '\\') {
+          escaped = true;
+          continue;
+        }
+        if (character === '>') {
+          angleEnd = cursor;
+          break;
+        }
+      }
+
+      if (angleEnd === -1) continue;
+
+      let outerEnd = angleEnd + 1;
+      while (/\s/u.test(contents[outerEnd] ?? '')) outerEnd += 1;
+      const titleDelimiter = contents[outerEnd];
+      if (titleDelimiter === '"' || titleDelimiter === "'") {
+        outerEnd += 1;
+        let titleEscaped = false;
+        while (outerEnd < contents.length) {
+          const character = contents[outerEnd];
+          if (titleEscaped) titleEscaped = false;
+          else if (character === '\\') titleEscaped = true;
+          else if (character === titleDelimiter) {
+            outerEnd += 1;
+            break;
+          }
+          outerEnd += 1;
+        }
+        while (/\s/u.test(contents[outerEnd] ?? '')) outerEnd += 1;
+      }
+
+      if (contents[outerEnd] === ')') {
+        destinations.push(contents.slice(start, angleEnd + 1));
+        index = outerEnd;
+      }
+      continue;
+    }
+
     let depth = 1;
     let escaped = false;
     for (let cursor = start; cursor < contents.length; cursor += 1) {

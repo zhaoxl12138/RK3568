@@ -205,6 +205,36 @@ test('resolves markdown destinations containing parentheses', async () => {
   assert.deepEqual(result.brokenRelativeLinks, []);
 });
 
+test('treats parentheses as literal inside angle-bracket destinations', async () => {
+  await writeFixture('07-专项笔记/file)name.md', '# 右括号文件\n');
+  await writeFixture('07-专项笔记/file(name.md', '# 左括号文件\n');
+  await writeFixture(
+    '07-专项笔记/00-专项笔记入口.md',
+    [
+      '[右括号](<file)name.md>)',
+      '[左括号](<file(name.md>)',
+    ].join('\n'),
+  );
+
+  const result = await scanVault(vaultDir);
+
+  assert.deepEqual(result.brokenRelativeLinks, []);
+  assert.deepEqual(result.orphanActiveDocs, []);
+});
+
+test('ignores malformed angle-bracket destinations without swallowing later links', async () => {
+  await writeFixture('07-专项笔记/有效目标.md', '# 有效目标\n');
+  await writeFixture(
+    '07-专项笔记/00-专项笔记入口.md',
+    '[格式错误](<未闭合.md)\n[有效链接](有效目标.md)\n',
+  );
+
+  const result = await scanVault(vaultDir);
+
+  assert.deepEqual(result.brokenRelativeLinks, []);
+  assert.deepEqual(result.orphanActiveDocs, []);
+});
+
 test('orphan-only CLI scan exits zero', async () => {
   await writeFixture('07-专项笔记/孤立正文.md', '# 孤立正文\n');
 
