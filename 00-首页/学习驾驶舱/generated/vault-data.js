@@ -123,98 +123,131 @@ window.RK3568_VAULT_DATA = {
     {
       "name": "Camera",
       "filePath": "07-专项笔记/Camera-V4L2/IMX415驱动调试与最小demo路线.md",
-      "url": "obsidian://open?vault=rk3568-hybrid-dashboard&file=07-%E4%B8%93%E9%A1%B9%E7%AC%94%E8%AE%B0%2FCamera-V4L2%2FIMX415%E9%A9%B1%E5%8A%A8%E8%B0%83%E8%AF%95%E4%B8%8E%E6%9C%80%E5%B0%8Fdemo%E8%B7%AF%E7%BA%BF"
+      "url": "obsidian://open?vault=RK3568&file=07-%E4%B8%93%E9%A1%B9%E7%AC%94%E8%AE%B0%2FCamera-V4L2%2FIMX415%E9%A9%B1%E5%8A%A8%E8%B0%83%E8%AF%95%E4%B8%8E%E6%9C%80%E5%B0%8Fdemo%E8%B7%AF%E7%BA%BF"
     },
     {
       "name": "OpenCV",
       "filePath": "07-专项笔记/OpenCV/OpenCV读取Camera记录.md",
-      "url": "obsidian://open?vault=rk3568-hybrid-dashboard&file=07-%E4%B8%93%E9%A1%B9%E7%AC%94%E8%AE%B0%2FOpenCV%2FOpenCV%E8%AF%BB%E5%8F%96Camera%E8%AE%B0%E5%BD%95"
+      "url": "obsidian://open?vault=RK3568&file=07-%E4%B8%93%E9%A1%B9%E7%AC%94%E8%AE%B0%2FOpenCV%2FOpenCV%E8%AF%BB%E5%8F%96Camera%E8%AE%B0%E5%BD%95"
     },
     {
       "name": "RKNN",
       "filePath": "07-专项笔记/AI-RKNN/官方AI例程运行记录.md",
-      "url": "obsidian://open?vault=rk3568-hybrid-dashboard&file=07-%E4%B8%93%E9%A1%B9%E7%AC%94%E8%AE%B0%2FAI-RKNN%2F%E5%AE%98%E6%96%B9AI%E4%BE%8B%E7%A8%8B%E8%BF%90%E8%A1%8C%E8%AE%B0%E5%BD%95"
+      "url": "obsidian://open?vault=RK3568&file=07-%E4%B8%93%E9%A1%B9%E7%AC%94%E8%AE%B0%2FAI-RKNN%2F%E5%AE%98%E6%96%B9AI%E4%BE%8B%E7%A8%8B%E8%BF%90%E8%A1%8C%E8%AE%B0%E5%BD%95"
     },
     {
       "name": "Display",
       "filePath": "07-专项笔记/Display-MIPI/MIPI屏显示链路.md",
-      "url": "obsidian://open?vault=rk3568-hybrid-dashboard&file=07-%E4%B8%93%E9%A1%B9%E7%AC%94%E8%AE%B0%2FDisplay-MIPI%2FMIPI%E5%B1%8F%E6%98%BE%E7%A4%BA%E9%93%BE%E8%B7%AF"
+      "url": "obsidian://open?vault=RK3568&file=07-%E4%B8%93%E9%A1%B9%E7%AC%94%E8%AE%B0%2FDisplay-MIPI%2FMIPI%E5%B1%8F%E6%98%BE%E7%A4%BA%E9%93%BE%E8%B7%AF"
     },
     {
       "name": "Streaming",
       "filePath": "07-专项笔记/Streaming/RTMP-HLS推流记录.md",
-      "url": "obsidian://open?vault=rk3568-hybrid-dashboard&file=07-%E4%B8%93%E9%A1%B9%E7%AC%94%E8%AE%B0%2FStreaming%2FRTMP-HLS%E6%8E%A8%E6%B5%81%E8%AE%B0%E5%BD%95"
+      "url": "obsidian://open?vault=RK3568&file=07-%E4%B8%93%E9%A1%B9%E7%AC%94%E8%AE%B0%2FStreaming%2FRTMP-HLS%E6%8E%A8%E6%B5%81%E8%AE%B0%E5%BD%95"
     },
     {
       "name": "System",
       "filePath": "07-专项笔记/系统/AI Camera系统数据流与模块边界.md",
-      "url": "obsidian://open?vault=rk3568-hybrid-dashboard&file=07-%E4%B8%93%E9%A1%B9%E7%AC%94%E8%AE%B0%2F%E7%B3%BB%E7%BB%9F%2FAI%20Camera%E7%B3%BB%E7%BB%9F%E6%95%B0%E6%8D%AE%E6%B5%81%E4%B8%8E%E6%A8%A1%E5%9D%97%E8%BE%B9%E7%95%8C"
+      "url": "obsidian://open?vault=RK3568&file=07-%E4%B8%93%E9%A1%B9%E7%AC%94%E8%AE%B0%2F%E7%B3%BB%E7%BB%9F%2FAI%20Camera%E7%B3%BB%E7%BB%9F%E6%95%B0%E6%8D%AE%E6%B5%81%E4%B8%8E%E6%A8%A1%E5%9D%97%E8%BE%B9%E7%95%8C"
     }
   ],
   "evidence": [
     {
       "name": "opencv_frame_gst.jpg",
       "type": "image",
+      "mediaType": "image/jpeg",
+      "assetPath": "../../05-实验与证据/实验产物/assets/opencv_frame_gst.jpg",
+      "vaultPath": "05-实验与证据/实验产物/assets/opencv_frame_gst.jpg",
       "sourcePath": "05-实验与证据/实验产物/01-实验产物索引.md",
       "stageLabel": "OpenCV 读取 Camera。"
     },
     {
       "name": "scrfd_realtime_last.jpg",
       "type": "image",
+      "mediaType": "image/jpeg",
+      "assetPath": "../../05-实验与证据/实验产物/assets/scrfd_realtime_last.jpg",
+      "vaultPath": "05-实验与证据/实验产物/assets/scrfd_realtime_last.jpg",
       "sourcePath": "05-实验与证据/实验产物/01-实验产物索引.md",
       "stageLabel": "AI 手册第 6 章，SCRFD 人脸检测。"
     },
     {
       "name": "scrfd_result_rotated.jpg",
       "type": "image",
+      "mediaType": "image/jpeg",
+      "assetPath": "../../05-实验与证据/实验产物/assets/scrfd_result_rotated.jpg",
+      "vaultPath": "05-实验与证据/实验产物/assets/scrfd_result_rotated.jpg",
       "sourcePath": "05-实验与证据/实验产物/01-实验产物索引.md",
       "stageLabel": "AI 手册第 6 章，SCRFD 人脸检测。"
     },
     {
       "name": "yolo_hls_pull_test.mp4",
       "type": "video",
+      "mediaType": "video/mp4",
+      "assetPath": "../../05-实验与证据/实验产物/assets/yolo_hls_pull_test.mp4",
+      "vaultPath": "05-实验与证据/实验产物/assets/yolo_hls_pull_test.mp4",
       "sourcePath": "05-实验与证据/实验产物/01-实验产物索引.md",
       "stageLabel": "unknown"
     },
     {
       "name": "yolo_hls_pull_test_frame.jpg",
       "type": "image",
+      "mediaType": "image/jpeg",
+      "assetPath": "../../05-实验与证据/实验产物/assets/yolo_hls_pull_test_frame.jpg",
+      "vaultPath": "05-实验与证据/实验产物/assets/yolo_hls_pull_test_frame.jpg",
       "sourcePath": "05-实验与证据/实验产物/01-实验产物索引.md",
       "stageLabel": "unknown"
     },
     {
       "name": "yolov5_bus_result.jpg",
       "type": "image",
+      "mediaType": "image/jpeg",
+      "assetPath": "../../05-实验与证据/实验产物/assets/yolov5_bus_result.jpg",
+      "vaultPath": "05-实验与证据/实验产物/assets/yolov5_bus_result.jpg",
       "sourcePath": "05-实验与证据/实验产物/01-实验产物索引.md",
       "stageLabel": "Python YOLOv5 RKNN 最小推理。"
     },
     {
       "name": "yolov5_camera_raw.jpg",
       "type": "image",
+      "mediaType": "image/jpeg",
+      "assetPath": "../../05-实验与证据/实验产物/assets/yolov5_camera_raw.jpg",
+      "vaultPath": "05-实验与证据/实验产物/assets/yolov5_camera_raw.jpg",
       "sourcePath": "05-实验与证据/实验产物/01-实验产物索引.md",
       "stageLabel": "unknown"
     },
     {
       "name": "yolov5_camera_result.jpg",
       "type": "image",
+      "mediaType": "image/jpeg",
+      "assetPath": "../../05-实验与证据/实验产物/assets/yolov5_camera_result.jpg",
+      "vaultPath": "05-实验与证据/实验产物/assets/yolov5_camera_result.jpg",
       "sourcePath": "05-实验与证据/实验产物/01-实验产物索引.md",
       "stageLabel": "unknown"
     },
     {
       "name": "yolov5_realtime_clean_last.jpg",
       "type": "image",
+      "mediaType": "image/jpeg",
+      "assetPath": "../../05-实验与证据/实验产物/assets/yolov5_realtime_clean_last.jpg",
+      "vaultPath": "05-实验与证据/实验产物/assets/yolov5_realtime_clean_last.jpg",
       "sourcePath": "05-实验与证据/实验产物/01-实验产物索引.md",
       "stageLabel": "unknown"
     },
     {
       "name": "yolov5_realtime_last.jpg",
       "type": "image",
+      "mediaType": "image/jpeg",
+      "assetPath": "../../05-实验与证据/实验产物/assets/yolov5_realtime_last.jpg",
+      "vaultPath": "05-实验与证据/实验产物/assets/yolov5_realtime_last.jpg",
       "sourcePath": "05-实验与证据/实验产物/01-实验产物索引.md",
       "stageLabel": "unknown"
     },
     {
       "name": "yolov5_rtmp_last.jpg",
       "type": "image",
+      "mediaType": "image/jpeg",
+      "assetPath": "../../05-实验与证据/实验产物/assets/yolov5_rtmp_last.jpg",
+      "vaultPath": "05-实验与证据/实验产物/assets/yolov5_rtmp_last.jpg",
       "sourcePath": "05-实验与证据/实验产物/01-实验产物索引.md",
       "stageLabel": "unknown"
     }
@@ -223,42 +256,42 @@ window.RK3568_VAULT_DATA = {
     {
       "name": "taskBoard",
       "filePath": "06-任务/01-下一步任务看板.md",
-      "url": "obsidian://open?vault=rk3568-hybrid-dashboard&file=06-%E4%BB%BB%E5%8A%A1%2F01-%E4%B8%8B%E4%B8%80%E6%AD%A5%E4%BB%BB%E5%8A%A1%E7%9C%8B%E6%9D%BF"
+      "url": "obsidian://open?vault=RK3568&file=06-%E4%BB%BB%E5%8A%A1%2F01-%E4%B8%8B%E4%B8%80%E6%AD%A5%E4%BB%BB%E5%8A%A1%E7%9C%8B%E6%9D%BF"
     },
     {
       "name": "activeRoute",
       "filePath": "01-主线/02-从零到Python MVP学习路线.md",
-      "url": "obsidian://open?vault=rk3568-hybrid-dashboard&file=01-%E4%B8%BB%E7%BA%BF%2F02-%E4%BB%8E%E9%9B%B6%E5%88%B0Python%20MVP%E5%AD%A6%E4%B9%A0%E8%B7%AF%E7%BA%BF"
+      "url": "obsidian://open?vault=RK3568&file=01-%E4%B8%BB%E7%BA%BF%2F02-%E4%BB%8E%E9%9B%B6%E5%88%B0Python%20MVP%E5%AD%A6%E4%B9%A0%E8%B7%AF%E7%BA%BF"
     },
     {
       "name": "dailyRecord",
       "filePath": "05-实验与证据/02-每日进度记录.md",
-      "url": "obsidian://open?vault=rk3568-hybrid-dashboard&file=05-%E5%AE%9E%E9%AA%8C%E4%B8%8E%E8%AF%81%E6%8D%AE%2F02-%E6%AF%8F%E6%97%A5%E8%BF%9B%E5%BA%A6%E8%AE%B0%E5%BD%95"
+      "url": "obsidian://open?vault=RK3568&file=05-%E5%AE%9E%E9%AA%8C%E4%B8%8E%E8%AF%81%E6%8D%AE%2F02-%E6%AF%8F%E6%97%A5%E8%BF%9B%E5%BA%A6%E8%AE%B0%E5%BD%95"
     },
     {
       "name": "acceptance",
       "filePath": "07-专项笔记/系统/AI Camera分阶段验收标准.md",
-      "url": "obsidian://open?vault=rk3568-hybrid-dashboard&file=07-%E4%B8%93%E9%A1%B9%E7%AC%94%E8%AE%B0%2F%E7%B3%BB%E7%BB%9F%2FAI%20Camera%E5%88%86%E9%98%B6%E6%AE%B5%E9%AA%8C%E6%94%B6%E6%A0%87%E5%87%86"
+      "url": "obsidian://open?vault=RK3568&file=07-%E4%B8%93%E9%A1%B9%E7%AC%94%E8%AE%B0%2F%E7%B3%BB%E7%BB%9F%2FAI%20Camera%E5%88%86%E9%98%B6%E6%AE%B5%E9%AA%8C%E6%94%B6%E6%A0%87%E5%87%86"
     },
     {
       "name": "project",
       "filePath": "04-项目/01-RK3568 YOLOv8n AI Camera项目.md",
-      "url": "obsidian://open?vault=rk3568-hybrid-dashboard&file=04-%E9%A1%B9%E7%9B%AE%2F01-RK3568%20YOLOv8n%20AI%20Camera%E9%A1%B9%E7%9B%AE"
+      "url": "obsidian://open?vault=RK3568&file=04-%E9%A1%B9%E7%9B%AE%2F01-RK3568%20YOLOv8n%20AI%20Camera%E9%A1%B9%E7%9B%AE"
     },
     {
       "name": "demo",
       "filePath": "04-项目/03-Python MVP演示手册.md",
-      "url": "obsidian://open?vault=rk3568-hybrid-dashboard&file=04-%E9%A1%B9%E7%9B%AE%2F03-Python%20MVP%E6%BC%94%E7%A4%BA%E6%89%8B%E5%86%8C"
+      "url": "obsidian://open?vault=RK3568&file=04-%E9%A1%B9%E7%9B%AE%2F03-Python%20MVP%E6%BC%94%E7%A4%BA%E6%89%8B%E5%86%8C"
     },
     {
       "name": "evidenceMoc",
       "filePath": "05-实验与证据/00-实验与证据入口.md",
-      "url": "obsidian://open?vault=rk3568-hybrid-dashboard&file=05-%E5%AE%9E%E9%AA%8C%E4%B8%8E%E8%AF%81%E6%8D%AE%2F00-%E5%AE%9E%E9%AA%8C%E4%B8%8E%E8%AF%81%E6%8D%AE%E5%85%A5%E5%8F%A3"
+      "url": "obsidian://open?vault=RK3568&file=05-%E5%AE%9E%E9%AA%8C%E4%B8%8E%E8%AF%81%E6%8D%AE%2F00-%E5%AE%9E%E9%AA%8C%E4%B8%8E%E8%AF%81%E6%8D%AE%E5%85%A5%E5%8F%A3"
     },
     {
       "name": "outputMoc",
       "filePath": "09-输出沉淀/00-输出沉淀入口.md",
-      "url": "obsidian://open?vault=rk3568-hybrid-dashboard&file=09-%E8%BE%93%E5%87%BA%E6%B2%89%E6%B7%80%2F00-%E8%BE%93%E5%87%BA%E6%B2%89%E6%B7%80%E5%85%A5%E5%8F%A3"
+      "url": "obsidian://open?vault=RK3568&file=09-%E8%BE%93%E5%87%BA%E6%B2%89%E6%B7%80%2F00-%E8%BE%93%E5%87%BA%E6%B2%89%E6%B7%80%E5%85%A5%E5%8F%A3"
     }
   ],
   "warnings": [
@@ -272,10 +305,6 @@ window.RK3568_VAULT_DATA = {
     "Unknown stage status: 8 RTMP/HLS",
     "Unknown stage status: 9 Python MVP",
     "Unknown stage status: 10 C++ 工程化",
-    "Missing optional evidence asset: 5.png",
-    "Missing optional evidence asset: bus.jpg",
-    "Missing optional evidence asset: scrfd_result.jpg",
-    "Missing optional evidence asset: yolov5_result.jpg",
     "Evidence has unknown stage: yolo_hls_pull_test.mp4",
     "Evidence has unknown stage: yolo_hls_pull_test_frame.jpg",
     "Evidence has unknown stage: yolov5_camera_raw.jpg",

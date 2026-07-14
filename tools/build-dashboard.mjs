@@ -8,6 +8,8 @@ const PATHS = {
   evidenceIndex: '05-实验与证据/实验产物/01-实验产物索引.md',
   evidenceAssets: '05-实验与证据/实验产物/assets',
 };
+const DASHBOARD_DIRECTORY = '00-首页/学习驾驶舱';
+const DEFAULT_VAULT_NAME = 'RK3568';
 
 const DOMAIN_MAP = [
   ['Camera', '07-专项笔记/Camera-V4L2/IMX415驱动调试与最小demo路线.md'],
@@ -164,6 +166,22 @@ function evidenceType(fileName) {
   return 'file';
 }
 
+function evidenceMediaType(fileName) {
+  const extension = path.extname(fileName).toLowerCase();
+  return {
+    '.gif': 'image/gif',
+    '.jpeg': 'image/jpeg',
+    '.jpg': 'image/jpeg',
+    '.mkv': 'video/x-matroska',
+    '.mov': 'video/quicktime',
+    '.mp4': 'video/mp4',
+    '.png': 'image/png',
+    '.svg': 'image/svg+xml',
+    '.webm': 'video/webm',
+    '.webp': 'image/webp',
+  }[extension] ?? 'application/octet-stream';
+}
+
 function compareCodePoints(left, right) {
   const leftPoints = [...left.normalize('NFC')].map((value) => value.codePointAt(0));
   const rightPoints = [...right.normalize('NFC')].map((value) => value.codePointAt(0));
@@ -255,30 +273,30 @@ async function indexEvidence(rootDir, markdown) {
   }
 
   const stages = new Map();
-  const referenced = new Set();
   for (const section of splitEvidenceSections(markdown)) {
     const stageLabel = evidenceStage(section);
     const contents = section.lines.join('\n');
     const sectionTargets = new Set(extractEvidenceTargets(contents));
     for (const name of sectionTargets) {
-      referenced.add(name);
       if (!assets.has(name)) continue;
       if (!stages.has(name) || stages.get(name) === 'unknown') stages.set(name, stageLabel);
     }
   }
 
-  for (const name of [...referenced].filter((value) => !assets.has(value)).sort(compareCodePoints)) {
-    warnings.push(`Missing optional evidence asset: ${name}`);
-  }
-
   const evidence = [...assets.values()]
     .sort(compareCodePoints)
-    .map((name) => ({
-      name,
-      type: evidenceType(name),
-      sourcePath: PATHS.evidenceIndex,
-      stageLabel: stages.get(name) ?? 'unknown',
-    }));
+    .map((name) => {
+      const vaultPath = path.posix.join(PATHS.evidenceAssets, name);
+      return {
+        name,
+        type: evidenceType(name),
+        mediaType: evidenceMediaType(name),
+        assetPath: path.posix.relative(DASHBOARD_DIRECTORY, vaultPath),
+        vaultPath,
+        sourcePath: PATHS.evidenceIndex,
+        stageLabel: stages.get(name) ?? 'unknown',
+      };
+    });
   for (const item of evidence) {
     if (item.stageLabel === 'unknown') warnings.push(`Evidence has unknown stage: ${item.name}`);
   }
@@ -286,7 +304,7 @@ async function indexEvidence(rootDir, markdown) {
   return { evidence, warnings };
 }
 
-export async function buildDashboardData(rootDir) {
+export async function buildDashboardData(rootDir, vaultName = DEFAULT_VAULT_NAME) {
   const sources = await Promise.all([
     readOptional(rootDir, PATHS.taskBoard, 'task board'),
     readOptional(rootDir, PATHS.acceptance, 'acceptance table'),
@@ -305,8 +323,7 @@ export async function buildDashboardData(rootDir) {
 
   const evidenceResult = await indexEvidence(rootDir, evidenceIndex);
   warnings.push(...evidenceResult.warnings);
-  const vault = path.basename(path.resolve(rootDir));
-  const link = ([name, filePath]) => ({ name, filePath, url: buildObsidianUrl(vault, filePath) });
+  const link = ([name, filePath]) => ({ name, filePath, url: buildObsidianUrl(vaultName, filePath) });
 
   return {
     currentStage,

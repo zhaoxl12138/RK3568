@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { afterEach, beforeEach, test } from 'node:test';
-import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { access, mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -216,6 +216,46 @@ OpenCV 读取 Camera。
   assert.equal(data.warnings.filter((warning) => warning.includes('yolo_hls_pull_test_frame.jpg')).length, 1);
 });
 
+test('buildDashboardData emits resolvable browser and vault paths with media metadata', async () => {
+  await Promise.all([
+    writeFixture('05-实验与证据/实验产物/01-实验产物索引.md', `
+### 1. Gallery media
+![[assets/opencv_frame.jpg]]
+![[assets/demo.mp4]]
+用到阶段：Stage media
+`),
+    writeFixture('05-实验与证据/实验产物/assets/opencv_frame.jpg', 'image'),
+    writeFixture('05-实验与证据/实验产物/assets/demo.mp4', 'video'),
+  ]);
+
+  const data = await buildDashboardData(vaultDir);
+  const dashboardDir = path.join(vaultDir, '00-首页/学习驾驶舱');
+
+  assert.deepEqual(data.evidence.map((item) => ({
+    name: item.name,
+    type: item.type,
+    mediaType: item.mediaType,
+    vaultPath: item.vaultPath,
+    assetPath: item.assetPath,
+  })), [
+    {
+      name: 'demo.mp4',
+      type: 'video',
+      mediaType: 'video/mp4',
+      vaultPath: '05-实验与证据/实验产物/assets/demo.mp4',
+      assetPath: '../../05-实验与证据/实验产物/assets/demo.mp4',
+    },
+    {
+      name: 'opencv_frame.jpg',
+      type: 'image',
+      mediaType: 'image/jpeg',
+      vaultPath: '05-实验与证据/实验产物/assets/opencv_frame.jpg',
+      assetPath: '../../05-实验与证据/实验产物/assets/opencv_frame.jpg',
+    },
+  ]);
+  await Promise.all(data.evidence.map((item) => access(path.resolve(dashboardDir, item.assetPath))));
+});
+
 test('buildDashboardData sorts normalized evidence names and warnings deterministically', async () => {
   await Promise.all([
     writeFixture('05-实验与证据/实验产物/01-实验产物索引.md', `
@@ -271,7 +311,29 @@ test('buildDashboardData matches exact case-sensitive basenames without substrin
   ]);
   assert.equal(data.warnings.filter((warning) => warning.includes('foo.jpg')).length, 1);
   assert.ok(data.warnings.includes('Evidence has unknown stage: foo.jpg'));
-  assert.ok(data.warnings.includes('Missing optional evidence asset: FOO.jpg'));
+  assert.equal(data.warnings.some((warning) => warning.includes('FOO.jpg')), false);
+});
+
+test('buildDashboardData ignores temp and historical filenames absent from gallery assets', async () => {
+  await Promise.all([
+    writeFixture('05-实验与证据/实验产物/01-实验产物索引.md', `
+### 1. Gallery asset
+![[assets/opencv_frame.jpg]]
+用到阶段：Stage gallery
+
+### 历史输入与临时输出
+5.png
+bus.jpg
+/tmp/scrfd_result.jpg
+E:\\temp\\yolov5_result.jpg
+`),
+    writeFixture('05-实验与证据/实验产物/assets/opencv_frame.jpg', 'image'),
+  ]);
+
+  const data = await buildDashboardData(vaultDir);
+
+  assert.deepEqual(data.evidence.map(({ name }) => name), ['opencv_frame.jpg']);
+  assert.equal(data.warnings.some((warning) => /5\.png|bus\.jpg|scrfd_result\.jpg|yolov5_result\.jpg/u.test(warning)), false);
 });
 
 test('buildObsidianUrl separately encodes the Chinese vault and normalized file path', () => {
@@ -307,6 +369,7 @@ test('buildDashboardData returns the dashboard shape and warns for missing optio
     'Camera', 'OpenCV', 'RKNN', 'Display', 'Streaming', 'System',
   ]);
   assert.equal(data.quickLinks.length, 8);
+  assert.ok([...data.domains, ...data.quickLinks].every(({ url }) => url.includes('vault=RK3568&')));
   assert.ok(data.warnings.some((warning) => warning.includes('evidence')));
 });
 
@@ -318,6 +381,9 @@ test('writeDashboardData emits a valid pretty JSON assignment with the required 
 
   assert.ok(emitted.startsWith(prefix));
   assert.equal(emitted, `${prefix}${JSON.stringify(JSON.parse(emitted.slice(prefix.length, -2)), null, 2)};\n`);
+  assert.ok(JSON.parse(emitted.slice(prefix.length, -2)).quickLinks.every(
+    ({ url }) => url.includes('vault=RK3568&'),
+  ));
 });
 
 test('CLI rejects unknown options and nonexistent roots concisely with nonzero exits', async () => {
