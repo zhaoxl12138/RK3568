@@ -1,5 +1,3 @@
-const data = window.RK3568_VAULT_DATA;
-
 const byId = (id) => document.getElementById(id);
 const asArray = (value) => Array.isArray(value) ? value : [];
 
@@ -228,6 +226,13 @@ function openObsidian(url, fallbackPath) {
   if (typeof url === 'string' && url.startsWith('obsidian://')) window.location.href = url;
 }
 
+function handleObsidianAction(event) {
+  if (!(event.target instanceof Element)) return;
+  const trigger = event.target.closest('[data-obsidian-url][data-fallback-path]');
+  if (!trigger) return;
+  openObsidian(trigger.dataset.obsidianUrl, trigger.dataset.fallbackPath);
+}
+
 function showFatalError(error) {
   const alert = byId('data-alert');
   alert.hidden = false;
@@ -239,6 +244,7 @@ function showFatalError(error) {
 }
 
 function start() {
+  const data = window.RK3568_VAULT_DATA;
   try {
     if (!data || typeof data !== 'object') throw new Error('未找到 window.RK3568_VAULT_DATA');
     renderCurrentState(data);
@@ -253,5 +259,14 @@ function start() {
   }
 }
 
-byId('fallback-close').addEventListener('click', () => { byId('obsidian-fallback').hidden = true; });
-start();
+function initialize() {
+  byId('fallback-close').addEventListener('click', () => { byId('obsidian-fallback').hidden = true; });
+  document.addEventListener('click', handleObsidianAction);
+  start();
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initialize, { once: true });
+} else {
+  initialize();
+}
