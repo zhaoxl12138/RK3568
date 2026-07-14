@@ -438,6 +438,8 @@ git commit -m "feat: generate RK3568 dashboard data from Markdown"
 <script type="module" src="./app.js"></script>
 ```
 
+实施说明（2026-07-13）：最终应用改用经典 `defer` 脚本加载 `app.js`，而非模块脚本；直接通过 `file://` 打开是核心要求，浏览器会阻止该场景下的模块加载。
+
 - [ ] **Step 2: 实现渲染和导航**
 
 `app.js` 必须提供：
