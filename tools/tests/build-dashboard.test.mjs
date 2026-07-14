@@ -248,6 +248,32 @@ test('buildDashboardData sorts normalized evidence names and warnings determinis
   ]);
 });
 
+test('buildDashboardData matches exact case-sensitive basenames without substring collisions', async () => {
+  await Promise.all([
+    writeFixture('05-实验与证据/实验产物/01-实验产物索引.md', `
+### 1. Referenced lowercase asset
+![[assets/myfoo.jpg]]
+用到阶段：Stage lowercase
+
+### 2. Wrong-case reference
+![[assets/FOO.jpg]]
+用到阶段：Wrong case
+`),
+    writeFixture('05-实验与证据/实验产物/assets/foo.jpg', 'image'),
+    writeFixture('05-实验与证据/实验产物/assets/myfoo.jpg', 'image'),
+  ]);
+
+  const data = await buildDashboardData(vaultDir);
+
+  assert.deepEqual(data.evidence.map(({ name, stageLabel }) => ({ name, stageLabel })), [
+    { name: 'foo.jpg', stageLabel: 'unknown' },
+    { name: 'myfoo.jpg', stageLabel: 'Stage lowercase' },
+  ]);
+  assert.equal(data.warnings.filter((warning) => warning.includes('foo.jpg')).length, 1);
+  assert.ok(data.warnings.includes('Evidence has unknown stage: foo.jpg'));
+  assert.ok(data.warnings.includes('Missing optional evidence asset: FOO.jpg'));
+});
+
 test('buildObsidianUrl separately encodes the Chinese vault and normalized file path', () => {
   assert.equal(
     buildObsidianUrl('RK3568 学习库', '07-专项笔记\\系统\\AI Camera分阶段验收标准.md'),

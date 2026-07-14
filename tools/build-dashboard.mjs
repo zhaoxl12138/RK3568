@@ -184,6 +184,10 @@ function normalizeEvidenceName(target) {
   return normalized.split('/').at(-1).normalize('NFC');
 }
 
+function isEvidenceFileName(name) {
+  return /\.(?:jpg|jpeg|png|gif|webp|svg|mp4|webm|mov|mkv)$/iu.test(name);
+}
+
 function extractEvidenceTargets(markdown) {
   const targets = [];
   for (const match of markdown.matchAll(/!\[\[([^\]]+)\]\]/gu)) {
@@ -192,7 +196,10 @@ function extractEvidenceTargets(markdown) {
   for (const match of markdown.matchAll(/\[[^\]]*\]\(([^)]+)\)/gu)) {
     targets.push(normalizeEvidenceName(match[1]));
   }
-  return targets.filter((name) => /\.[a-z0-9]+$/iu.test(name));
+  for (const match of markdown.matchAll(/(?:^|[\s`"'(<\[])([^\s`"'()<>\[\]|]+\.(?:jpg|jpeg|png|gif|webp|svg|mp4|webm|mov|mkv))(?=$|[\s`"'<>),\]|，。；：])/gimu)) {
+    targets.push(normalizeEvidenceName(match[1]));
+  }
+  return targets.filter(isEvidenceFileName);
 }
 
 function splitEvidenceSections(markdown) {
@@ -252,11 +259,7 @@ async function indexEvidence(rootDir, markdown) {
   for (const section of splitEvidenceSections(markdown)) {
     const stageLabel = evidenceStage(section);
     const contents = section.lines.join('\n');
-    const normalizedContents = contents.replace(/\\/gu, '/').normalize('NFC');
     const sectionTargets = new Set(extractEvidenceTargets(contents));
-    for (const name of assets.keys()) {
-      if (normalizedContents.includes(name)) sectionTargets.add(name);
-    }
     for (const name of sectionTargets) {
       referenced.add(name);
       if (!assets.has(name)) continue;
