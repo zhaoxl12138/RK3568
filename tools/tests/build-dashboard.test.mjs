@@ -65,6 +65,25 @@ test('parseTaskBoard gets the current stage and checkbox text from named section
   ]);
 });
 
+test('parseTaskBoard supports CRLF and uppercase checkbox markers', () => {
+  const parsed = parseTaskBoard([
+    '## 当前阶段',
+    '- 阶段：阶段 2：Camera/V4L2',
+    '',
+    '## 本轮唯一任务',
+    '- [X] 检查 media topology',
+    '- [ ] 抓取 NV12 原始帧',
+    '',
+    '## 阶段验收',
+  ].join('\r\n'));
+
+  assert.equal(parsed.currentStage, '阶段 2：Camera/V4L2');
+  assert.deepEqual(parsed.currentTasks, [
+    { completed: true, text: '检查 media topology' },
+    { completed: false, text: '抓取 NV12 原始帧' },
+  ]);
+});
+
 test('parseStageTable parses rows from the current acceptance Markdown table', () => {
   const stages = parseStageTable(`
 ## 阶段总表
@@ -96,6 +115,44 @@ test('parseStageTable parses rows from the current acceptance Markdown table', (
   ]);
 });
 
+test('parseStageTable supports optional pipes and escaped pipes inside cells', () => {
+  const stages = parseStageTable(`
+## 阶段总表
+阶段 | 要回答的问题 | 最小输出证据 | 通过标准 | 证据入口
+--- | --- | --- | --- | ---
+0 系统地图 | 数据 \\| 控制怎样流动 | 数据流图 | 说明边界 | [[系统地图]]
+| 1 Buildroot 验机 | 系统是否可用 | 串口日志 | 区分故障层 | [[验机记录]] |
+`);
+
+  assert.equal(stages.length, 2);
+  assert.equal(stages[0].question, '数据 | 控制怎样流动');
+  assert.equal(stages[1].evidenceEntry, '[[验机记录]]');
+});
+
+test('parseStageTable ignores fenced examples and stops after the first relevant table', () => {
+  const stages = parseStageTable(`
+## 阶段总表
+
+\`\`\`markdown
+| 阶段 | 要回答的问题 | 最小输出证据 | 通过标准 | 证据入口 |
+|---|---|---|---|---|
+| 99 示例 | 不应读取 | 示例 | 示例 | [[示例]] |
+\`\`\`
+
+| 阶段 | 要回答的问题 | 最小输出证据 | 通过标准 | 证据入口 |
+|---|---|---|---|---|
+| 0 系统地图 | 数据怎样流动 | 数据流图 | 说明边界 | [[系统地图]] |
+
+### 后续示例
+
+| 阶段 | 要回答的问题 | 最小输出证据 | 通过标准 | 证据入口 |
+|---|---|---|---|---|
+| 88 后续表格 | 不应吸收 | 示例 | 示例 | [[后续]] |
+`);
+
+  assert.deepEqual(stages.map(({ id }) => id), ['0']);
+});
+
 test('buildDashboardData indexes evidence assets with stage labels and warns for unknown stages', async () => {
   await Promise.all([
     writeFixture('05-实验与证据/实验产物/01-实验产物索引.md', `
@@ -116,6 +173,79 @@ test('buildDashboardData indexes evidence assets with stage labels and warns for
     { name: 'opencv_frame.jpg', stageLabel: '阶段 4 OpenCV', type: 'image' },
   ]);
   assert.ok(data.warnings.some((warning) => warning.includes('demo.mp4')));
+});
+
+test('buildDashboardData parses realistic evidence sections, later stage fields, and embed aliases', async () => {
+  await Promise.all([
+    writeFixture('05-实验与证据/实验产物/01-实验产物索引.md', `
+## 关键实验产物
+
+### 1. OpenCV单帧JPG
+
+仓库内备份：
+
+\`\`\`text
+05-实验与证据\\实验产物\\assets\\opencv_frame_gst.jpg
+\`\`\`
+
+图片预览：
+
+![[assets\\opencv_frame_gst.jpg|OpenCV frame|640x480]]
+
+用到阶段：
+
+\`\`\`text
+OpenCV 读取 Camera。
+\`\`\`
+
+### 2. 网络拉流结果
+
+![[assets/yolo_hls_pull_test_frame.jpg|480]]
+`),
+    writeFixture('05-实验与证据/实验产物/assets/opencv_frame_gst.jpg', 'image'),
+    writeFixture('05-实验与证据/实验产物/assets/yolo_hls_pull_test_frame.jpg', 'image'),
+  ]);
+
+  const data = await buildDashboardData(vaultDir);
+
+  assert.deepEqual(data.evidence.map(({ name, stageLabel }) => ({ name, stageLabel })), [
+    { name: 'opencv_frame_gst.jpg', stageLabel: 'OpenCV 读取 Camera。' },
+    { name: 'yolo_hls_pull_test_frame.jpg', stageLabel: 'unknown' },
+  ]);
+  assert.equal(data.warnings.some((warning) => warning.includes('opencv_frame_gst.jpg')), false);
+  assert.equal(data.warnings.filter((warning) => warning.includes('yolo_hls_pull_test_frame.jpg')).length, 1);
+});
+
+test('buildDashboardData sorts normalized evidence names and warnings deterministically', async () => {
+  await Promise.all([
+    writeFixture('05-实验与证据/实验产物/01-实验产物索引.md', `
+### 1. 无阶段
+![[assets\\中.jpg|300]]
+![[assets/a.jpg|别名]]
+![[assets\\é.jpg]]
+![[assets/é.jpg]]
+![[assets/a.jpg|重复]]
+`),
+    writeFixture('05-实验与证据/实验产物/assets/中.jpg', 'image'),
+    writeFixture('05-实验与证据/实验产物/assets/a.jpg', 'image'),
+    writeFixture('05-实验与证据/实验产物/assets/é.jpg', 'image'),
+  ]);
+
+  const first = await buildDashboardData(vaultDir);
+  const second = await buildDashboardData(vaultDir);
+
+  assert.deepEqual(first.evidence.map(({ name }) => name), ['a.jpg', 'é.jpg', '中.jpg']);
+  assert.deepEqual(first.warnings, second.warnings);
+  assert.deepEqual(first.warnings.slice(0, 2), [
+    'Missing optional task board: 06-任务/01-下一步任务看板.md',
+    'Missing optional acceptance table: 07-专项笔记/系统/AI Camera分阶段验收标准.md',
+  ]);
+  assert.equal(new Set(first.warnings).size, first.warnings.length);
+  assert.deepEqual(first.warnings.slice(-3), [
+    'Evidence has unknown stage: a.jpg',
+    'Evidence has unknown stage: é.jpg',
+    'Evidence has unknown stage: 中.jpg',
+  ]);
 });
 
 test('buildObsidianUrl separately encodes the Chinese vault and normalized file path', () => {
@@ -167,9 +297,22 @@ test('writeDashboardData emits a valid pretty JSON assignment with the required 
 test('CLI rejects unknown options and nonexistent roots concisely with nonzero exits', async () => {
   const unknown = await runCli('--unknown');
   const missing = await runCli('--root', path.join(vaultDir, 'missing'));
+  const extra = await runCli(vaultDir, 'extra');
 
   assert.deepEqual(unknown, { code: 2, stderr: 'Unknown option: --unknown\n', stdout: '' });
   assert.equal(missing.code, 2);
   assert.equal(missing.stdout, '');
   assert.match(missing.stderr, /^Root directory not found: .+\n$/u);
+  assert.deepEqual(extra, { code: 2, stderr: 'Unexpected argument: extra\n', stdout: '' });
+});
+
+test('CLI accepts a positional vault root and writes the default output', async () => {
+  const result = await runCli(vaultDir);
+  const output = await readFile(
+    path.join(vaultDir, '00-首页/学习驾驶舱/generated/vault-data.js'),
+    'utf8',
+  );
+
+  assert.deepEqual(result, { code: 0, stderr: '', stdout: '' });
+  assert.ok(output.startsWith('window.RK3568_VAULT_DATA = '));
 });

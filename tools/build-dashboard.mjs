@@ -1,4 +1,4 @@
-import { access, mkdir, readFile, readdir, stat, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, readdir, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -60,14 +60,68 @@ export function parseTaskBoard(markdown) {
   return { currentStage, currentTasks };
 }
 
-export function parseStageTable(markdown) {
-  const table = section(markdown, '阶段总表');
-  const lines = table.split(/\r?\n/u).filter((line) => line.trim().startsWith('|'));
-  if (lines.length < 3) return [];
+function splitMarkdownRow(line) {
+  let value = line.trim();
+  if (value.startsWith('|')) value = value.slice(1);
+  if (/(?<!\\)\|\s*$/u.test(value)) value = value.replace(/(?<!\\)\|\s*$/u, '');
 
-  const headers = lines[0].split('|').slice(1, -1).map((value) => value.trim());
-  return lines.slice(2).map((line) => {
-    const cells = line.split('|').slice(1, -1).map((value) => value.trim());
+  const cells = [];
+  let cell = '';
+  for (let index = 0; index < value.length; index += 1) {
+    if (value[index] === '\\' && value[index + 1] === '|') {
+      cell += '|';
+      index += 1;
+    } else if (value[index] === '|') {
+      cells.push(cell.trim());
+      cell = '';
+    } else {
+      cell += value[index];
+    }
+  }
+  cells.push(cell.trim());
+  return cells;
+}
+
+function isDelimiterRow(cells) {
+  return cells.length > 0 && cells.every((cell) => /^:?-{3,}:?$/u.test(cell));
+}
+
+export function parseStageTable(markdown) {
+  const lines = markdown.split(/\r?\n/u);
+  const requiredHeaders = ['阶段', '要回答的问题', '最小输出证据', '通过标准', '证据入口'];
+  let inFence = false;
+  let inSection = false;
+  let headers = null;
+  const rows = [];
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
+    if (/^\s*(?:```|~~~)/u.test(line)) {
+      inFence = !inFence;
+      continue;
+    }
+    if (inFence) continue;
+    if (!inSection) {
+      if (/^##\s+阶段总表\s*$/u.test(line)) inSection = true;
+      continue;
+    }
+    if (/^##\s+/u.test(line)) break;
+
+    const cells = splitMarkdownRow(line);
+    if (!headers) {
+      if (!requiredHeaders.every((header) => cells.includes(header))) continue;
+      const delimiter = splitMarkdownRow(lines[index + 1] ?? '');
+      if (delimiter.length !== cells.length || !isDelimiterRow(delimiter)) continue;
+      headers = cells;
+      index += 1;
+      continue;
+    }
+    if (!line.trim() || !line.includes('|')) break;
+    rows.push(cells);
+  }
+
+  if (!headers) return [];
+  return rows.map((cells) => {
     const values = Object.fromEntries(headers.map((header, index) => [header, cells[index] ?? '']));
     const label = values['阶段'] ?? '';
     return {
@@ -87,13 +141,20 @@ export function buildObsidianUrl(vault, filePath) {
   return `obsidian://open?vault=${encodeURIComponent(vault)}&file=${encodeURIComponent(normalizedPath)}`;
 }
 
-async function readOptional(rootDir, relativePath, warnings, description) {
+async function readOptional(rootDir, relativePath, description) {
   try {
-    return await readFile(path.join(rootDir, ...relativePath.split('/')), 'utf8');
+    return {
+      contents: await readFile(path.join(rootDir, ...relativePath.split('/')), 'utf8'),
+      warnings: [],
+    };
   } catch (error) {
-    if (error.code === 'ENOENT') warnings.push(`Missing optional ${description}: ${relativePath}`);
+    if (error.code === 'ENOENT') {
+      return {
+        contents: '',
+        warnings: [`Missing optional ${description}: ${relativePath}`],
+      };
+    }
     else throw error;
-    return '';
   }
 }
 
@@ -103,47 +164,133 @@ function evidenceType(fileName) {
   return 'file';
 }
 
-async function indexEvidence(rootDir, markdown, warnings) {
-  if (!markdown) return [];
-  const sourcePath = PATHS.evidenceIndex;
+function compareCodePoints(left, right) {
+  const leftPoints = [...left.normalize('NFC')].map((value) => value.codePointAt(0));
+  const rightPoints = [...right.normalize('NFC')].map((value) => value.codePointAt(0));
+  const length = Math.min(leftPoints.length, rightPoints.length);
+  for (let index = 0; index < length; index += 1) {
+    if (leftPoints[index] !== rightPoints[index]) return leftPoints[index] - rightPoints[index];
+  }
+  return leftPoints.length - rightPoints.length;
+}
+
+function normalizeEvidenceName(target) {
+  const normalized = target
+    .trim()
+    .replace(/^<|>$/gu, '')
+    .split('|', 1)[0]
+    .replace(/\\/gu, '/')
+    .split(/[?#]/u, 1)[0];
+  return normalized.split('/').at(-1).normalize('NFC');
+}
+
+function extractEvidenceTargets(markdown) {
+  const targets = [];
+  for (const match of markdown.matchAll(/!\[\[([^\]]+)\]\]/gu)) {
+    targets.push(normalizeEvidenceName(match[1]));
+  }
+  for (const match of markdown.matchAll(/\[[^\]]*\]\(([^)]+)\)/gu)) {
+    targets.push(normalizeEvidenceName(match[1]));
+  }
+  return targets.filter((name) => /\.[a-z0-9]+$/iu.test(name));
+}
+
+function splitEvidenceSections(markdown) {
   const lines = markdown.split(/\r?\n/u);
-  let stageLabel = 'unknown';
-  const evidence = [];
-  const linkedNames = new Set();
+  const sections = [{ heading: '', lines: [] }];
+  let inFence = false;
 
   for (const line of lines) {
-    const isHeading = /^#{3,}\s+/u.test(line);
-    const heading = line.match(/^#{3,}\s+(阶段\s*\d+.+)$/u);
-    if (isHeading) stageLabel = heading ? heading[1].trim() : 'unknown';
-    for (const match of line.matchAll(/!\[\[([^\]]+)\]\]|\[[^\]]+\]\((?:assets\/)?([^\)]+)\)/gu)) {
-      const name = path.basename(match[1] ?? match[2]);
-      if (linkedNames.has(name)) continue;
-      linkedNames.add(name);
-      const assetPath = path.join(rootDir, ...PATHS.evidenceAssets.split('/'), name);
-      try {
-        await access(assetPath);
-      } catch (error) {
-        if (error.code === 'ENOENT') {
-          warnings.push(`Missing optional evidence asset: ${name}`);
-          continue;
-        }
-        throw error;
-      }
-      if (stageLabel === 'unknown') warnings.push(`Evidence has unknown stage: ${name}`);
-      evidence.push({ name, type: evidenceType(name), sourcePath, stageLabel });
+    if (/^\s*(?:```|~~~)/u.test(line)) inFence = !inFence;
+    const heading = !inFence ? line.match(/^###\s+(.+?)\s*$/u) : null;
+    if (heading) {
+      sections.push({ heading: heading[1], lines: [] });
+    } else {
+      sections.at(-1).lines.push(line);
+    }
+  }
+  return sections;
+}
+
+function evidenceStage(section) {
+  for (let index = 0; index < section.lines.length; index += 1) {
+    const field = section.lines[index].match(/^\s*用到阶段：\s*(.*?)\s*$/u);
+    if (!field) continue;
+    if (field[1]) return field[1];
+    for (const candidate of section.lines.slice(index + 1)) {
+      const value = candidate.trim();
+      if (!value || /^(?:```|~~~)/u.test(value)) continue;
+      return value;
+    }
+  }
+  return section.heading.match(/^(阶段\s*\d+.+)$/u)?.[1].trim() ?? 'unknown';
+}
+
+async function indexEvidence(rootDir, markdown) {
+  const warnings = [];
+  let entries;
+  try {
+    entries = await readdir(path.join(rootDir, ...PATHS.evidenceAssets.split('/')), { withFileTypes: true });
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      return {
+        evidence: [],
+        warnings: [`Missing optional evidence assets: ${PATHS.evidenceAssets}`],
+      };
+    }
+    throw error;
+  }
+
+  const assets = new Map();
+  for (const entry of entries.filter((value) => value.isFile()).sort((left, right) => compareCodePoints(left.name, right.name))) {
+    const normalizedName = entry.name.normalize('NFC');
+    if (!assets.has(normalizedName)) assets.set(normalizedName, normalizedName);
+  }
+
+  const stages = new Map();
+  const referenced = new Set();
+  for (const section of splitEvidenceSections(markdown)) {
+    const stageLabel = evidenceStage(section);
+    const contents = section.lines.join('\n');
+    const normalizedContents = contents.replace(/\\/gu, '/').normalize('NFC');
+    const sectionTargets = new Set(extractEvidenceTargets(contents));
+    for (const name of assets.keys()) {
+      if (normalizedContents.includes(name)) sectionTargets.add(name);
+    }
+    for (const name of sectionTargets) {
+      referenced.add(name);
+      if (!assets.has(name)) continue;
+      if (!stages.has(name) || stages.get(name) === 'unknown') stages.set(name, stageLabel);
     }
   }
 
-  return evidence.sort((left, right) => left.name.localeCompare(right.name));
+  for (const name of [...referenced].filter((value) => !assets.has(value)).sort(compareCodePoints)) {
+    warnings.push(`Missing optional evidence asset: ${name}`);
+  }
+
+  const evidence = [...assets.values()]
+    .sort(compareCodePoints)
+    .map((name) => ({
+      name,
+      type: evidenceType(name),
+      sourcePath: PATHS.evidenceIndex,
+      stageLabel: stages.get(name) ?? 'unknown',
+    }));
+  for (const item of evidence) {
+    if (item.stageLabel === 'unknown') warnings.push(`Evidence has unknown stage: ${item.name}`);
+  }
+
+  return { evidence, warnings };
 }
 
 export async function buildDashboardData(rootDir) {
-  const warnings = [];
-  const [taskBoard, acceptance, evidenceIndex] = await Promise.all([
-    readOptional(rootDir, PATHS.taskBoard, warnings, 'task board'),
-    readOptional(rootDir, PATHS.acceptance, warnings, 'acceptance table'),
-    readOptional(rootDir, PATHS.evidenceIndex, warnings, 'evidence index'),
+  const sources = await Promise.all([
+    readOptional(rootDir, PATHS.taskBoard, 'task board'),
+    readOptional(rootDir, PATHS.acceptance, 'acceptance table'),
+    readOptional(rootDir, PATHS.evidenceIndex, 'evidence index'),
   ]);
+  const [taskBoard, acceptance, evidenceIndex] = sources.map(({ contents }) => contents);
+  const warnings = sources.flatMap((source) => source.warnings);
   const { currentStage, currentTasks } = parseTaskBoard(taskBoard);
   const stages = parseStageTable(acceptance);
   const currentId = currentStage?.match(/阶段\s*(\d+)/u)?.[1];
@@ -153,8 +300,8 @@ export async function buildDashboardData(rootDir) {
     if (stage.status === 'unknown') warnings.push(`Unknown stage status: ${stage.label}`);
   }
 
-  const evidence = await indexEvidence(rootDir, evidenceIndex, warnings);
-  if (!evidenceIndex) warnings.push('Missing optional evidence assets/index data');
+  const evidenceResult = await indexEvidence(rootDir, evidenceIndex);
+  warnings.push(...evidenceResult.warnings);
   const vault = path.basename(path.resolve(rootDir));
   const link = ([name, filePath]) => ({ name, filePath, url: buildObsidianUrl(vault, filePath) });
 
@@ -163,9 +310,9 @@ export async function buildDashboardData(rootDir) {
     currentTasks,
     stages,
     domains: DOMAIN_MAP.map(link),
-    evidence,
+    evidence: evidenceResult.evidence,
     quickLinks: QUICK_LINKS.map(link),
-    warnings,
+    warnings: [...new Set(warnings)],
   };
 }
 
@@ -179,13 +326,30 @@ export async function writeDashboardData(rootDir, outputFile) {
 async function main() {
   const args = process.argv.slice(2);
   let rootDir = process.cwd();
-  if (args.length > 0) {
-    if (args.length !== 2 || args[0] !== '--root') {
-      process.stderr.write(`Unknown option: ${args[0]}\n`);
+  if (args[0]?.startsWith('-') && args[0] !== '--root') {
+    process.stderr.write(`Unknown option: ${args[0]}\n`);
+    process.exitCode = 2;
+    return;
+  }
+  if (args[0] === '--root') {
+    if (!args[1]) {
+      process.stderr.write('Missing value for --root\n');
       process.exitCode = 2;
       return;
     }
     rootDir = args[1];
+    if (args[2]) {
+      process.stderr.write(`Unexpected argument: ${args[2]}\n`);
+      process.exitCode = 2;
+      return;
+    }
+  } else if (args[0]) {
+    rootDir = args[0];
+    if (args[1]) {
+      process.stderr.write(`Unexpected argument: ${args[1]}\n`);
+      process.exitCode = 2;
+      return;
+    }
   }
   try {
     if (!(await stat(rootDir)).isDirectory()) throw new Error('not a directory');
