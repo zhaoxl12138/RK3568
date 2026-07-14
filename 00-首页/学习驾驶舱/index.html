@@ -7,8 +7,8 @@
   <meta name="description" content="RK3568 AI Camera 本地学习驾驶舱">
   <title>RK3568 学习驾驶舱</title>
   <link rel="stylesheet" href="./styles.css">
-  <script src="./generated/vault-data.js"></script>
-  <script type="module" src="./app.js"></script>
+  <script defer src="./generated/vault-data.js"></script>
+  <script defer src="./app.js"></script>
 </head>
 <body>
   <a class="skip-link" href="#main-content">跳到主要内容</a>
@@ -21,6 +21,8 @@
     <nav class="top-nav" aria-label="移动端主导航">
       <a href="#overview">当前</a>
       <a href="#stages">阶段</a>
+      <a href="#pipeline">管线</a>
+      <a href="#domains">领域</a>
       <a href="#evidence">证据</a>
       <a href="#quick-links">记录</a>
     </nav>
@@ -33,7 +35,7 @@
         <span><strong>RK3568</strong><small>学习驾驶舱</small></span>
       </a>
       <nav class="side-nav" aria-label="主导航">
-        <a class="is-active" href="#overview"><span aria-hidden="true">01</span>当前任务</a>
+        <a class="is-active" href="#overview" aria-current="location"><span aria-hidden="true">01</span>当前任务</a>
         <a href="#stages"><span aria-hidden="true">02</span>阶段地图</a>
         <a href="#pipeline"><span aria-hidden="true">03</span>系统管线</a>
         <a href="#domains"><span aria-hidden="true">04</span>技术领域</a>
@@ -98,15 +100,6 @@
           <div>
             <h3>回到 Obsidian</h3>
             <div id="quick-link-grid" class="quick-grid"></div>
-            <button
-              class="quick-button quick-button--secondary quick-button--output"
-              type="button"
-              data-obsidian-url="obsidian://open?vault=RK3568&amp;file=04-%E9%A1%B9%E7%9B%AE%2F02-AI%20Camera%E9%A1%B9%E7%9B%AE%E8%AE%B2%E8%A7%A3%E7%A8%BF"
-              data-fallback-path="04-项目/02-AI Camera项目讲解稿.md"
-            >
-              <span>项目讲解稿</span>
-              <small>输出阅读 · 非当前任务</small>
-            </button>
           </div>
           <div>
             <h3>本地可视化</h3>
@@ -133,13 +126,13 @@
     </main>
   </div>
 
-  <aside id="obsidian-fallback" class="fallback" aria-labelledby="fallback-title" aria-live="polite" hidden>
+  <aside id="obsidian-fallback" class="fallback" role="dialog" aria-modal="false" tabindex="-1" aria-labelledby="fallback-title" aria-live="polite" hidden>
     <div>
       <strong id="fallback-title">若未打开 Obsidian</strong>
       <button id="fallback-close" class="icon-button" type="button" aria-label="关闭回退提示">×</button>
     </div>
     <p>请在仓库中打开以下路径：</p>
-    <code id="fallback-path"></code>
+    <code id="fallback-path" tabindex="0"></code>
     <button id="fallback-copy" class="button button--small" type="button">复制路径</button>
     <span id="copy-status" role="status"></span>
   </aside>

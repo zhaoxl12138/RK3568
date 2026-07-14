@@ -1,5 +1,6 @@
 const byId = (id) => document.getElementById(id);
 const asArray = (value) => Array.isArray(value) ? value : [];
+let fallbackTrigger = null;
 
 function element(tag, className, text) {
   const node = document.createElement(tag);
@@ -87,10 +88,15 @@ function renderPipeline(vaultData) {
   container.replaceChildren(list, note);
 }
 
-function obsidianButton(label, item, className = 'button') {
-  const button = element('button', className, label);
+function obsidianButton(label, item, className = 'button', description = '') {
+  const button = element('button', className);
   button.type = 'button';
-  button.addEventListener('click', () => openObsidian(item.url, item.filePath));
+  if (description) {
+    button.append(element('span', '', label), element('small', '', description));
+  } else {
+    button.textContent = label;
+  }
+  button.addEventListener('click', (event) => openObsidian(item.url, item.filePath, event.currentTarget));
   return button;
 }
 
@@ -170,15 +176,18 @@ function renderQuickLinks(vaultData) {
     acceptance: '查看阶段验收',
     activeRoute: '打开学习路线',
     project: '打开项目说明',
+    projectTalk: '项目讲解稿',
     demo: '打开演示手册',
     evidenceMoc: '打开证据入口',
     outputMoc: '打开输出入口',
   };
+  const descriptions = { projectTalk: '输出阅读 · 非当前任务' };
   const ordered = [...links].sort((left, right) => Number(actionNames.has(right.name)) - Number(actionNames.has(left.name)));
   const fragment = document.createDocumentFragment();
   for (const item of ordered) {
-    const className = actionNames.has(item.name) ? 'quick-button' : 'quick-button quick-button--secondary';
-    fragment.append(obsidianButton(labels[item.name] || item.name, item, className));
+    const outputClass = item.name === 'projectTalk' ? ' quick-button--output' : '';
+    const className = actionNames.has(item.name) ? 'quick-button' : `quick-button quick-button--secondary${outputClass}`;
+    fragment.append(obsidianButton(labels[item.name] || item.name, item, className, descriptions[item.name]));
   }
   container.replaceChildren(fragment);
 }
@@ -194,6 +203,17 @@ function renderDiagnostics(vaultData) {
     return;
   }
   list.replaceChildren(...warnings.map((warning) => element('li', '', warning)));
+}
+
+function focusAndSelectFallbackPath() {
+  const pathNode = byId('fallback-path');
+  pathNode.focus();
+  const selection = window.getSelection();
+  if (!selection) return;
+  const range = document.createRange();
+  range.selectNodeContents(pathNode);
+  selection.removeAllRanges();
+  selection.addRange(range);
 }
 
 function copyFallbackPath(path) {
@@ -213,24 +233,87 @@ function copyFallbackPath(path) {
   const operation = navigator.clipboard?.writeText
     ? navigator.clipboard.writeText(path)
     : Promise.resolve().then(legacyCopy);
-  operation.then(() => { status.textContent = '已复制'; }).catch(() => { status.textContent = '请手动选择路径复制'; });
+  operation.then(() => {
+    status.textContent = '已复制';
+  }).catch(() => {
+    focusAndSelectFallbackPath();
+    status.textContent = '复制失败。路径已选中，请使用系统复制快捷键复制。';
+  });
 }
 
-function openObsidian(url, fallbackPath) {
+function closeObsidianFallback() {
+  const fallback = byId('obsidian-fallback');
+  if (fallback.hidden) return;
+  fallback.hidden = true;
+  const trigger = fallbackTrigger;
+  fallbackTrigger = null;
+  if (trigger && typeof trigger.focus === 'function' && document.contains(trigger)) trigger.focus();
+}
+
+function openObsidian(url, fallbackPath, trigger) {
   const fallback = byId('obsidian-fallback');
   const path = String(fallbackPath || '未提供路径');
+  fallbackTrigger = trigger instanceof HTMLElement
+    ? trigger
+    : (document.activeElement instanceof HTMLElement ? document.activeElement : null);
   byId('fallback-path').textContent = path;
   byId('copy-status').textContent = '';
   fallback.hidden = false;
   byId('fallback-copy').onclick = () => copyFallbackPath(path);
+  byId('fallback-close').focus();
   if (typeof url === 'string' && url.startsWith('obsidian://')) window.location.href = url;
 }
 
-function handleObsidianAction(event) {
-  if (!(event.target instanceof Element)) return;
-  const trigger = event.target.closest('[data-obsidian-url][data-fallback-path]');
-  if (!trigger) return;
-  openObsidian(trigger.dataset.obsidianUrl, trigger.dataset.fallbackPath);
+function handleFallbackKeydown(event) {
+  if (event.key === 'Escape' && !byId('obsidian-fallback').hidden) {
+    event.preventDefault();
+    closeObsidianFallback();
+  }
+}
+
+function setupScrollSpy() {
+  const links = [...document.querySelectorAll('.side-nav a[href^="#"]')];
+  const sections = links.map((link) => byId(link.hash.slice(1))).filter(Boolean);
+  if (!links.length || !sections.length) return;
+
+  const setActive = (id) => {
+    for (const link of links) {
+      const active = link.hash === `#${id}`;
+      link.classList.toggle('is-active', active);
+      if (active) link.setAttribute('aria-current', 'location');
+      else link.removeAttribute('aria-current');
+    }
+  };
+  const update = () => {
+    const marker = Math.min(180, window.innerHeight * 0.3);
+    let current = sections[0];
+    for (const section of sections) {
+      if (section.getBoundingClientRect().top <= marker) current = section;
+      else break;
+    }
+    if (window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 2) {
+      current = sections[sections.length - 1];
+    }
+    setActive(current.id);
+  };
+
+  links.forEach((link) => link.addEventListener('click', () => setActive(link.hash.slice(1))));
+  if ('IntersectionObserver' in window) {
+    const observer = new IntersectionObserver(update, { rootMargin: '-20% 0px -65% 0px', threshold: [0, 0.1] });
+    sections.forEach((section) => observer.observe(section));
+  } else {
+    let scheduled = false;
+    window.addEventListener('scroll', () => {
+      if (scheduled) return;
+      scheduled = true;
+      window.requestAnimationFrame(() => {
+        scheduled = false;
+        update();
+      });
+    }, { passive: true });
+  }
+  window.addEventListener('hashchange', update);
+  update();
 }
 
 function showFatalError(error) {
@@ -260,9 +343,10 @@ function start() {
 }
 
 function initialize() {
-  byId('fallback-close').addEventListener('click', () => { byId('obsidian-fallback').hidden = true; });
-  document.addEventListener('click', handleObsidianAction);
+  byId('fallback-close').addEventListener('click', closeObsidianFallback);
+  document.addEventListener('keydown', handleFallbackKeydown);
   start();
+  setupScrollSpy();
 }
 
 if (document.readyState === 'loading') {

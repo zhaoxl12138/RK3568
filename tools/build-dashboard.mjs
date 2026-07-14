@@ -26,6 +26,7 @@ const QUICK_LINKS = [
   ['dailyRecord', '05-实验与证据/02-每日进度记录.md'],
   ['acceptance', PATHS.acceptance],
   ['project', '04-项目/01-RK3568 YOLOv8n AI Camera项目.md'],
+  ['projectTalk', '04-项目/02-AI Camera项目讲解稿.md'],
   ['demo', '04-项目/03-Python MVP演示手册.md'],
   ['evidenceMoc', '05-实验与证据/00-实验与证据入口.md'],
   ['outputMoc', '09-输出沉淀/00-输出沉淀入口.md'],

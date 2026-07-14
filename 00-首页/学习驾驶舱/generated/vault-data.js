@@ -279,6 +279,11 @@ window.RK3568_VAULT_DATA = {
       "url": "obsidian://open?vault=RK3568&file=04-%E9%A1%B9%E7%9B%AE%2F01-RK3568%20YOLOv8n%20AI%20Camera%E9%A1%B9%E7%9B%AE"
     },
     {
+      "name": "projectTalk",
+      "filePath": "04-项目/02-AI Camera项目讲解稿.md",
+      "url": "obsidian://open?vault=RK3568&file=04-%E9%A1%B9%E7%9B%AE%2F02-AI%20Camera%E9%A1%B9%E7%9B%AE%E8%AE%B2%E8%A7%A3%E7%A8%BF"
+    },
+    {
       "name": "demo",
       "filePath": "04-项目/03-Python MVP演示手册.md",
       "url": "obsidian://open?vault=RK3568&file=04-%E9%A1%B9%E7%9B%AE%2F03-Python%20MVP%E6%BC%94%E7%A4%BA%E6%89%8B%E5%86%8C"

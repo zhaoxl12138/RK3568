@@ -368,7 +368,12 @@ test('buildDashboardData returns the dashboard shape and warns for missing optio
   assert.deepEqual(data.domains.map(({ name }) => name), [
     'Camera', 'OpenCV', 'RKNN', 'Display', 'Streaming', 'System',
   ]);
-  assert.equal(data.quickLinks.length, 8);
+  assert.equal(data.quickLinks.length, 9);
+  assert.deepEqual(data.quickLinks.find(({ name }) => name === 'projectTalk'), {
+    name: 'projectTalk',
+    filePath: '04-项目/02-AI Camera项目讲解稿.md',
+    url: buildObsidianUrl('RK3568', '04-项目/02-AI Camera项目讲解稿.md'),
+  });
   assert.ok([...data.domains, ...data.quickLinks].every(({ url }) => url.includes('vault=RK3568&')));
   assert.ok(data.warnings.some((warning) => warning.includes('evidence')));
 });
