@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="RK3568 AI Camera 本地学习驾驶舱">
+  <title>RK3568 学习驾驶舱</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script defer src="./generated/vault-data.js"></script>
+  <script defer src="./app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">跳到主要内容</a>
+
+  <header class="topbar">
+    <a class="brand brand--compact" href="#overview" aria-label="返回驾驶舱概览">
+      <span class="brand__mark" aria-hidden="true">RK</span>
+      <span>学习驾驶舱</span>
+    </a>
+    <nav class="top-nav" aria-label="移动端主导航">
+      <a href="#overview">当前</a>
+      <a href="#stages">阶段</a>
+      <a href="#evidence">证据</a>
+      <a href="#quick-links">记录</a>
+    </nav>
+  </header>
+
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="驾驶舱侧栏">
+      <a class="brand" href="#overview" aria-label="返回驾驶舱概览">
+        <span class="brand__mark" aria-hidden="true">RK</span>
+        <span><strong>RK3568</strong><small>学习驾驶舱</small></span>
+      </a>
+      <nav class="side-nav" aria-label="主导航">
+        <a class="is-active" href="#overview"><span aria-hidden="true">01</span>当前任务</a>
+        <a href="#stages"><span aria-hidden="true">02</span>阶段地图</a>
+        <a href="#pipeline"><span aria-hidden="true">03</span>系统管线</a>
+        <a href="#domains"><span aria-hidden="true">04</span>技术领域</a>
+        <a href="#evidence"><span aria-hidden="true">05</span>证据画廊</a>
+        <a href="#quick-links"><span aria-hidden="true">06</span>项目与记录</a>
+      </nav>
+      <p class="sidebar__boundary">本页只读展示全局与状态。内容写入回到 Obsidian，实时状态以任务看板为准。</p>
+    </aside>
+
+    <main id="main-content" tabindex="-1">
+      <section id="overview" class="hero section-anchor" aria-labelledby="page-title">
+        <div class="hero__intro">
+          <p class="eyebrow">LOCAL LEARNING SYSTEM</p>
+          <h1 id="page-title">RK3568 学习驾驶舱</h1>
+          <p>从当前唯一任务出发，沿系统链路学习，用可追溯证据完成验收。</p>
+        </div>
+        <div id="data-alert" class="alert" role="alert" hidden></div>
+        <div id="current-state" class="current-grid" aria-live="polite"></div>
+      </section>
+
+      <section id="stages" class="panel section-anchor" aria-labelledby="stages-title">
+        <div class="section-heading">
+          <div><p class="eyebrow">ROADMAP 00–10</p><h2 id="stages-title">学习阶段地图</h2></div>
+          <div class="status-legend" aria-label="阶段状态图例">
+            <span class="legend legend--current">当前</span>
+            <span class="legend legend--verified">已验证</span>
+            <span class="legend legend--planned">计划中</span>
+            <span class="legend legend--unknown">未标注</span>
+          </div>
+        </div>
+        <div id="stage-map" class="stage-map"></div>
+      </section>
+
+      <section id="pipeline" class="panel panel--navy section-anchor" aria-labelledby="pipeline-title">
+        <div class="section-heading">
+          <div><p class="eyebrow">AI CAMERA PIPELINE</p><h2 id="pipeline-title">系统链路</h2></div>
+        </div>
+        <div id="pipeline-flow"></div>
+      </section>
+
+      <section id="domains" class="panel section-anchor" aria-labelledby="domains-title">
+        <div class="section-heading">
+          <div><p class="eyebrow">KNOWLEDGE DOMAINS</p><h2 id="domains-title">六个技术领域</h2></div>
+          <p>在 Obsidian 中打开对应专项笔记</p>
+        </div>
+        <div id="domain-grid" class="domain-grid"></div>
+      </section>
+
+      <section id="evidence" class="panel section-anchor" aria-labelledby="evidence-title">
+        <div class="section-heading">
+          <div><p class="eyebrow">VERIFIABLE OUTPUTS</p><h2 id="evidence-title">证据画廊</h2></div>
+          <p id="evidence-count"></p>
+        </div>
+        <div id="evidence-grid" class="evidence-grid"></div>
+      </section>
+
+      <section id="quick-links" class="panel section-anchor" aria-labelledby="quick-title">
+        <div class="section-heading">
+          <div><p class="eyebrow">PROJECT &amp; RECORD</p><h2 id="quick-title">项目与快速记录</h2></div>
+        </div>
+        <div class="resource-layout">
+          <div>
+            <h3>回到 Obsidian</h3>
+            <div id="quick-link-grid" class="quick-grid"></div>
+          </div>
+          <div>
+            <h3>本地可视化</h3>
+            <div class="visual-grid">
+              <a href="../../04-项目/10-Phase0-可视化总入口.html">Phase0 可视化总入口<span>打开本地页面</span></a>
+              <a href="../../04-项目/12-Phase0-数据流动画.html">数据流动画<span>查看链路流转</span></a>
+              <a href="../../04-项目/13-Phase0-Camera配置全流程.html">Camera 配置全流程<span>查看配置顺序</span></a>
+              <a href="../../04-项目/14-Phase0-驱动层全链路框架图.html">驱动层全链路<span>查看驱动边界</span></a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="diagnostics" aria-labelledby="diagnostics-title">
+        <details id="diagnostics-details">
+          <summary id="diagnostics-title">诊断信息</summary>
+          <ul id="diagnostics-list"></ul>
+        </details>
+      </section>
+
+      <footer>
+        <p>只读本地驾驶舱 · 内容写入由 Obsidian 完成 · 状态由任务看板维护</p>
+      </footer>
+    </main>
+  </div>
+
+  <aside id="obsidian-fallback" class="fallback" aria-labelledby="fallback-title" aria-live="polite" hidden>
+    <div>
+      <strong id="fallback-title">若未打开 Obsidian</strong>
+      <button id="fallback-close" class="icon-button" type="button" aria-label="关闭回退提示">×</button>
+    </div>
+    <p>请在仓库中打开以下路径：</p>
+    <code id="fallback-path"></code>
+    <button id="fallback-copy" class="button button--small" type="button">复制路径</button>
+    <span id="copy-status" role="status"></span>
+  </aside>
+</body>
+</html>
