@@ -120,3 +120,29 @@ test('target pages expose the shared navigation marker', () => {
 
   assert.deepEqual(missingNavigation, [], `missing shared .site-nav marker:\n${missingNavigation.join('\n')}`);
 });
+
+test('homepage exposes the Phase0 learning entrance contract', () => {
+  const homepagePath = path.join(siteRoot, 'index.html');
+  const html = readHtml(homepagePath);
+
+  assert.match(html, /RK3568\s+Phase0\s+可视化总入口/iu);
+  assert.match(html, /现在从这里开始/iu);
+  assert.match(html, /data-current-stage/iu);
+  assert.match(html, /data-current-task/iu);
+  assert.match(html, /href=["'][^"']*06-任务[^"']*01-下一步任务看板\.md["']/iu);
+  assert.match(html, /推荐学习路径/iu);
+  assert.match(html, /pages\/learning-route\.html/iu);
+  assert.match(html, /pages\/system-map\.html/iu);
+  assert.match(html, /pages\/phase0\.html/iu);
+  assert.match(html, /pages\/project\.html/iu);
+  assert.match(html, /重要内容/iu);
+  for (const page of ['evidence', 'environment', 'notes', 'archive']) {
+    assert.match(html, new RegExp(`pages/${page}\\.html`, 'iu'));
+  }
+  assert.match(html, /href=["'][^"']*\.\/styles\.css["']/iu);
+  assert.match(html, /href=["'][^"']*\.\/site\.css["']/iu);
+  assert.match(html, /src=["'][^"']*\.\/generated\/vault-data\.js["']/iu);
+  assert.match(html, /src=["'][^"']*\.\/app\.js["']/iu);
+  assert.doesNotMatch(html, /id=["'](?:stage-map|pipeline-flow|domain-grid|evidence-grid|quick-link-grid)["']/iu);
+  assert.match(html, /网页只读[\s\S]*回 Obsidian/iu);
+});
