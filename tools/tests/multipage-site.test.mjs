@@ -82,6 +82,32 @@ test('Task 3 pages expose shared assets and the complete site navigation', () =>
   }
 });
 
+test('system map and phase0 pages expose the complete content navigation', () => {
+  const pages = ['system-map.html', 'phase0.html']
+    .map((name) => path.join(siteRoot, 'pages', name));
+  const navigationTargets = [
+    '../index.html',
+    'learning-route.html',
+    'system-map.html',
+    'phase0.html',
+    'project.html',
+    'evidence.html',
+    'environment.html',
+    'notes.html',
+    'archive.html',
+    '../../../00-首页/00-RK3568学习主入口.md'
+  ];
+
+  for (const filePath of pages) {
+    const html = readHtml(filePath);
+    const nav = html.match(/<nav\b[^>]*data-site-nav[\s\S]*?<\/nav>/iu)?.[0] ?? '';
+    assert.equal((html.match(/data-site-nav/giu) ?? []).length, 1, `${path.basename(filePath)} must have one site navigation`);
+    for (const target of navigationTargets) {
+      assert.ok(nav.includes(`href="${target}"`), `${path.basename(filePath)} missing navigation target: ${target}`);
+    }
+  }
+});
+
 test('Task 3 pages expose skip links, main targets, and visible focus styles', () => {
   const task3Pages = ['learning-route.html', 'system-map.html', 'phase0.html']
     .map((name) => path.join(siteRoot, 'pages', name));
@@ -204,6 +230,52 @@ test('phase0 page sequences the five existing visualizations with learning focus
   assert.match(html, /下一页/gu);
 });
 
+test('Task5 pages keep narrow-screen content clear of duplicated navigation', () => {
+  const dataFlowHtml = readHtml(phase0Pages[1]);
+  const cameraConfigHtml = readHtml(phase0Pages[2]);
+  const mobileStyles = dataFlowHtml.match(/@media\s*\(max-width:\s*900px\)[\s\S]*?<\/style>/iu)?.[0] ?? '';
+
+  assert.match(dataFlowHtml, /\.topbar\s*\{[^}]*position:\s*fixed/isu, 'desktop topbar must remain fixed');
+  assert.match(mobileStyles, /\.topbar\s*\{[^}]*position:\s*(?:static|absolute)/isu, 'mobile topbar must participate in the page layout');
+  assert.doesNotMatch(mobileStyles, /\.main\s*\{[^}]*padding-top:\s*220px/isu, 'mobile layout must not use a fixed 220px topbar compensation');
+  assert.doesNotMatch(mobileStyles, /\.topbar\s*\{[^}]*position:\s*fixed[\s\S]*?\}[^}]*\.main\s*\{[^}]*padding-top:\s*\d+px/isu, 'mobile rules must not pair a fixed topbar with a fixed main offset');
+  assert.doesNotMatch(cameraConfigHtml, /<div\s+class=["']bottom-links["'][\s\S]*?<\/div>/iu);
+  assert.match(cameraConfigHtml, /<div\s+class=["']footer["'][^>]*>[\s\S]*?\S[\s\S]*?<\/div>/iu);
+});
+
+test('Task5 framework diagram shrinks detail cards on narrow screens', () => {
+  const html = readHtml(phase0Pages[4]);
+  const narrowStyles = html.match(/@media\s*\(max-width:\s*600px\)[\s\S]*?<\/style>/iu)?.[0] ?? '';
+
+  assert.match(html, /<h2\b[^>]*class=["'][^"']*\bsection-title\b/iu, 'framework diagram section titles must use semantic h2 headings');
+  assert.match(narrowStyles, /\.detail-grid\s*\{[^}]*grid-template-columns:\s*(?:repeat\(auto-fit,\s*)?minmax\(0,\s*1fr\)/isu);
+  assert.match(narrowStyles, /\.detail-grid\s*>\s*\*\s*\{[^}]*min-width:\s*0/isu);
+});
+
+test('Task5 framework diagram wraps narrow-screen code and key-value content', () => {
+  const html = readHtml(phase0Pages[4]);
+  const narrowStyles = html.match(/@media\s*\(max-width:\s*600px\)[\s\S]*?<\/style>/iu)?.[0] ?? '';
+
+  assert.match(narrowStyles, /\.code-block\s*\{[^}]*max-width:\s*100%/isu);
+  assert.match(narrowStyles, /\.code-block\s*\{[^}]*white-space:\s*pre-wrap/isu);
+  assert.match(narrowStyles, /\.code-block\s*\{[^}]*overflow-wrap:\s*anywhere/isu);
+  assert.match(narrowStyles, /\.code-block\s+\.cmt\s*,\s*\.code-block\s+\.str\s*\{[^}]*overflow-wrap:\s*anywhere/isu);
+  assert.match(narrowStyles, /table\.kv\s*\{[^}]*table-layout:\s*fixed/isu);
+  assert.match(narrowStyles, /table\.kv\s+td\s*\{[^}]*overflow-wrap:\s*anywhere/isu);
+  assert.match(narrowStyles, /table\.kv\s+td\.k\s*\{[^}]*white-space:\s*normal/isu);
+});
+
+test('Task5 data-flow nodes expose the keyboard interaction contract', () => {
+  const html = readHtml(phase0Pages[1]);
+
+  assert.match(html, /div\.setAttribute\(['"]tabindex['"],\s*['"]0['"]\)/u);
+  assert.match(html, /div\.setAttribute\(['"]role['"],\s*['"]button['"]\)/u);
+  assert.match(html, /div\.setAttribute\(['"]aria-label['"],\s*n\.label\.replace\(\/\\n\/g,\s*['"]\s*['"]\)/u);
+  assert.match(html, /div\.addEventListener\(['"]click['"],\s*\(\)\s*=>\s*jumpToStep\(i\)\)/u);
+  assert.match(html, /div\.addEventListener\(['"]keydown['"],[\s\S]*?event\.key\s*===\s*['"]Enter['"][\s\S]*?event\.key\s*===\s*['"]\s['"][\s\S]*?event\.preventDefault\(\)[\s\S]*?jumpToStep\(i\)/u);
+  assert.match(html, /\.node:focus-visible\s*\{[^}]*outline:/isu);
+});
+
 test('shared resources satisfy the site contract', () => {
   const css = fs.readFileSync(path.join(siteRoot, 'site.css'), 'utf8');
   const js = fs.readFileSync(path.join(siteRoot, 'site.js'), 'utf8');
@@ -262,6 +334,51 @@ test('target pages expose the shared navigation marker', () => {
     .map((filePath) => path.relative(repoRoot, filePath));
 
   assert.deepEqual(missingNavigation, [], `missing shared .site-nav marker:\n${missingNavigation.join('\n')}`);
+});
+
+test('Phase0 visualization pages expose the shared shell and fixed learning sequence', () => {
+  const expectedNext = [
+    './12-Phase0-数据流动画.html',
+    './13-Phase0-Camera配置全流程.html',
+    './14-Phase0-驱动层全链路框架图.html',
+    './15-Phase0-RK3568全系统框架图.html',
+    null
+  ];
+  const expectedPrevious = [
+    null,
+    './10-Phase0-可视化总入口.html',
+    './12-Phase0-数据流动画.html',
+    './13-Phase0-Camera配置全流程.html',
+    './14-Phase0-驱动层全链路框架图.html'
+  ];
+  const sharedAssets = [
+    '../00-首页/学习驾驶舱/site.css',
+    '../00-首页/学习驾驶舱/generated/vault-data.js',
+    '../00-首页/学习驾驶舱/site.js'
+  ];
+  const navigationTargets = [
+    '../00-首页/学习驾驶舱/index.html',
+    './10-Phase0-可视化总入口.html',
+    '../06-任务/01-下一步任务看板.md',
+    '../00-首页/00-RK3568学习主入口.md'
+  ];
+
+  phase0Pages.forEach((filePath, index) => {
+    const html = readHtml(filePath);
+    assert.match(html, /<link\b[^>]*href=["']\.\.\/00-首页\/学习驾驶舱\/site\.css["']/u);
+    assert.match(html, /<script\b[^>]*defer[^>]*src=["']\.\.\/00-首页\/学习驾驶舱\/generated\/vault-data\.js["']/u);
+    assert.match(html, /<script\b[^>]*defer[^>]*src=["']\.\.\/00-首页\/学习驾驶舱\/site\.js["']/u);
+    assert.match(html, /data-site-nav(?:\s|=|>)/u);
+    assert.match(html, /<body>\s*<a[^>]*class=["'][^"']*\bskip-link\b[^"']*["'][^>]*href=["']#main-content["']/u);
+    assert.match(html, /<main[^>]*\bid=["']main-content["']/u);
+    for (const target of navigationTargets) assert.ok(html.includes(`href="${target}"`), `${path.basename(filePath)} missing navigation target: ${target}`);
+    assert.match(html, /Obsidian\s+(?:主入口|首页)/u, `${path.basename(filePath)} missing clear Obsidian entry text`);
+    if (index === phase0Pages.length - 1) assert.doesNotMatch(html, /下一页[^<]*任务看板/u, `${path.basename(filePath)} must not label the task board as the next page`);
+    if (expectedPrevious[index]) assert.ok(html.includes(`href="${expectedPrevious[index]}"`), `${path.basename(filePath)} missing previous page`);
+    if (expectedNext[index]) assert.ok(html.includes(`href="${expectedNext[index]}"`), `${path.basename(filePath)} missing next page`);
+    for (const asset of sharedAssets) assert.ok(fs.existsSync(path.resolve(path.dirname(filePath), asset)), `${path.basename(filePath)} missing target: ${asset}`);
+    for (const { href, target } of relativeHrefTargets(filePath)) assert.ok(fs.existsSync(target), `${path.basename(filePath)} -> ${href}`);
+  });
 });
 
 test('homepage exposes the Phase0 learning entrance contract', () => {

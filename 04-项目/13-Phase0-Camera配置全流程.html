@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RK3568 Linux Camera 配置全流程</title>
+<link rel="stylesheet" href="../00-首页/学习驾驶舱/site.css">
+<script defer src="../00-首页/学习驾驶舱/generated/vault-data.js"></script>
+<script defer src="../00-首页/学习驾驶舱/site.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
@@ -307,20 +310,22 @@
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main-content">跳到主要内容</a>
+<main id="main-content">
 <div class="hero">
   <h1>RK3568 <span>Linux Camera 配置全流程</span></h1>
   <div class="sub">从 Camera 手册、原理图、设备树、Sensor 驱动到 /dev/video0 和 OpenCV</div>
   <div class="helper">
     这一页只回答一件事：从 Camera 手册开始，Linux 是怎么一步步把 Sensor 接进系统，最后变成用户态可访问的 <code>/dev/video0</code>，再进入 GStreamer 和 OpenCV。
   </div>
-  <div class="top-links">
-    <a href="./10-Phase0-可视化总入口.html">可视化总入口</a>
+  <nav class="top-links" data-site-nav aria-label="Phase0 学习导航">
+    <a href="../00-首页/学习驾驶舱/index.html">驾驶舱首页</a>
+    <a href="./10-Phase0-可视化总入口.html">Phase0 总入口</a>
     <a href="./12-Phase0-数据流动画.html">上一页：数据流动画</a>
     <a href="./14-Phase0-驱动层全链路框架图.html">下一页：驱动层全链路框架图</a>
-    <a href="./12-Phase0-数据流动画.html">Phase0 数据流动画</a>
-    <a href="./14-Phase0-驱动层全链路框架图.html">Phase0 驱动层全链路框架图</a>
-    <a href="./15-Phase0-RK3568全系统框架图.html">Phase0 RK3568 全系统框架图</a>
-  </div>
+    <a href="../06-任务/01-下一步任务看板.md">任务看板</a>
+    <a href="../00-首页/00-RK3568学习主入口.md">Obsidian 主入口</a>
+  </nav>
   <div class="nav-tip">建议顺序：静态总图 → 数据流动画 → 当前页 → 驱动层全链路框架图</div>
 </div>
 
@@ -354,15 +359,6 @@
       之后通过 V4L2 subdev、Media Controller、CSI、RKISP 形成完整 Camera pipeline，最终在用户态得到 <code>/dev/video0</code>，
       再继续进入 GStreamer、OpenCV、RKNN、显示和推流。
     </div>
-  </div>
-
-  <div class="bottom-links">
-    <a href="./10-Phase0-可视化总入口.html">返回可视化总入口</a>
-    <a href="./12-Phase0-数据流动画.html">返回上一页：数据流动画</a>
-    <a href="./14-Phase0-驱动层全链路框架图.html">继续下一页：驱动层全链路框架图</a>
-    <a href="./12-Phase0-数据流动画.html">返回数据流动画页</a>
-    <a href="./14-Phase0-驱动层全链路框架图.html">返回驱动层框架图页</a>
-    <a href="./15-Phase0-RK3568全系统框架图.html">查看 RK3568 全系统框架图</a>
   </div>
 
   <div class="footer">本页用于学习复盘，具体 GPIO、clock、endpoint、驱动路径等必须以当前 RK3568 SDK、开发板 DTS 和实际脚本为准。</div>
@@ -740,5 +736,6 @@ function render() {
 
 render();
 </script>
+</main>
 </body>
 </html>

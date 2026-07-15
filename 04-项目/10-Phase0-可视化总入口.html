@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RK3568 Phase0 可视化总入口</title>
+<link rel="stylesheet" href="../00-首页/学习驾驶舱/site.css">
+<script defer src="../00-首页/学习驾驶舱/generated/vault-data.js"></script>
+<script defer src="../00-首页/学习驾驶舱/site.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap');
   :root {
@@ -41,6 +44,8 @@
 </style>
 </head>
 <body>
+  <a class="skip-link" href="#main-content">跳到主要内容</a>
+  <main id="main-content">
   <div class="hero">
     <h1>RK3568 <span>Phase0 可视化总入口</span></h1>
     <div class="sub">把当前几张核心可视化页串成一个统一入口，按“先看懂，再深挖”的顺序学习</div>
@@ -48,10 +53,15 @@
       推荐顺序固定为：先看静态总图建立整体地图，再看数据流动画页理解“数据怎么流”，
       再看 Camera 配置全流程理解“Linux Camera 是怎么一步步接起来的”，最后看驱动层全链路框架图做第二遍深挖。
     </div>
-    <div class="hero-links">
+    <nav class="hero-links" data-site-nav aria-label="Phase0 学习导航">
+      <a href="../00-首页/学习驾驶舱/index.html">驾驶舱首页</a>
+      <a href="./10-Phase0-可视化总入口.html" aria-current="page">Phase0 总入口</a>
+      <a href="../00-首页/学习驾驶舱/index.html">上一页：驾驶舱首页</a>
+      <a href="./12-Phase0-数据流动画.html">下一页：数据流动画</a>
+      <a href="../06-任务/01-下一步任务看板.md">任务看板</a>
       <a href="../00-首页/00-RK3568学习主入口.md">返回 Obsidian 首页</a>
       <a href="./00-项目可视化入口.md">返回 Markdown 可视化入口</a>
-    </div>
+    </nav>
   </div>
   <div class="container">
     <div class="section-title">首页展示图</div>
@@ -99,5 +109,6 @@
     </div>
     <div class="footer">本页是 Phase0 可视化总入口，不替代 Markdown 主线笔记。</div>
   </div>
+  </main>
 </body>
 </html>
