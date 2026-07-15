@@ -13,6 +13,28 @@
   font-family: "Noto Sans SC", "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
 }
 
+.skip-link {
+  position: fixed;
+  top: .75rem;
+  left: .75rem;
+  z-index: 20;
+  padding: .65rem .9rem;
+  border: 2px solid var(--site-blue);
+  border-radius: 10px;
+  color: var(--site-text);
+  background: var(--site-surface-strong);
+  box-shadow: var(--site-shadow);
+  transform: translateY(-200%);
+  transition: transform .2s ease;
+}
+
+.skip-link:focus-visible { transform: translateY(0); }
+
+:focus-visible {
+  outline: 3px solid var(--site-blue);
+  outline-offset: 3px;
+}
+
 .site-nav {
   position: fixed;
   top: 0;

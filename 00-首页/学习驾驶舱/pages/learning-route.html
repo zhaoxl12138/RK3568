@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>学习路线 · RK3568 驾驶舱</title>
+  <link rel="stylesheet" href="../site.css">
+  <script defer src="../generated/vault-data.js"></script>
+  <script defer src="../site.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">跳到主要内容</a>
+  <nav class="site-nav" data-site-nav aria-label="网站导航">
+    <a class="site-nav__brand" href="../index.html">RK3568 / 驾驶舱</a>
+    <div class="site-nav__links">
+      <a href="../index.html">驾驶舱首页</a>
+      <a aria-current="page" href="learning-route.html">学习路线</a>
+      <a href="system-map.html">系统地图</a>
+      <a href="phase0.html">Phase0 可视化</a>
+      <a href="../../../06-任务/01-下一步任务看板.md">任务看板</a>
+    </div>
+  </nav>
+  <div class="page-shell">
+    <main id="main-content">
+      <header class="hero">
+        <p class="hero__eyebrow">RECOMMENDED ROUTE · PHASE 0 → 10</p>
+        <h1>从系统地图走到可复现 MVP</h1>
+        <p>每个阶段只回答一个核心问题，并用最小证据决定是否进入下一站。阶段 1 是当前入口。</p>
+        <div class="hero__actions">
+          <a class="button" href="../../../01-主线/02-从零到Python MVP学习路线.md">打开主线学习路线</a>
+          <a class="button button--quiet" href="../../../06-任务/01-下一步任务看板.md">查看当前任务</a>
+        </div>
+      </header>
+      <section aria-labelledby="route-title">
+        <div class="section-title"><h2 id="route-title">阶段路线</h2><p>问题 → 通过标准 / 入口</p></div>
+        <div class="grid">
+          <article class="card" data-stage="0"><span class="badge badge--blue">阶段 0</span><h3>系统地图</h3><p><strong>要回答的问题：</strong>数据如何从 Camera 到显示和网络？</p><p><strong>通过标准：</strong>能说清每层输入、输出和边界。</p><a class="card__link" href="../../../07-专项笔记/系统/AI Camera系统数据流与模块边界.md">打开系统边界</a></article>
+          <article class="card card--accent" data-stage="1"><span class="badge badge--orange">阶段 1 · 当前</span><h3>Buildroot 板端验机</h3><p><strong>要回答的问题：</strong>板子、系统、网络和 Camera 是否可用？</p><p><strong>通过标准 / 入口：</strong>串口、SSH、系统信息和 Camera 出图均有记录。</p><a class="card__link" href="../../../05-实验与证据/01-板子到手验机记录.md">打开验机证据</a></article>
+          <article class="card" data-stage="2"><span class="badge badge--purple">阶段 2</span><h3>Camera / V4L2</h3><p><strong>要回答的问题：</strong><code>/dev/video0</code> 代表什么？</p><p><strong>通过标准：</strong>解释 node、entity、pad、link 的关系。</p><a class="card__link" href="../../../07-专项笔记/Camera-V4L2/V4L2命令行抓帧记录.md">打开抓帧记录</a></article>
+          <article class="card" data-stage="3"><span class="badge badge--blue">阶段 3</span><h3>NV12 抓帧</h3><p><strong>要回答的问题：</strong>原始帧是什么格式？</p><p><strong>通过标准：</strong>说明 Y / UV 平面、stride 和查看方式。</p><a class="card__link" href="../../../07-专项笔记/Camera-V4L2/V4L2命令行抓帧记录.md">进入 NV12 证据</a></article>
+          <article class="card" data-stage="4"><span class="badge badge--green">阶段 4</span><h3>OpenCV / GStreamer</h3><p><strong>要回答的问题：</strong>为什么默认摄像头打开方式会失败？</p><p><strong>通过标准：</strong>得到成功 pipeline 和 BGR 图像。</p><a class="card__link" href="../../../07-专项笔记/OpenCV/OpenCV读取Camera记录.md">打开 OpenCV 记录</a></article>
+          <article class="card" data-stage="5"><span class="badge badge--orange">阶段 5</span><h3>RKNN 最小例程</h3><p><strong>要回答的问题：</strong>Python 如何调用 NPU？</p><p><strong>通过标准：</strong>能区分模型、runtime、驱动和应用。</p><a class="card__link" href="../../../07-专项笔记/AI-RKNN/官方AI例程运行记录.md">打开 RKNN 记录</a></article>
+          <article class="card" data-stage="6"><span class="badge badge--purple">阶段 6</span><h3>Camera + RKNN</h3><p><strong>要回答的问题：</strong>图像如何进入模型并产生框？</p><p><strong>通过标准：</strong>解释预处理、量化、后处理和坐标回映。</p><a class="card__link" href="../../../07-专项笔记/AI-RKNN/YOLOv5 Python最小推理记录.md">打开推理记录</a></article>
+          <article class="card" data-stage="7"><span class="badge badge--blue">阶段 7</span><h3>MIPI 显示</h3><p><strong>要回答的问题：</strong>推理结果如何显示？</p><p><strong>通过标准：</strong>区分 Camera MIPI 与 Display MIPI 两条链路。</p><a class="card__link" href="../../../07-专项笔记/Display-MIPI/MIPI屏显示链路.md">打开显示链路</a></article>
+          <article class="card" data-stage="8"><span class="badge badge--green">阶段 8</span><h3>RTMP / HLS</h3><p><strong>要回答的问题：</strong>画面如何离开板子？</p><p><strong>通过标准：</strong>区分编码、封装、协议、服务端和播放器。</p><a class="card__link" href="../../../07-专项笔记/Streaming/RTMP-HLS推流记录.md">打开推流记录</a></article>
+          <article class="card" data-stage="9"><span class="badge badge--orange">阶段 9</span><h3>Python MVP</h3><p><strong>要回答的问题：</strong>能否独立复现完整链路？</p><p><strong>通过标准：</strong>从启动到拉流，并能解释失败定位顺序。</p><a class="card__link" href="../../../01-主线/02-从零到Python MVP学习路线.md">回到 MVP 主线</a></article>
+          <article class="card" data-stage="10"><span class="badge badge--purple">阶段 10</span><h3>C++ 工程化</h3><p><strong>要回答的问题：</strong>如何提升可维护性和性能？</p><p><strong>入口：</strong>当前复盘完成后，再将验证过的链路工程化。</p><a class="card__link" href="../../../01-主线/02-从零到Python MVP学习路线.md">查看主线入口</a></article>
+        </div>
+      </section>
+      <footer class="footer">当前状态以任务看板和实验记录为准。</footer>
+    </main>
+  </div>
+</body>
+</html>

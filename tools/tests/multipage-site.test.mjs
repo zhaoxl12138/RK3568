@@ -61,6 +61,93 @@ test('shared site resources exist', () => {
   }
 });
 
+test('Task 3 pages expose shared assets and the complete site navigation', () => {
+  const task3Pages = ['learning-route.html', 'system-map.html', 'phase0.html']
+    .map((name) => path.join(siteRoot, 'pages', name));
+  const labels = ['驾驶舱首页', '学习路线', '系统地图', 'Phase0 可视化', '任务看板'];
+
+  for (const filePath of task3Pages) {
+    const html = readHtml(filePath);
+    assert.match(html, /href=["']\.\.\/site\.css["']/u);
+    assert.match(html, /src=["']\.\.\/generated\/vault-data\.js["']/u);
+    assert.match(html, /src=["']\.\.\/site\.js["']/u);
+    assert.doesNotMatch(html, /type=["']module["']/iu);
+    assert.match(html, /<script\b[^>]*\bdefer\b[^>]*\bsrc=["'][^"']+\.js["']/iu);
+    assert.match(html, /data-site-nav(?:\s|=|>)/iu);
+    assert.match(html, /<nav\b[^>]*class=["'][^"']*\bsite-nav\b/iu);
+    for (const label of labels) assert.match(html, new RegExp(label, 'u'));
+  }
+});
+
+test('Task 3 pages expose skip links, main targets, and visible focus styles', () => {
+  const task3Pages = ['learning-route.html', 'system-map.html', 'phase0.html']
+    .map((name) => path.join(siteRoot, 'pages', name));
+  const css = fs.readFileSync(path.join(siteRoot, 'site.css'), 'utf8');
+
+  for (const filePath of task3Pages) {
+    const html = readHtml(filePath);
+    assert.match(html, /<body>\s*<a[^>]*class=["'][^"']*\bskip-link\b[^"']*["'][^>]*href=["']#main-content["'][^>]*>跳到主要内容<\/a>/u);
+    assert.match(html, /<main[^>]*\bid=["']main-content["']/u);
+  }
+
+  assert.match(css, /\.skip-link\s*\{[^}]*position:\s*fixed/isu);
+  assert.match(css, /\.skip-link:focus-visible\s*\{[^}]*transform:/isu);
+  assert.match(css, /:focus-visible\s*\{[^}]*outline:/isu);
+});
+
+test('learning route presents Phase 0 through Phase 10 and the current Phase 1 entry', () => {
+  const html = readHtml(path.join(siteRoot, 'pages', 'learning-route.html'));
+  for (let stage = 0; stage <= 10; stage += 1) {
+    assert.match(html, new RegExp(`data-stage=["']${stage}["']`, 'u'));
+  }
+  assert.match(html, /阶段 1[\s\S]*Buildroot 板端验机[\s\S]*当前/iu);
+  assert.match(html, /阶段 1[\s\S]*(?:要回答的问题|通过标准|入口)/iu);
+  for (const target of [
+    '../../../01-主线/02-从零到Python MVP学习路线.md',
+    '../../../06-任务/01-下一步任务看板.md',
+    '../../../05-实验与证据/01-板子到手验机记录.md',
+    '../../../07-专项笔记/系统/AI Camera系统数据流与模块边界.md'
+  ]) assert.ok(html.includes(`href="${target}"`), `missing route link: ${target}`);
+});
+
+test('system map presents the Camera to Display and Streaming chain with module references', () => {
+  const html = readHtml(path.join(siteRoot, 'pages', 'system-map.html'));
+  const modules = ['Camera', 'V4L2', 'GStreamer', 'OpenCV', 'RKNN', 'Display', 'Streaming'];
+  for (const module of modules) assert.match(html, new RegExp(module, 'iu'));
+  assert.match(html, /Camera[\s\S]*V4L2[\s\S]*GStreamer[\s\S]*OpenCV[\s\S]*RKNN[\s\S]*Display[\s\S]*Streaming/iu);
+  assert.match(html, /07-专项笔记\/系统\/AI Camera系统数据流与模块边界\.md/u);
+  assert.match(html, /04-项目\/15-Phase0-RK3568全系统框架图\.html/u);
+  for (const target of [
+    '../../../07-专项笔记/Camera-V4L2/IMX415驱动调试与最小demo路线.md',
+    '../../../07-专项笔记/Camera-V4L2/V4L2命令行抓帧记录.md',
+    '../../../07-专项笔记/OpenCV/OpenCV读取Camera记录.md',
+    '../../../07-专项笔记/AI-RKNN/官方AI例程运行记录.md',
+    '../../../07-专项笔记/Display-MIPI/MIPI屏显示链路.md',
+    '../../../07-专项笔记/Streaming/RTMP-HLS推流记录.md'
+  ]) assert.ok(html.includes(`href="${target}"`), `missing system link: ${target}`);
+});
+
+test('phase0 page sequences the five existing visualizations with learning focus and navigation concepts', () => {
+  const html = readHtml(path.join(siteRoot, 'pages', 'phase0.html'));
+  const pages = [
+    '10-Phase0-可视化总入口.html',
+    '12-Phase0-数据流动画.html',
+    '13-Phase0-Camera配置全流程.html',
+    '14-Phase0-驱动层全链路框架图.html',
+    '15-Phase0-RK3568全系统框架图.html'
+  ];
+  let previousIndex = -1;
+  for (const page of pages) {
+    const index = html.indexOf(page);
+    assert.ok(index > previousIndex, `${page} is out of sequence`);
+    previousIndex = index;
+  }
+  assert.match(html, /学习重点/gu);
+  assert.match(html, /打开页面/gu);
+  assert.match(html, /上一页/gu);
+  assert.match(html, /下一页/gu);
+});
+
 test('shared resources satisfy the site contract', () => {
   const css = fs.readFileSync(path.join(siteRoot, 'site.css'), 'utf8');
   const js = fs.readFileSync(path.join(siteRoot, 'site.js'), 'utf8');

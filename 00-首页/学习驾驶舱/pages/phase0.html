@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Phase0 可视化 · RK3568 驾驶舱</title>
+  <link rel="stylesheet" href="../site.css">
+  <script defer src="../generated/vault-data.js"></script>
+  <script defer src="../site.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">跳到主要内容</a>
+  <nav class="site-nav" data-site-nav aria-label="网站导航"><a class="site-nav__brand" href="../index.html">RK3568 / 驾驶舱</a><div class="site-nav__links"><a href="../index.html">驾驶舱首页</a><a href="learning-route.html">学习路线</a><a href="system-map.html">系统地图</a><a aria-current="page" href="phase0.html">Phase0 可视化</a><a href="../../../06-任务/01-下一步任务看板.md">任务看板</a></div></nav>
+  <div class="page-shell"><main id="main-content">
+    <header class="hero"><p class="hero__eyebrow">PHASE 0 · VISUAL STUDY SEQUENCE</p><h1>先看懂，再动手验证</h1><p>五张现有可视化页面按“总览 → 数据流 → Camera 配置 → 驱动层 → 全系统框架图”串联，适合作为阶段 0 的预习和复盘。</p></header>
+    <section aria-labelledby="sequence-title"><div class="section-title"><h2 id="sequence-title">Phase0 学习序列</h2><p>每张卡都是一站</p></div><div class="grid">
+      <article class="card" data-phase0-step="1"><span class="badge badge--blue">01 · 总览</span><h3>可视化总入口</h3><p><strong>学习重点：</strong>建立问题清单，知道 Camera、推理、显示和推流分别在哪里。</p><a class="button" href="../../../04-项目/10-Phase0-可视化总入口.html">打开页面</a><p class="card__link">下一页：数据流动画</p></article>
+      <article class="card" data-phase0-step="2"><span class="badge badge--purple">02 · 数据流</span><h3>数据流动画</h3><p><strong>学习重点：</strong>跟随一帧图像，理解采集、转换、推理和输出的先后关系。</p><a class="button" href="../../../04-项目/12-Phase0-数据流动画.html">打开页面</a><p class="card__link">上一页：总览 · 下一页：Camera 配置</p></article>
+      <article class="card" data-phase0-step="3"><span class="badge badge--orange">03 · Camera 配置</span><h3>Camera 配置全流程</h3><p><strong>学习重点：</strong>把供电、时钟、MIPI、V4L2 节点和格式配置连起来。</p><a class="button" href="../../../04-项目/13-Phase0-Camera配置全流程.html">打开页面</a><p class="card__link">上一页：数据流 · 下一页：驱动层</p></article>
+      <article class="card" data-phase0-step="4"><span class="badge badge--green">04 · 驱动层</span><h3>驱动层全链路框架图</h3><p><strong>学习重点：</strong>定位 sensor、ISP、media controller、V4L2 与用户空间的边界。</p><a class="button" href="../../../04-项目/14-Phase0-驱动层全链路框架图.html">打开页面</a><p class="card__link">上一页：Camera 配置 · 下一页：全系统框架图</p></article>
+      <article class="card card--accent" data-phase0-step="5"><span class="badge badge--orange">05 · 全系统</span><h3>RK3568 全系统框架图</h3><p><strong>学习重点：</strong>把 SoC、内存、NPU、显示、网络和 Camera 链路放回一张系统图。</p><a class="button" href="../../../04-项目/15-Phase0-RK3568全系统框架图.html">打开页面</a><p class="card__link">上一页：驱动层 · 下一步：进入阶段 1 验机</p></article>
+    </div></section>
+    <section aria-labelledby="guide-title"><div class="section-title"><h2 id="guide-title">上一页 / 下一页怎么用</h2></div><div class="grid"><article class="card"><h3>上一页</h3><p>当一个概念还没有落地时，退回上一张图，重新确认它的输入、输出和边界。</p></article><article class="card"><h3>下一页</h3><p>只有能用一句话解释当前页面的主线，才继续打开下一页；看完第 5 站进入板端验机。</p></article></div></section>
+    <footer class="footer">Phase0 页面只做导航摘要，原始可视化页面保留完整交互与说明。</footer>
+  </main></div>
+</body>
+</html>

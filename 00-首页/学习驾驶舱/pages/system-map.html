@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>系统地图 · RK3568 驾驶舱</title>
+  <link rel="stylesheet" href="../site.css">
+  <script defer src="../generated/vault-data.js"></script>
+  <script defer src="../site.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">跳到主要内容</a>
+  <nav class="site-nav" data-site-nav aria-label="网站导航"><a class="site-nav__brand" href="../index.html">RK3568 / 驾驶舱</a><div class="site-nav__links"><a href="../index.html">驾驶舱首页</a><a href="learning-route.html">学习路线</a><a aria-current="page" href="system-map.html">系统地图</a><a href="phase0.html">Phase0 可视化</a><a href="../../../06-任务/01-下一步任务看板.md">任务看板</a></div></nav>
+  <div class="page-shell"><main id="main-content">
+    <header class="hero"><p class="hero__eyebrow">SYSTEM MAP · DATA BOUNDARIES</p><h1>从 Camera 到输出的系统地图</h1><p>把每个模块看成一个可验证边界：先确认输入和输出，再深入专项笔记。</p><div class="hero__actions"><a class="button" href="../../../07-专项笔记/系统/AI Camera系统数据流与模块边界.md">打开系统边界笔记</a><a class="button button--quiet" href="../../../04-项目/15-Phase0-RK3568全系统框架图.html">打开全系统框架图</a></div></header>
+    <section aria-labelledby="chain-title"><div class="section-title"><h2 id="chain-title">主数据链路</h2><p>采集 → 处理 → 推理 → 输出</p></div><div class="grid">
+      <article class="card" data-module="camera"><span class="badge badge--blue">01 · 输入</span><h3>Camera</h3><p>传感器产生原始图像；先确认供电、时序、分辨率与出图。</p><a class="card__link" href="../../../07-专项笔记/Camera-V4L2/IMX415驱动调试与最小demo路线.md">Camera 专项 →</a></article>
+      <article class="card" data-module="v4l2"><span class="badge badge--green">02 · 内核接口</span><h3>V4L2</h3><p>把媒体设备和视频节点暴露给用户空间，负责格式与缓冲区边界。</p><a class="card__link" href="../../../07-专项笔记/Camera-V4L2/V4L2命令行抓帧记录.md">V4L2 专项 →</a></article>
+      <article class="card" data-module="gstreamer"><span class="badge badge--purple">03 · 管线</span><h3>GStreamer</h3><p>用 caps 和 pipeline 串联采集、转换、编码与输出，显式描述数据格式。</p><a class="card__link" href="../../../07-专项笔记/系统/AI Camera系统数据流与模块边界.md">查看管线边界 →</a></article>
+      <article class="card" data-module="opencv"><span class="badge badge--orange">04 · 图像处理</span><h3>OpenCV</h3><p>接收可用帧并完成颜色转换、缩放和应用侧视觉处理。</p><a class="card__link" href="../../../07-专项笔记/OpenCV/OpenCV读取Camera记录.md">OpenCV 专项 →</a></article>
+      <article class="card" data-module="rknn"><span class="badge badge--orange">05 · NPU</span><h3>RKNN</h3><p>承接模型输入、NPU runtime 和后处理，输出类别、置信度与坐标。</p><a class="card__link" href="../../../07-专项笔记/AI-RKNN/官方AI例程运行记录.md">RKNN 专项 →</a></article>
+      <article class="card" data-module="display"><span class="badge badge--blue">06 · 本地输出</span><h3>Display</h3><p>把处理后的画面送到屏幕；验证方向、分辨率和显示时序。</p><a class="card__link" href="../../../07-专项笔记/Display-MIPI/MIPI屏显示链路.md">Display 专项 →</a></article>
+      <article class="card" data-module="streaming"><span class="badge badge--green">07 · 网络输出</span><h3>Streaming</h3><p>编码并通过 RTMP/HLS 送出，让 Windows 或服务端可以拉流播放。</p><a class="card__link" href="../../../07-专项笔记/Streaming/RTMP-HLS推流记录.md">Streaming 专项 →</a></article>
+    </div></section>
+    <section aria-labelledby="boundary-title"><div class="section-title"><h2 id="boundary-title">先记住两条边界</h2></div><div class="grid"><article class="card"><h3>数据边界</h3><p>每一层都要能说清格式、内存位置、时序和失败现象。</p></article><article class="card"><h3>控制边界</h3><p>Camera 配置、模型推理和输出播放是不同问题，按链路逐段验收。</p></article></div></section>
+    <footer class="footer">系统地图是学习导航摘要，详细结论回到专项 Markdown。</footer>
+  </main></div>
+</body>
+</html>
