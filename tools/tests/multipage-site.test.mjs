@@ -39,7 +39,10 @@ function readHtml(filePath) {
 }
 
 function existingPages() {
-  return expectedPages().filter((filePath) => fs.existsSync(filePath));
+  return [
+    path.join(siteRoot, 'index.html'),
+    ...contentPages.map((name) => path.join(siteRoot, 'pages', name))
+  ].filter((filePath) => fs.existsSync(filePath));
 }
 
 function relativeHrefTargets(filePath) {
@@ -93,6 +96,59 @@ test('Task 3 pages expose skip links, main targets, and visible focus styles', (
   assert.match(css, /\.skip-link\s*\{[^}]*position:\s*fixed/isu);
   assert.match(css, /\.skip-link:focus-visible\s*\{[^}]*transform:/isu);
   assert.match(css, /:focus-visible\s*\{[^}]*outline:/isu);
+});
+
+test('Task 4 pages expose the shared shell and page-specific content contracts', () => {
+  const task4Pages = ['project.html', 'evidence.html', 'environment.html', 'notes.html', 'archive.html']
+    .map((name) => path.join(siteRoot, 'pages', name));
+  const sharedPatterns = [
+    /href=["']\.\.\/site\.css["']/u,
+    /src=["']\.\.\/generated\/vault-data\.js["']/u,
+    /src=["']\.\.\/site\.js["']/u,
+    /<script\b[^>]*\bdefer\b[^>]*\bsrc=["'][^"']+\.js["']/iu,
+    /data-site-nav(?:\s|=|>)/iu,
+    /<body>\s*<a[^>]*class=["'][^"']*\bskip-link\b[^"']*["'][^>]*href=["']#main-content["'][^>]*>/u,
+    /<main[^>]*\bid=["']main-content["']/u
+  ];
+
+  for (const filePath of task4Pages) {
+    const html = readHtml(filePath);
+    for (const pattern of sharedPatterns) assert.match(html, pattern, `${path.basename(filePath)} missing shared contract`);
+    assert.doesNotMatch(html, /type=["']module["']/iu);
+    assert.match(html, /class=["'][^"']*\b(?:hero|grid|card|badge|button|flow)\b/iu);
+  }
+
+  const project = readHtml(task4Pages[0]);
+  for (const textValue of ['RK3568 + Buildroot 4.19 + YOLOv5 RKNN Python MVP', '01-RK3568 YOLOv8n AI Camera项目.md', '02-AI Camera项目讲解稿.md', '03-Python MVP演示手册.md', '06-AI-Camera项目五分钟讲解.md', '10-Phase0-可视化总入口.html']) {
+    assert.match(project, new RegExp(textValue.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&'), 'u'), `project missing ${textValue}`);
+  }
+
+  const evidence = readHtml(task4Pages[1]);
+  assert.match(evidence, /RK3568_VAULT_DATA\.evidence/iu);
+  assert.match(evidence, /createElement\(["'](?:img|video)["']\)/u);
+  assert.match(evidence, /controls/iu);
+  assert.match(evidence, /missing|unknown|不可用/iu);
+  for (const target of ['00-实验与证据入口.md', '01-实验产物索引.md', '02-每日进度记录.md']) assert.match(evidence, new RegExp(target.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&'), 'u'));
+
+  const environment = readHtml(task4Pages[2]);
+  for (const textValue of ['板端 Buildroot', 'Ubuntu / SDK', 'WSL2 / VSCode', '00-环境入口.md', '01-Ubuntu与SDK编译注意事项.md', '02-WSL2和VSCode使用说明.md', '03-WSL2开发环境现状.md', '00-附录入口.md']) assert.match(environment, new RegExp(textValue.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&'), 'u'));
+
+  const notes = readHtml(task4Pages[3]);
+  for (const textValue of ['Camera', 'OpenCV', 'RKNN', 'Display', 'Streaming', 'System', 'IMX415驱动调试与最小demo路线.md', 'AI Camera系统数据流与模块边界.md', 'system-map.html']) assert.match(notes, new RegExp(textValue.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&'), 'u'));
+
+  const archive = readHtml(task4Pages[4]);
+  for (const textValue of ['网页当前入口', 'Obsidian 状态源', '00-重构归档说明.md', '00-归档说明.md', 'index.html', '01-下一步任务看板.md']) assert.match(archive, new RegExp(textValue.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&'), 'u'));
+  assert.doesNotMatch(archive, /href=["'][^"']*(?:重构前|历史版|旧路线)[^"']*["'][^>]*>[^<]*旧路线[^<]*当前入口/iu);
+});
+
+test('evidence page implements a defensive evidence data contract', () => {
+  const html = readHtml(path.join(siteRoot, 'pages', 'evidence.html'));
+  assert.match(html, /Array\.isArray\([^)]*evidence\)/u);
+  assert.match(html, /assetPath/iu);
+  assert.match(html, /mediaType|type/iu);
+  assert.match(html, /missing|unknown|不可用/iu);
+  assert.match(html, /try\s*\{/u);
+  assert.match(html, /catch\s*\(/u);
 });
 
 test('learning route presents Phase 0 through Phase 10 and the current Phase 1 entry', () => {

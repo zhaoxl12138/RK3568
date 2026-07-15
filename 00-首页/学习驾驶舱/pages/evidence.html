@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>实验与证据 · RK3568 驾驶舱</title>
+  <link rel="stylesheet" href="../site.css">
+  <script defer src="../generated/vault-data.js"></script>
+  <script defer src="../site.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">跳到主要内容</a>
+  <nav class="site-nav" data-site-nav aria-label="网站导航"><a class="site-nav__brand" href="../index.html">RK3568 / 驾驶舱</a><div class="site-nav__links"><a href="../index.html">驾驶舱首页</a><a href="learning-route.html">学习路线</a><a href="system-map.html">系统地图</a><a href="phase0.html">Phase0 可视化</a><a href="project.html">项目</a><a aria-current="page" href="evidence.html">证据</a><a href="environment.html">环境</a><a href="notes.html">笔记</a><a href="archive.html">归档</a><a href="../../../06-任务/01-下一步任务看板.md">任务看板</a></div></nav>
+  <div class="page-shell"><main id="main-content">
+    <header class="hero"><p class="hero__eyebrow">EVIDENCE DESK · JPG / MP4</p><h1>实验与证据</h1><p>这里展示 vault-data.js 记录的真实 JPG / MP4 产物；文件不存在、类型未知或加载失败时仍保留可读状态。</p><div class="hero__actions"><a class="button" href="../../../05-实验与证据/00-实验与证据入口.md">实验与证据入口</a><a class="button" href="../../../05-实验与证据/实验产物/01-实验产物索引.md">实验产物索引</a><a class="button" href="../../../05-实验与证据/02-每日进度记录.md">每日进度记录</a></div></header>
+    <section aria-labelledby="evidence-title"><div class="section-title"><h2 id="evidence-title">资产卡片</h2><p><span data-evidence-count>0</span> 项已登记资产</p></div><div id="evidence-grid" class="grid" aria-live="polite"></div></section>
+    <script>
+      (function () {
+        'use strict';
+        function renderEvidence() {
+          var grid = document.getElementById('evidence-grid');
+          var data = window.RK3568_VAULT_DATA || {};
+          var evidence = Array.isArray(window.RK3568_VAULT_DATA && window.RK3568_VAULT_DATA.evidence) ? window.RK3568_VAULT_DATA.evidence : [];
+          if (!grid) return;
+          grid.textContent = '';
+          if (!evidence.length) {
+            var empty = document.createElement('article');
+            empty.className = 'card';
+            empty.textContent = '暂无已登记证据资产。';
+            grid.appendChild(empty);
+            return;
+          }
+          evidence.forEach(function (item) {
+            var card = document.createElement('article');
+            card.className = 'card';
+            try {
+              item = item || {};
+              var name = item.name || '未命名资产';
+              var kind = String(item.type || item.mediaType || '').toLowerCase();
+              var source = item.assetPath ? '../' + item.assetPath : '';
+              var heading = document.createElement('h3');
+              heading.textContent = name;
+              card.appendChild(heading);
+              var meta = document.createElement('p');
+              meta.textContent = item.stageLabel || 'unknown';
+              card.appendChild(meta);
+              if (!source) {
+                card.appendChild(document.createTextNode('资产路径缺失，暂不可用。'));
+              } else if (kind.indexOf('image') === 0 || /\.jpe?g$/iu.test(name)) {
+                var image = document.createElement('img');
+                image.src = source;
+                image.alt = name;
+                image.loading = 'lazy';
+                image.addEventListener('error', function () { image.replaceWith(document.createTextNode('图片文件缺失或无法加载。')); });
+                card.appendChild(image);
+              } else if (kind.indexOf('video') === 0 || /\.mp4$/iu.test(name)) {
+                var video = document.createElement('video');
+                video.controls = true;
+                video.preload = 'metadata';
+                video.src = source;
+                video.addEventListener('error', function () { video.replaceWith(document.createTextNode('视频文件缺失或无法加载。')); });
+                card.appendChild(video);
+              } else {
+                card.appendChild(document.createTextNode('资产类型未知，暂不可预览。'));
+              }
+            } catch (error) {
+              card.appendChild(document.createTextNode('资产信息不可用，无法渲染此卡片。'));
+            }
+            grid.appendChild(card);
+          });
+        }
+        document.addEventListener('DOMContentLoaded', renderEvidence);
+      }());
+    </script>
+    <footer class="footer">证据卡片只读展示索引数据，原始记录和产物仍以 Obsidian 为准。</footer>
+  </main></div>
+</body>
+</html>
