@@ -490,6 +490,7 @@ test('shared site shell supports reduced motion and non-overlapping narrow navig
   assert.match(siteCss, /transition:\s*none\s*!important/u);
   assert.match(siteCss, /@media\s*\(max-width:\s*760px\)[\s\S]*?\.site-nav\s*\{[\s\S]*?position:\s*relative/u);
   assert.match(siteCss, /@media\s*\(max-width:\s*760px\)[\s\S]*?\.page-shell\s*\{[\s\S]*?--site-nav-space:\s*0/u);
+  assert.match(siteCss, /\.card\s+img,\s*\.card\s+video\s*\{[^}]*max-width:\s*100%/u);
 });
 
 test('learning route stage cards expose acceptance, evidence, and Obsidian entries', () => {
