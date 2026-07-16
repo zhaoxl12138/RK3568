@@ -120,8 +120,28 @@ test('Task 3 pages expose skip links, main targets, and visible focus styles', (
   }
 
   assert.match(css, /\.skip-link\s*\{[^}]*position:\s*fixed/isu);
+  assert.match(css, /\.skip-link:focus\s*\{[^}]*transform:/isu);
   assert.match(css, /\.skip-link:focus-visible\s*\{[^}]*transform:/isu);
+  assert.match(css, /a:focus\s*\{[^}]*outline:/isu);
   assert.match(css, /:focus-visible\s*\{[^}]*outline:/isu);
+});
+
+test('shared site JavaScript keeps cleaning regexes compatible with legacy browsers', () => {
+  const siteJs = fs.readFileSync(path.join(siteRoot, 'site.js'), 'utf8');
+
+  assert.doesNotMatch(siteJs, /\/(?:[^/\\]|\\.)*\/[^\n]*u/);
+});
+
+test('learning route current marker is sourced from generated stage data', () => {
+  const html = readHtml(path.join(siteRoot, 'pages', 'learning-route.html'));
+  const siteJs = fs.readFileSync(path.join(siteRoot, 'site.js'), 'utf8');
+
+  assert.match(html, /<article\b[^>]*data-stage=["'][^"']+["'][^>]*>[\s\S]*?<span\b[^>]*class=["'][^"']*badge/iu);
+  assert.match(siteJs, /data\.stages/iu);
+  assert.match(siteJs, /status\s*===\s*["']current["']/u);
+  assert.match(siteJs, /querySelectorAll\(["']\[data-stage\]["']\)/u);
+  assert.match(siteJs, /setAttribute\(["']data-current["']/u);
+  assert.match(siteJs, /classList\.(?:add|remove)\(["'][^"']*current/iu);
 });
 
 test('Task 4 pages expose the shared shell and page-specific content contracts', () => {
@@ -177,12 +197,13 @@ test('evidence page implements a defensive evidence data contract', () => {
   assert.match(html, /catch\s*\(/u);
 });
 
-test('learning route presents Phase 0 through Phase 10 and the current Phase 1 entry', () => {
+test('learning route presents Phase 0 through Phase 10 without a hardcoded current stage', () => {
   const html = readHtml(path.join(siteRoot, 'pages', 'learning-route.html'));
   for (let stage = 0; stage <= 10; stage += 1) {
     assert.match(html, new RegExp(`data-stage=["']${stage}["']`, 'u'));
   }
-  assert.match(html, /阶段 1[\s\S]*Buildroot 板端验机[\s\S]*当前/iu);
+  assert.doesNotMatch(html, /阶段\s*1\s*(?:是)?\s*当前(?:入口)?/iu);
+  assert.doesNotMatch(html, /阶段\s*1[^<]*当前/iu);
   assert.match(html, /阶段 1[\s\S]*(?:要回答的问题|通过标准|入口)/iu);
   for (const target of [
     '../../../01-主线/02-从零到Python MVP学习路线.md',
@@ -405,4 +426,50 @@ test('homepage exposes the Phase0 learning entrance contract', () => {
   assert.match(html, /src=["'][^"']*\.\/app\.js["']/iu);
   assert.doesNotMatch(html, /id=["'](?:stage-map|pipeline-flow|domain-grid|evidence-grid|quick-link-grid)["']/iu);
   assert.match(html, /网页只读[\s\S]*回 Obsidian/iu);
+});
+
+test('Task 2 pages expose the shared current-learning-state contract', () => {
+  const task2Pages = ['index.html', 'pages/learning-route.html', 'pages/system-map.html', 'pages/phase0.html']
+    .map((name) => path.join(siteRoot, name));
+
+  for (const filePath of task2Pages) {
+    const html = readHtml(filePath);
+    assert.match(html, /data-current-state(?:\s|=|>)/iu, `${path.basename(filePath)} missing current-state container`);
+    assert.match(html, /data-current-stage(?:\s|=|>)/iu, `${path.basename(filePath)} missing current-stage target`);
+    assert.match(html, /data-current-task(?:\s|=|>)/iu, `${path.basename(filePath)} missing current-task target`);
+    assert.match(html, /data-current-task-link(?:\s|=|>)/iu, `${path.basename(filePath)} missing task-board link target`);
+  }
+
+  const siteJs = fs.readFileSync(path.join(siteRoot, 'site.js'), 'utf8');
+  const appJs = fs.readFileSync(path.join(siteRoot, 'app.js'), 'utf8');
+  assert.match(siteJs, /querySelectorAll\(['"]\[data-current-stage\]['"]\)/u);
+  assert.match(siteJs, /querySelectorAll\(['"]\[data-current-task\]['"]\)/u);
+  assert.match(siteJs, /data-current-task-link/u);
+  assert.match(siteJs, /for\s*\(\s*(?:var\s+)?i\s*=\s*0/u);
+  assert.doesNotMatch(siteJs, /\.find\s*\(/u);
+  assert.doesNotMatch(siteJs, /\.forEach\s*\(/u);
+  assert.doesNotMatch(appJs, /data-current-(?:stage|task)/u);
+});
+
+test('shared site shell supports reduced motion and non-overlapping narrow navigation', () => {
+  const siteCss = fs.readFileSync(path.join(siteRoot, 'site.css'), 'utf8');
+
+  assert.match(siteCss, /@media\s*\(prefers-reduced-motion:\s*reduce\)/u);
+  assert.match(siteCss, /scroll-behavior:\s*auto/u);
+  assert.match(siteCss, /animation:\s*none\s*!important/u);
+  assert.match(siteCss, /transition:\s*none\s*!important/u);
+  assert.match(siteCss, /@media\s*\(max-width:\s*760px\)[\s\S]*?\.site-nav\s*\{[\s\S]*?position:\s*relative/u);
+  assert.match(siteCss, /@media\s*\(max-width:\s*760px\)[\s\S]*?\.page-shell\s*\{[\s\S]*?--site-nav-space:\s*0/u);
+});
+
+test('learning route stage cards expose acceptance, evidence, and Obsidian entries', () => {
+  const html = readHtml(path.join(siteRoot, 'pages', 'learning-route.html'));
+  const stageCards = [...html.matchAll(/<article\b[^>]*data-stage=["'](?:[0-9]|10)["'][\s\S]*?<\/article>/giu)].map((match) => match[0]);
+
+  assert.equal(stageCards.length, 11, 'learning route must keep all eleven stage cards');
+  for (const [index, card] of stageCards.entries()) {
+    for (const kind of ['acceptance', 'evidence', 'obsidian']) {
+      assert.match(card, new RegExp(`data-route-kind=["']${kind}["']`, 'u'), `stage ${index} missing ${kind} entry`);
+    }
+  }
 });
