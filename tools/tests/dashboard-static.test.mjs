@@ -28,9 +28,10 @@ function scriptTags(html) {
 
 function parseGeneratedAssignment(source) {
   const prefix = 'window.RK3568_VAULT_DATA = ';
+  const normalizedSource = source.replace(/\r\n/g, '\n');
   assert.ok(source.startsWith(prefix), 'generated data must use the expected global assignment');
-  assert.ok(source.endsWith(';\n'), 'generated assignment must end with a semicolon');
-  return JSON.parse(source.slice(prefix.length, -2));
+  assert.ok(normalizedSource.endsWith(';\n'), 'generated assignment must end with a semicolon');
+  return JSON.parse(normalizedSource.slice(prefix.length, -2));
 }
 
 test('homepage loads classic deferred data and site scripts for file://', async () => {
