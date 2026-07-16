@@ -182,7 +182,7 @@ window.RK3568_VAULT_DATA = {
       "vaultPath": "05-实验与证据/实验产物/assets/opencv_frame_gst.jpg",
       "sourcePath": "05-实验与证据/实验产物/01-实验产物索引.md",
       "stageLabel": "OpenCV 读取 Camera。",
-      "evidenceStageKey": "unknown"
+      "evidenceStageKey": "stage-4"
     },
     {
       "name": "scrfd_realtime_last.jpg",
@@ -202,7 +202,7 @@ window.RK3568_VAULT_DATA = {
       "vaultPath": "05-实验与证据/实验产物/assets/scrfd_result_rotated.jpg",
       "sourcePath": "05-实验与证据/实验产物/01-实验产物索引.md",
       "stageLabel": "AI 手册第 6 章，Camera + RKNN 人脸检测。",
-      "evidenceStageKey": "unknown"
+      "evidenceStageKey": "stage-6"
     },
     {
       "name": "yolo_hls_pull_test.mp4",
@@ -212,7 +212,7 @@ window.RK3568_VAULT_DATA = {
       "vaultPath": "05-实验与证据/实验产物/assets/yolo_hls_pull_test.mp4",
       "sourcePath": "05-实验与证据/实验产物/01-实验产物索引.md",
       "stageLabel": "unknown",
-      "evidenceStageKey": "unknown"
+      "evidenceStageKey": "stage-8"
     },
     {
       "name": "yolo_hls_pull_test_frame.jpg",
@@ -222,7 +222,7 @@ window.RK3568_VAULT_DATA = {
       "vaultPath": "05-实验与证据/实验产物/assets/yolo_hls_pull_test_frame.jpg",
       "sourcePath": "05-实验与证据/实验产物/01-实验产物索引.md",
       "stageLabel": "unknown",
-      "evidenceStageKey": "unknown"
+      "evidenceStageKey": "stage-8"
     },
     {
       "name": "yolov5_bus_result.jpg",
@@ -231,8 +231,8 @@ window.RK3568_VAULT_DATA = {
       "assetPath": "../../05-实验与证据/实验产物/assets/yolov5_bus_result.jpg",
       "vaultPath": "05-实验与证据/实验产物/assets/yolov5_bus_result.jpg",
       "sourcePath": "05-实验与证据/实验产物/01-实验产物索引.md",
-      "stageLabel": "unknown",
-      "evidenceStageKey": "unknown"
+      "stageLabel": "Python YOLOv5 RKNN 最小推理。",
+      "evidenceStageKey": "stage-6"
     },
     {
       "name": "yolov5_camera_raw.jpg",
@@ -282,7 +282,7 @@ window.RK3568_VAULT_DATA = {
       "vaultPath": "05-实验与证据/实验产物/assets/yolov5_rtmp_last.jpg",
       "sourcePath": "05-实验与证据/实验产物/01-实验产物索引.md",
       "stageLabel": "unknown",
-      "evidenceStageKey": "unknown"
+      "evidenceStageKey": "stage-8"
     }
   ],
   "quickLinks": [
@@ -343,16 +343,10 @@ window.RK3568_VAULT_DATA = {
     "Unknown stage status: 8 RTMP/HLS",
     "Unknown stage status: 9 Python MVP",
     "Unknown stage status: 10 C++ 工程化",
-    "Evidence has unknown stage: opencv_frame_gst.jpg",
     "Evidence has unknown stage: scrfd_realtime_last.jpg",
-    "Evidence has unknown stage: scrfd_result_rotated.jpg",
-    "Evidence has unknown stage: yolo_hls_pull_test.mp4",
-    "Evidence has unknown stage: yolo_hls_pull_test_frame.jpg",
-    "Evidence has unknown stage: yolov5_bus_result.jpg",
     "Evidence has unknown stage: yolov5_camera_raw.jpg",
     "Evidence has unknown stage: yolov5_camera_result.jpg",
     "Evidence has unknown stage: yolov5_realtime_clean_last.jpg",
-    "Evidence has unknown stage: yolov5_realtime_last.jpg",
-    "Evidence has unknown stage: yolov5_rtmp_last.jpg"
+    "Evidence has unknown stage: yolov5_realtime_last.jpg"
   ]
 };
