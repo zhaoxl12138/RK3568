@@ -39,10 +39,20 @@ function section(markdown, heading) {
 
 function normalizeStatus(value) {
   const normalized = value.trim().toLowerCase();
+  if (!normalized) return 'planned';
   if (['current', '进行中', '当前'].includes(normalized)) return 'current';
   if (['verified', '已验证', '已驗證'].includes(normalized)) return 'verified';
   if (['planned', '计划', '計劃'].includes(normalized)) return 'planned';
   return 'unknown';
+}
+
+function normalizeStageLabel(value) {
+  const label = value.trim().replace(/\s+/gu, ' ');
+  const match = label.match(/^(?:\u9636\u6bb5\s*)?(\d+)(?:\s*(?:[:,\uFF1A\uFF0C\u3001-]\s*|\s+)(.*))?$/u);
+  if (!match) return { id: '', stageKey: 'unknown', normalizedLabel: label };
+  const id = String(Number(match[1]));
+  const body = match[2]?.trim() ?? '';
+  return { id, stageKey: `stage-${id}`, normalizedLabel: `\u9636\u6bb5 ${id}${body ? ` ${body}` : ''}` };
 }
 
 export function parseTaskBoard(markdown) {
@@ -127,8 +137,11 @@ export function parseStageTable(markdown) {
   return rows.map((cells) => {
     const values = Object.fromEntries(headers.map((header, index) => [header, cells[index] ?? '']));
     const label = values['阶段'] ?? '';
+    const normalized = normalizeStageLabel(label);
     return {
-      id: label.match(/^\d+/u)?.[0] ?? '',
+      id: normalized.id,
+      stageKey: normalized.stageKey,
+      normalizedLabel: normalized.normalizedLabel,
       label,
       question: values['要回答的问题'] ?? '',
       minimumEvidence: values['最小输出证据'] ?? '',
@@ -136,7 +149,7 @@ export function parseStageTable(markdown) {
       evidenceEntry: values['证据入口'] ?? '',
       status: normalizeStatus(values['状态'] ?? ''),
     };
-  }).filter((stage) => stage.id);
+  });
 }
 
 export function buildObsidianUrl(vault, filePath) {
@@ -242,12 +255,13 @@ function evidenceStage(section) {
   for (let index = 0; index < section.lines.length; index += 1) {
     const field = section.lines[index].match(/^\s*用到阶段：\s*(.*?)\s*$/u);
     if (!field) continue;
-    if (field[1]) return field[1];
+    if (field[1]) return { label: field[1], explicit: true };
     for (const candidate of section.lines.slice(index + 1)) {
       const value = candidate.trim();
       if (!value || /^(?:```|~~~)/u.test(value)) continue;
-      return value;
+      return { label: value, explicit: true };
     }
+    return { label: 'unknown', explicit: true };
   }
   return section.heading.match(/^(阶段\s*\d+.+)$/u)?.[1].trim() ?? 'unknown';
 }
@@ -275,12 +289,19 @@ async function indexEvidence(rootDir, markdown) {
 
   const stages = new Map();
   for (const section of splitEvidenceSections(markdown)) {
-    const stageLabel = evidenceStage(section);
+    const stageResult = evidenceStage(section);
+    const stageInfo = typeof stageResult === 'string'
+      ? { label: stageResult, explicit: false }
+      : stageResult;
+    const stageLabel = stageInfo.label;
+    const stage = normalizeStageLabel(stageLabel);
     const contents = section.lines.join('\n');
     const sectionTargets = new Set(extractEvidenceTargets(contents));
     for (const name of sectionTargets) {
       if (!assets.has(name)) continue;
-      if (!stages.has(name) || stages.get(name) === 'unknown') stages.set(name, stageLabel);
+      if (!stages.has(name) || stages.get(name).stageKey === 'unknown') {
+        stages.set(name, { label: stageLabel, explicit: stageInfo.explicit, ...stage });
+      }
     }
   }
 
@@ -295,11 +316,14 @@ async function indexEvidence(rootDir, markdown) {
         assetPath: path.posix.relative(DASHBOARD_DIRECTORY, vaultPath),
         vaultPath,
         sourcePath: PATHS.evidenceIndex,
-        stageLabel: stages.get(name) ?? 'unknown',
+        stageLabel: stages.get(name)?.label ?? 'unknown',
+        evidenceStageKey: stages.get(name)?.stageKey ?? 'unknown',
       };
     });
   for (const item of evidence) {
-    if (item.stageLabel === 'unknown') warnings.push(`Evidence has unknown stage: ${item.name}`);
+    if (item.evidenceStageKey === 'unknown' && (item.stageLabel === 'unknown' || stages.get(item.name)?.explicit)) {
+      warnings.push(`Evidence has unknown stage: ${item.name}`);
+    }
   }
 
   return { evidence, warnings };
@@ -315,10 +339,11 @@ export async function buildDashboardData(rootDir, vaultName = DEFAULT_VAULT_NAME
   const warnings = sources.flatMap((source) => source.warnings);
   const { currentStage, currentTasks } = parseTaskBoard(taskBoard);
   const stages = parseStageTable(acceptance);
-  const currentId = currentStage?.match(/阶段\s*(\d+)/u)?.[1];
+  const currentId = currentStage ? normalizeStageLabel(currentStage).id : '';
 
   for (const stage of stages) {
     if (stage.id === currentId) stage.status = 'current';
+    if (stage.stageKey === 'unknown') warnings.push(`Unknown stage format: ${stage.label}`);
     if (stage.status === 'unknown') warnings.push(`Unknown stage status: ${stage.label}`);
   }
 

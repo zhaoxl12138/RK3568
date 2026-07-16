@@ -96,22 +96,71 @@ test('parseStageTable parses rows from the current acceptance Markdown table', (
   assert.deepEqual(stages, [
     {
       id: '0',
+      stageKey: 'stage-0',
+      normalizedLabel: '阶段 0 系统地图',
       label: '0 系统地图',
       question: '数据怎样流动',
       minimumEvidence: '数据流图',
       criteria: '说明模块边界',
       evidenceEntry: '[[系统地图]]',
-      status: 'unknown',
+      status: 'planned',
     },
     {
       id: '1',
+      stageKey: 'stage-1',
+      normalizedLabel: '阶段 1 Buildroot 验机',
       label: '1 Buildroot 验机',
       question: '系统是否可用',
       minimumEvidence: '串口日志',
       criteria: '区分故障层',
       evidenceEntry: '[[验机记录]]',
-      status: 'unknown',
+      status: 'planned',
     },
+  ]);
+});
+
+test('parseStageTable preserves unknown for an explicitly unrecognized status', () => {
+  const stages = parseStageTable(`
+## \u9636\u6bb5\u603b\u8868
+| \u9636\u6bb5 | \u8981\u56de\u7b54\u7684\u95ee\u9898 | \u6700\u5c0f\u8f93\u51fa\u8bc1\u636e | \u901a\u8fc7\u6807\u51c6 | \u8bc1\u636e\u5165\u53e3 | \u72b6\u6001 |
+|---|---|---|---|---|---|
+| 1 Buildroot | q | e | c | [[e]] | blocked |
+`);
+
+  assert.equal(stages[0].status, 'unknown');
+});
+
+test('parseStageTable normalizes equivalent stage labels to stable keys', () => {
+  const stages = parseStageTable(`
+## \u9636\u6bb5\u603b\u8868
+| \u9636\u6bb5 | \u8981\u56de\u7b54\u7684\u95ee\u9898 | \u6700\u5c0f\u8f93\u51fa\u8bc1\u636e | \u901a\u8fc7\u6807\u51c6 | \u8bc1\u636e\u5165\u53e3 |
+|---|---|---|---|---|
+| \u9636\u6bb5 1\uff0cBuildroot \u677f\u7aef\u9a8c\u673a | q | e | c | [[e1]] |
+| \u9636\u6bb5 1\uff1aBuildroot \u677f\u7aef\u9a8c\u673a | q | e | c | [[e2]] |
+| 1 Buildroot \u9a8c\u673a | q | e | c | [[e3]] |
+| Buildroot \u9a8c\u673a | q | e | c | [[unknown]] |
+`);
+
+  assert.deepEqual(stages.map(({ id, stageKey, normalizedLabel }) => ({ id, stageKey, normalizedLabel })), [
+    { id: '1', stageKey: 'stage-1', normalizedLabel: '\u9636\u6bb5 1 Buildroot \u677f\u7aef\u9a8c\u673a' },
+    { id: '1', stageKey: 'stage-1', normalizedLabel: '\u9636\u6bb5 1 Buildroot \u677f\u7aef\u9a8c\u673a' },
+    { id: '1', stageKey: 'stage-1', normalizedLabel: '\u9636\u6bb5 1 Buildroot \u9a8c\u673a' },
+    { id: '', stageKey: 'unknown', normalizedLabel: 'Buildroot \u9a8c\u673a' },
+  ]);
+});
+
+test('parseStageTable canonicalizes leading zeros in stage numbers', () => {
+  const stages = parseStageTable(`
+## \u9636\u6bb5\u603b\u8868
+| \u9636\u6bb5 | \u8981\u56de\u7b54\u7684\u95ee\u9898 | \u6700\u5c0f\u8f93\u51fa\u8bc1\u636e | \u901a\u8fc7\u6807\u51c6 | \u8bc1\u636e\u5165\u53e3 |
+|---|---|---|---|---|
+| 01 Buildroot | q | e | c | [[e]] |
+| \u9636\u6bb5 1 Buildroot | q | e | c | [[e2]] |
+`);
+
+  assert.deepEqual(stages.map(({ id, stageKey }) => ({ id, stageKey })), [
+    { id: '1', stageKey: 'stage-1' },
+    { id: '1', stageKey: 'stage-1' },
   ]);
 });
 
@@ -175,6 +224,71 @@ test('buildDashboardData indexes evidence assets with stage labels and warns for
   assert.ok(data.warnings.some((warning) => warning.includes('demo.mp4')));
 });
 
+test('buildDashboardData assigns evidenceStageKey across punctuation variants and warns for unknown formats', async () => {
+  await Promise.all([
+    writeFixture('07-专项笔记/系统/AI Camera分阶段验收标准.md', `
+## 阶段总表
+| 阶段 | 要回答的问题 | 最小输出证据 | 通过标准 | 证据入口 |
+|---|---|---|---|---|
+| 1 Buildroot \u9a8c\u673a | q | e | c | [[e]] |
+| Buildroot 验机 | q | e | c | [[unknown]] |
+`),
+    writeFixture('05-实验与证据/实验产物/01-实验产物索引.md', `
+### 相同阶段一的证据
+![[evidence-a.jpg]]
+用到阶段：阶段 1，Buildroot 板端验机
+
+### 相同阶段二的证据
+![[evidence-b.jpg]]
+用到阶段：阶段 1：Buildroot 板端验机
+
+### 无法识别
+![[evidence-unknown.jpg]]
+用到阶段：Buildroot 验机
+`),
+    writeFixture('05-实验与证据/实验产物/assets/evidence-a.jpg', 'image'),
+    writeFixture('05-实验与证据/实验产物/assets/evidence-b.jpg', 'image'),
+    writeFixture('05-实验与证据/实验产物/assets/evidence-unknown.jpg', 'image'),
+  ]);
+
+  const data = await buildDashboardData(vaultDir);
+
+  assert.deepEqual(data.evidence.map(({ name, evidenceStageKey }) => ({ name, evidenceStageKey })), [
+    { name: 'evidence-a.jpg', evidenceStageKey: 'stage-1' },
+    { name: 'evidence-b.jpg', evidenceStageKey: 'stage-1' },
+    { name: 'evidence-unknown.jpg', evidenceStageKey: 'unknown' },
+  ]);
+  assert.ok(data.warnings.includes('Unknown stage format: Buildroot 验机'));
+});
+
+test('buildDashboardData distinguishes missing and explicitly invalid evidence stages', async () => {
+  await Promise.all([
+    writeFixture('05-\u5b9e\u9a8c\u4e0e\u8bc1\u636e/\u5b9e\u9a8c\u4ea7\u7269/01-\u5b9e\u9a8c\u4ea7\u7269\u7d22\u5f15.md', `
+### \u9636\u6bb5 2 Missing field
+![[missing-field.jpg]]
+
+### \u9636\u6bb5 3 Explicit invalid field
+![[explicit-invalid.jpg]]
+\u7528\u5230\u9636\u6bb5\uff1aNot a stage
+`),
+    writeFixture('05-\u5b9e\u9a8c\u4e0e\u8bc1\u636e/\u5b9e\u9a8c\u4ea7\u7269/assets/missing-field.jpg', 'image'),
+    writeFixture('05-\u5b9e\u9a8c\u4e0e\u8bc1\u636e/\u5b9e\u9a8c\u4ea7\u7269/assets/explicit-invalid.jpg', 'image'),
+  ]);
+
+  const data = await buildDashboardData(vaultDir);
+
+  assert.deepEqual(data.evidence.map(({ name, stageLabel, evidenceStageKey }) => ({
+    name,
+    stageLabel,
+    evidenceStageKey,
+  })), [
+    { name: 'explicit-invalid.jpg', stageLabel: 'Not a stage', evidenceStageKey: 'unknown' },
+    { name: 'missing-field.jpg', stageLabel: '\u9636\u6bb5 2 Missing field', evidenceStageKey: 'stage-2' },
+  ]);
+  assert.ok(data.warnings.includes('Evidence has unknown stage: explicit-invalid.jpg'));
+  assert.equal(data.warnings.includes('Evidence has unknown stage: missing-field.jpg'), false);
+});
+
 test('buildDashboardData parses realistic evidence sections, later stage fields, and embed aliases', async () => {
   await Promise.all([
     writeFixture('05-实验与证据/实验产物/01-实验产物索引.md', `
@@ -212,7 +326,7 @@ OpenCV 读取 Camera。
     { name: 'opencv_frame_gst.jpg', stageLabel: 'OpenCV 读取 Camera。' },
     { name: 'yolo_hls_pull_test_frame.jpg', stageLabel: 'unknown' },
   ]);
-  assert.equal(data.warnings.some((warning) => warning.includes('opencv_frame_gst.jpg')), false);
+  assert.equal(data.warnings.some((warning) => warning.includes('opencv_frame_gst.jpg')), true);
   assert.equal(data.warnings.filter((warning) => warning.includes('yolo_hls_pull_test_frame.jpg')).length, 1);
 });
 
@@ -309,7 +423,7 @@ test('buildDashboardData matches exact case-sensitive basenames without substrin
     { name: 'foo.jpg', stageLabel: 'unknown' },
     { name: 'myfoo.jpg', stageLabel: 'Stage lowercase' },
   ]);
-  assert.equal(data.warnings.filter((warning) => warning.includes('foo.jpg')).length, 1);
+  assert.equal(data.warnings.filter((warning) => warning.includes('foo.jpg')).length, 2);
   assert.ok(data.warnings.includes('Evidence has unknown stage: foo.jpg'));
   assert.equal(data.warnings.some((warning) => warning.includes('FOO.jpg')), false);
 });
@@ -365,6 +479,7 @@ test('buildDashboardData returns the dashboard shape and warns for missing optio
     'currentStage', 'currentTasks', 'stages', 'domains', 'evidence', 'quickLinks', 'warnings',
   ]);
   assert.equal(data.stages[0].status, 'current');
+  assert.equal(data.warnings.some((warning) => warning.startsWith('Unknown stage status:')), false);
   assert.deepEqual(data.domains.map(({ name }) => name), [
     'Camera', 'OpenCV', 'RKNN', 'Display', 'Streaming', 'System',
   ]);

@@ -21,6 +21,8 @@ window.RK3568_VAULT_DATA = {
   "stages": [
     {
       "id": "0",
+      "stageKey": "stage-0",
+      "normalizedLabel": "阶段 0 系统地图",
       "label": "0 系统地图",
       "question": "数据从 Camera 怎样到显示和网络",
       "minimumEvidence": "一张数据流/控制流图",
@@ -30,6 +32,8 @@ window.RK3568_VAULT_DATA = {
     },
     {
       "id": "1",
+      "stageKey": "stage-1",
+      "normalizedLabel": "阶段 1 Buildroot 验机",
       "label": "1 Buildroot 验机",
       "question": "板子、系统、网络是否可用",
       "minimumEvidence": "串口、SSH、系统信息、Camera 出图",
@@ -39,6 +43,8 @@ window.RK3568_VAULT_DATA = {
     },
     {
       "id": "2",
+      "stageKey": "stage-2",
+      "normalizedLabel": "阶段 2 Camera/V4L2",
       "label": "2 Camera/V4L2",
       "question": "`/dev/video0` 代表什么",
       "minimumEvidence": "节点、media topology、格式列表",
@@ -48,6 +54,8 @@ window.RK3568_VAULT_DATA = {
     },
     {
       "id": "3",
+      "stageKey": "stage-3",
+      "normalizedLabel": "阶段 3 NV12 抓帧",
       "label": "3 NV12 抓帧",
       "question": "原始帧是什么格式",
       "minimumEvidence": "一帧 NV12 文件和尺寸计算",
@@ -57,6 +65,8 @@ window.RK3568_VAULT_DATA = {
     },
     {
       "id": "4",
+      "stageKey": "stage-4",
+      "normalizedLabel": "阶段 4 OpenCV/GStreamer",
       "label": "4 OpenCV/GStreamer",
       "question": "为什么不用默认摄像头打开",
       "minimumEvidence": "成功 pipeline 和 BGR 图像",
@@ -66,6 +76,8 @@ window.RK3568_VAULT_DATA = {
     },
     {
       "id": "5",
+      "stageKey": "stage-5",
+      "normalizedLabel": "阶段 5 RKNN 最小例程",
       "label": "5 RKNN 最小例程",
       "question": "Python 如何调用 NPU",
       "minimumEvidence": "`01_lenet` 输出和 runtime 版本",
@@ -75,6 +87,8 @@ window.RK3568_VAULT_DATA = {
     },
     {
       "id": "6",
+      "stageKey": "stage-6",
+      "normalizedLabel": "阶段 6 Camera + RKNN",
       "label": "6 Camera + RKNN",
       "question": "图像如何进入模型并产生框",
       "minimumEvidence": "单帧/实时检测结果",
@@ -84,6 +98,8 @@ window.RK3568_VAULT_DATA = {
     },
     {
       "id": "7",
+      "stageKey": "stage-7",
+      "normalizedLabel": "阶段 7 MIPI 显示",
       "label": "7 MIPI 显示",
       "question": "推理结果如何显示",
       "minimumEvidence": "屏幕方向、分辨率和实时画面",
@@ -93,6 +109,8 @@ window.RK3568_VAULT_DATA = {
     },
     {
       "id": "8",
+      "stageKey": "stage-8",
+      "normalizedLabel": "阶段 8 RTMP/HLS",
       "label": "8 RTMP/HLS",
       "question": "画面如何离开板子",
       "minimumEvidence": "服务端地址和 Windows 播放结果",
@@ -102,6 +120,8 @@ window.RK3568_VAULT_DATA = {
     },
     {
       "id": "9",
+      "stageKey": "stage-9",
+      "normalizedLabel": "阶段 9 Python MVP",
       "label": "9 Python MVP",
       "question": "能否独立复现完整链路",
       "minimumEvidence": "从启动到拉流的复测记录",
@@ -111,6 +131,8 @@ window.RK3568_VAULT_DATA = {
     },
     {
       "id": "10",
+      "stageKey": "stage-10",
+      "normalizedLabel": "阶段 10 C++ 工程化",
       "label": "10 C++ 工程化",
       "question": "如何提升可维护性和性能",
       "minimumEvidence": "设计草图或独立实验",
@@ -159,7 +181,8 @@ window.RK3568_VAULT_DATA = {
       "assetPath": "../../05-实验与证据/实验产物/assets/opencv_frame_gst.jpg",
       "vaultPath": "05-实验与证据/实验产物/assets/opencv_frame_gst.jpg",
       "sourcePath": "05-实验与证据/实验产物/01-实验产物索引.md",
-      "stageLabel": "OpenCV 读取 Camera。"
+      "stageLabel": "OpenCV 读取 Camera。",
+      "evidenceStageKey": "unknown"
     },
     {
       "name": "scrfd_realtime_last.jpg",
@@ -168,7 +191,8 @@ window.RK3568_VAULT_DATA = {
       "assetPath": "../../05-实验与证据/实验产物/assets/scrfd_realtime_last.jpg",
       "vaultPath": "05-实验与证据/实验产物/assets/scrfd_realtime_last.jpg",
       "sourcePath": "05-实验与证据/实验产物/01-实验产物索引.md",
-      "stageLabel": "AI 手册第 6 章，SCRFD 人脸检测。"
+      "stageLabel": "unknown",
+      "evidenceStageKey": "unknown"
     },
     {
       "name": "scrfd_result_rotated.jpg",
@@ -177,7 +201,8 @@ window.RK3568_VAULT_DATA = {
       "assetPath": "../../05-实验与证据/实验产物/assets/scrfd_result_rotated.jpg",
       "vaultPath": "05-实验与证据/实验产物/assets/scrfd_result_rotated.jpg",
       "sourcePath": "05-实验与证据/实验产物/01-实验产物索引.md",
-      "stageLabel": "AI 手册第 6 章，SCRFD 人脸检测。"
+      "stageLabel": "AI 手册第 6 章，Camera + RKNN 人脸检测。",
+      "evidenceStageKey": "unknown"
     },
     {
       "name": "yolo_hls_pull_test.mp4",
@@ -186,7 +211,8 @@ window.RK3568_VAULT_DATA = {
       "assetPath": "../../05-实验与证据/实验产物/assets/yolo_hls_pull_test.mp4",
       "vaultPath": "05-实验与证据/实验产物/assets/yolo_hls_pull_test.mp4",
       "sourcePath": "05-实验与证据/实验产物/01-实验产物索引.md",
-      "stageLabel": "unknown"
+      "stageLabel": "unknown",
+      "evidenceStageKey": "unknown"
     },
     {
       "name": "yolo_hls_pull_test_frame.jpg",
@@ -195,7 +221,8 @@ window.RK3568_VAULT_DATA = {
       "assetPath": "../../05-实验与证据/实验产物/assets/yolo_hls_pull_test_frame.jpg",
       "vaultPath": "05-实验与证据/实验产物/assets/yolo_hls_pull_test_frame.jpg",
       "sourcePath": "05-实验与证据/实验产物/01-实验产物索引.md",
-      "stageLabel": "unknown"
+      "stageLabel": "unknown",
+      "evidenceStageKey": "unknown"
     },
     {
       "name": "yolov5_bus_result.jpg",
@@ -204,7 +231,8 @@ window.RK3568_VAULT_DATA = {
       "assetPath": "../../05-实验与证据/实验产物/assets/yolov5_bus_result.jpg",
       "vaultPath": "05-实验与证据/实验产物/assets/yolov5_bus_result.jpg",
       "sourcePath": "05-实验与证据/实验产物/01-实验产物索引.md",
-      "stageLabel": "Python YOLOv5 RKNN 最小推理。"
+      "stageLabel": "unknown",
+      "evidenceStageKey": "unknown"
     },
     {
       "name": "yolov5_camera_raw.jpg",
@@ -213,7 +241,8 @@ window.RK3568_VAULT_DATA = {
       "assetPath": "../../05-实验与证据/实验产物/assets/yolov5_camera_raw.jpg",
       "vaultPath": "05-实验与证据/实验产物/assets/yolov5_camera_raw.jpg",
       "sourcePath": "05-实验与证据/实验产物/01-实验产物索引.md",
-      "stageLabel": "unknown"
+      "stageLabel": "unknown",
+      "evidenceStageKey": "unknown"
     },
     {
       "name": "yolov5_camera_result.jpg",
@@ -222,7 +251,8 @@ window.RK3568_VAULT_DATA = {
       "assetPath": "../../05-实验与证据/实验产物/assets/yolov5_camera_result.jpg",
       "vaultPath": "05-实验与证据/实验产物/assets/yolov5_camera_result.jpg",
       "sourcePath": "05-实验与证据/实验产物/01-实验产物索引.md",
-      "stageLabel": "unknown"
+      "stageLabel": "unknown",
+      "evidenceStageKey": "unknown"
     },
     {
       "name": "yolov5_realtime_clean_last.jpg",
@@ -231,7 +261,8 @@ window.RK3568_VAULT_DATA = {
       "assetPath": "../../05-实验与证据/实验产物/assets/yolov5_realtime_clean_last.jpg",
       "vaultPath": "05-实验与证据/实验产物/assets/yolov5_realtime_clean_last.jpg",
       "sourcePath": "05-实验与证据/实验产物/01-实验产物索引.md",
-      "stageLabel": "unknown"
+      "stageLabel": "unknown",
+      "evidenceStageKey": "unknown"
     },
     {
       "name": "yolov5_realtime_last.jpg",
@@ -240,7 +271,8 @@ window.RK3568_VAULT_DATA = {
       "assetPath": "../../05-实验与证据/实验产物/assets/yolov5_realtime_last.jpg",
       "vaultPath": "05-实验与证据/实验产物/assets/yolov5_realtime_last.jpg",
       "sourcePath": "05-实验与证据/实验产物/01-实验产物索引.md",
-      "stageLabel": "unknown"
+      "stageLabel": "unknown",
+      "evidenceStageKey": "unknown"
     },
     {
       "name": "yolov5_rtmp_last.jpg",
@@ -249,7 +281,8 @@ window.RK3568_VAULT_DATA = {
       "assetPath": "../../05-实验与证据/实验产物/assets/yolov5_rtmp_last.jpg",
       "vaultPath": "05-实验与证据/实验产物/assets/yolov5_rtmp_last.jpg",
       "sourcePath": "05-实验与证据/实验产物/01-实验产物索引.md",
-      "stageLabel": "unknown"
+      "stageLabel": "unknown",
+      "evidenceStageKey": "unknown"
     }
   ],
   "quickLinks": [
@@ -310,8 +343,12 @@ window.RK3568_VAULT_DATA = {
     "Unknown stage status: 8 RTMP/HLS",
     "Unknown stage status: 9 Python MVP",
     "Unknown stage status: 10 C++ 工程化",
+    "Evidence has unknown stage: opencv_frame_gst.jpg",
+    "Evidence has unknown stage: scrfd_realtime_last.jpg",
+    "Evidence has unknown stage: scrfd_result_rotated.jpg",
     "Evidence has unknown stage: yolo_hls_pull_test.mp4",
     "Evidence has unknown stage: yolo_hls_pull_test_frame.jpg",
+    "Evidence has unknown stage: yolov5_bus_result.jpg",
     "Evidence has unknown stage: yolov5_camera_raw.jpg",
     "Evidence has unknown stage: yolov5_camera_result.jpg",
     "Evidence has unknown stage: yolov5_realtime_clean_last.jpg",
