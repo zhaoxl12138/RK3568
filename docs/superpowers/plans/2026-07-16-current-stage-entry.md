@@ -28,15 +28,15 @@ Run `node --test tools/tests/multipage-site.test.mjs`; it should fail because th
 **Files:**
 - Modify: `00-首页/学习驾驶舱/index.html`
 - Modify: `00-首页/学习驾驶舱/site.js`
-- Modify: `00-首页/学习驾驶舱/pages/learning-route.html`
+- Modify: `00-首页/学习驾驶舱/pages/learning-route.html` (inspection only; cards remain static data)
 
 - [ ] **Step 1: Add the homepage link marker**
 
 Add `data-current-stage-link` to the “从当前阶段开始” hero action and leave its initial fallback as `pages/learning-route.html`.
 
-- [ ] **Step 2: Add stable stage anchors and start links**
+- [ ] **Step 2: Add stable stage anchors and start links at render time**
 
-Give each route card `id="stage-{id}"` and add one `data-stage-start` link whose destination is `#stage-{id}` on the same page.
+Use the existing `data-stage` cards; `site.js` assigns each card `id="stage-{id}"` and appends one `data-stage-start` link whose destination is `#stage-{id}` on the same page.
 
 - [ ] **Step 3: Update links from generated state**
 

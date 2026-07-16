@@ -481,6 +481,18 @@ test('Task 2 pages expose the shared current-learning-state contract', () => {
   assert.doesNotMatch(appJs, /data-current-(?:stage|task)/u);
 });
 
+test('dashboard starts from the generated current learning stage', () => {
+  const homepage = readHtml(path.join(siteRoot, 'index.html'));
+  const route = readHtml(path.join(siteRoot, 'pages', 'learning-route.html'));
+
+  assert.match(homepage, /href=["']#start["'][^>]*>从当前阶段开始/iu);
+  assert.equal((route.match(/data-stage=["'](?:[0-9]|10)["']/giu) || []).length, 11);
+  const siteJs = fs.readFileSync(path.join(siteRoot, 'site.js'), 'utf8');
+  assert.match(siteJs, /data-current-stage-link|href\s*===\s*['"]#start['"]/iu);
+  assert.match(siteJs, /data-stage-start/iu);
+  assert.match(siteJs, /stage-['"]\s*\+/iu);
+});
+
 test('shared site shell supports reduced motion and non-overlapping narrow navigation', () => {
   const siteCss = fs.readFileSync(path.join(siteRoot, 'site.css'), 'utf8');
 

@@ -8,7 +8,7 @@
 
 - `site.js` 从 `stages` 中读取 `status === "current"` 的阶段 ID。
 - 首页带有 `data-current-stage-link` 的链接自动指向 `pages/learning-route.html#stage-{id}`。
-- 学习路线页的每个阶段卡片使用稳定的 `id="stage-{id}"`，当前卡片增加“从这里开始”按钮。
+- 学习路线页的每个阶段卡片由 `site.js` 补充稳定的 `id="stage-{id}"`，并增加“从这里开始”按钮。
 - 没有有效当前阶段时，首页链接回退到 `pages/learning-route.html`，不生成错误锚点。
 - 不改变任务看板、生成数据格式或现有 Obsidian 状态源。
 
