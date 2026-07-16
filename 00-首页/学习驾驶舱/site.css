@@ -76,8 +76,14 @@ a:focus {
 .section-title p { margin: 0; color: var(--site-muted); font-size: .88rem; }
 
 .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+.evidence-groups { display: grid; gap: 2rem; }
+.evidence-group { min-width: 0; }
+.evidence-group__title { margin: 0 0 1rem; }
+.evidence-group__title h3 { margin: 0; font-size: 1.25rem; }
+.evidence-empty { grid-column: 1 / -1; }
 .card { min-width: 0; padding: clamp(1.1rem, 3vw, 1.6rem); border: 1px solid var(--site-line); border-radius: var(--site-radius); color: var(--site-text); background: linear-gradient(145deg, rgb(44 55 101 / 76%), var(--site-surface)); box-shadow: var(--site-shadow); }
 .card h3 { margin: 0 0 .65rem; font-size: 1.05rem; }
+.card h4 { margin: 0 0 .65rem; font-size: 1.05rem; }
 .card p { margin: 0; color: var(--site-muted); line-height: 1.7; }
 .card--accent { border-color: rgb(154 124 255 / 50%); background: linear-gradient(145deg, rgb(72 57 141 / 82%), rgb(25 27 62 / 86%)); }
 .card--current { border-color: var(--site-blue); box-shadow: 0 0 0 2px rgb(101 165 255 / 24%), var(--site-shadow); }

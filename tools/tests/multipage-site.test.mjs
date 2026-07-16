@@ -191,10 +191,40 @@ test('evidence page implements a defensive evidence data contract', () => {
   const html = readHtml(path.join(siteRoot, 'pages', 'evidence.html'));
   assert.match(html, /Array\.isArray\([^)]*evidence\)/u);
   assert.match(html, /assetPath/iu);
+  assert.match(html, /item\.sourcePath/iu, 'evidence cards must consume the generated source path');
+  assert.match(html, /item\.(?:url|sourceUrl)/iu, 'evidence cards must prefer a generated Obsidian URL when available');
+  assert.match(html, /obsidian:\/\/open/iu, 'evidence cards must expose an Obsidian URL fallback');
   assert.match(html, /mediaType|type/iu);
   assert.match(html, /missing|unknown|不可用/iu);
   assert.match(html, /try\s*\{/u);
   assert.match(html, /catch\s*\(/u);
+});
+
+test('evidence page groups assets by evidence stage and exposes empty and unknown states', () => {
+  const html = readHtml(path.join(siteRoot, 'pages', 'evidence.html'));
+
+  assert.match(html, /evidenceStageKey/iu, 'evidence groups must use the normalized stage key');
+  assert.match(html, /stageLabel/iu, 'evidence groups must display the stage label');
+  assert.match(html, /data-stage-group/iu, 'each evidence stage must have a group container');
+  assert.match(html, /data-stage-count/iu, 'each evidence stage must display an asset count');
+  assert.match(html, /需要补充阶段|补充阶段/iu, 'unknown-stage evidence must ask for a stage');
+  assert.match(html, /暂无已登记证据|暂无.*证据|缺失.*证据/iu, 'empty evidence must show a missing notice');
+  assert.match(html, /实验与证据|实验记录/iu, 'evidence page must keep an experiment-record entry');
+  assert.match(html, /Obsidian/iu, 'evidence page must keep an Obsidian entry');
+  assert.doesNotMatch(html, /fetch\s*\(/iu, 'evidence page must not depend on fetch');
+  assert.doesNotMatch(html, /type=["']module["']/iu, 'evidence page must keep classic scripts');
+});
+
+test('evidence page exposes the shared current-learning-state contract and zero-count notices', () => {
+  const html = readHtml(path.join(siteRoot, 'pages', 'evidence.html'));
+
+  assert.match(html, /data-current-state(?:\s|=|>)/iu);
+  assert.match(html, /data-current-stage(?:\s|=|>)/iu);
+  assert.match(html, /data-current-task(?:\s|=|>)/iu);
+  assert.match(html, /data-current-task-link(?:\s|=|>)/iu);
+  assert.match(html, /data\.stages/iu, 'known stages must be rendered even without evidence');
+  assert.match(html, /暂无证据，待补充/iu, 'known stages with zero evidence need a supplement notice');
+  assert.match(html, /unknown|需要补充阶段/iu, 'unknown evidence must remain a separate group');
 });
 
 test('learning route presents Phase 0 through Phase 10 without a hardcoded current stage', () => {

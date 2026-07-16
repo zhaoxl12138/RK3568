@@ -266,6 +266,29 @@ function evidenceStage(section) {
   return section.heading.match(/^(阶段\s*\d+.+)$/u)?.[1].trim() ?? 'unknown';
 }
 
+function normalizeEvidenceStage(label) {
+  const normalized = normalizeStageLabel(label);
+  if (normalized.stageKey !== 'unknown') return normalized;
+
+  const semantic = label.trim().replace(/\s+/gu, ' ').toLowerCase();
+  if (/opencv|默认摄像头|读取\s*camera/iu.test(semantic)) {
+    return { id: '4', stageKey: 'stage-4', normalizedLabel: '阶段 4 OpenCV/GStreamer' };
+  }
+  if (/rknn/iu.test(semantic)) {
+    const hasInferenceFlow = /camera|推理|inference/iu.test(semantic);
+    return hasInferenceFlow
+      ? { id: '6', stageKey: 'stage-6', normalizedLabel: '阶段 6 Camera + RKNN' }
+      : { id: '5', stageKey: 'stage-5', normalizedLabel: '阶段 5 RKNN 最小例程' };
+  }
+  if (/streaming|rtmp|hls/iu.test(semantic)) {
+    return { id: '8', stageKey: 'stage-8', normalizedLabel: '阶段 8 RTMP/HLS' };
+  }
+  if (/mipi\s*(?:display|显示)|(?:display|显示)\s*mipi/iu.test(semantic)) {
+    return { id: '7', stageKey: 'stage-7', normalizedLabel: '阶段 7 MIPI 显示' };
+  }
+  return normalized;
+}
+
 async function indexEvidence(rootDir, markdown) {
   const warnings = [];
   let entries;
@@ -294,7 +317,7 @@ async function indexEvidence(rootDir, markdown) {
       ? { label: stageResult, explicit: false }
       : stageResult;
     const stageLabel = stageInfo.label;
-    const stage = normalizeStageLabel(stageLabel);
+    const stage = normalizeEvidenceStage(stageLabel === 'unknown' ? section.heading : stageLabel);
     const contents = section.lines.join('\n');
     const sectionTargets = new Set(extractEvidenceTargets(contents));
     for (const name of sectionTargets) {

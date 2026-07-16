@@ -326,8 +326,47 @@ OpenCV 读取 Camera。
     { name: 'opencv_frame_gst.jpg', stageLabel: 'OpenCV 读取 Camera。' },
     { name: 'yolo_hls_pull_test_frame.jpg', stageLabel: 'unknown' },
   ]);
-  assert.equal(data.warnings.some((warning) => warning.includes('opencv_frame_gst.jpg')), true);
+  assert.equal(data.evidence[0].evidenceStageKey, 'stage-4');
+  assert.equal(data.warnings.some((warning) => warning.includes('opencv_frame_gst.jpg')), false);
   assert.equal(data.warnings.filter((warning) => warning.includes('yolo_hls_pull_test_frame.jpg')).length, 1);
+});
+
+test('buildDashboardData maps explicit evidence semantics to stable learning stages', async () => {
+  await Promise.all([
+    writeFixture('05-实验与证据/实验产物/01-实验产物索引.md', `
+### OpenCV 默认摄像头读取 Camera
+![[opencv.jpg]]
+
+### RKNN 最小例程
+![[rknn.jpg]]
+
+### Camera + RKNN 推理
+![[inference.jpg]]
+
+### Streaming RTMP/HLS
+![[streaming.jpg]]
+
+### MIPI 显示
+![[display.jpg]]
+
+### 未知实验语义
+![[unknown.jpg]]
+`),
+    ...['opencv.jpg', 'rknn.jpg', 'inference.jpg', 'streaming.jpg', 'display.jpg', 'unknown.jpg']
+      .map((name) => writeFixture(`05-实验与证据/实验产物/assets/${name}`, 'image')),
+  ]);
+
+  const data = await buildDashboardData(vaultDir);
+
+  assert.deepEqual(data.evidence.map(({ name, evidenceStageKey }) => ({ name, evidenceStageKey })), [
+    { name: 'display.jpg', evidenceStageKey: 'stage-7' },
+    { name: 'inference.jpg', evidenceStageKey: 'stage-6' },
+    { name: 'opencv.jpg', evidenceStageKey: 'stage-4' },
+    { name: 'rknn.jpg', evidenceStageKey: 'stage-5' },
+    { name: 'streaming.jpg', evidenceStageKey: 'stage-8' },
+    { name: 'unknown.jpg', evidenceStageKey: 'unknown' },
+  ]);
+  assert.ok(data.warnings.includes('Evidence has unknown stage: unknown.jpg'));
 });
 
 test('buildDashboardData emits resolvable browser and vault paths with media metadata', async () => {
