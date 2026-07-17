@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>OpenCV读取Camera记录 · RK3568</title><link rel="stylesheet" href="../../site.css"></head><body><div class="page-shell"><nav class="site-nav" data-site-nav aria-label="网站导航"><a class="site-nav__brand" href="../../index.html">RK3568 / 驾驶舱</a><div class="site-nav__links"><a href="../../index.html">驾驶舱首页</a><a href="../learning-route.html">学习路线</a><a href="../system-map.html">系统地图</a><a href="../notes.html" aria-current="page">专项笔记</a></div></nav><main id="main-content" class="note-page"><header class="hero"><p class="hero__eyebrow">GENERATED NOTE · 07-专项笔记/OpenCV</p><h1>OpenCV读取Camera记录</h1><p>此页面由 Markdown 知识源自动生成，适合网页阅读；编辑仍请回到 Obsidian。</p><div class="hero__actions"><a class="button" href="obsidian://open?vault=RK3568&amp;file=07-%E4%B8%93%E9%A1%B9%E7%AC%94%E8%AE%B0%2FOpenCV%2FOpenCV%E8%AF%BB%E5%8F%96Camera%E8%AE%B0%E5%BD%95">在 Obsidian 中打开</a><a class="button button--quiet" href="../../../../07-专项笔记/OpenCV/OpenCV读取Camera记录.md">查看原始 Markdown</a></div></header><article class="note-content"><h1>OpenCV读取Camera记录</h1>
+<h2>2026-05-30</h2>
+<h2>本次要解决什么</h2>
+<p>验证 Camera 图像能不能从底层 <code>V4L2</code> 采集，进入 OpenCV 处理层。</p>
+<p>当前链路：</p>
+<pre><code class="language-text">IMX415 MIPI Camera
+-&gt; RKISP
+-&gt; /dev/video0
+-&gt; GStreamer pipeline
+-&gt; OpenCV Mat
+-&gt; JPG 文件</code></pre>
+<p>这一步的意义是：后面 YOLO/RKNN 不直接吃 <code>/dev/video0</code>，而是吃 OpenCV 或类似视频处理模块输出的图像帧。</p>
+<h2>对应官方文档</h2>
+<p><code>03、辅助文档/19【正点原子】ATK-DLRK3568_OpenCV4使用手册V1.0.pdf</code></p>
+<p>重点结论：</p>
+<ul><li>出厂 Buildroot 系统已经内置 OpenCV 4.5.5。</li><li>Python 可以直接在板端 <code>import cv2</code>，不需要交叉编译。</li><li>C++ OpenCV 程序需要在 Ubuntu 20.04 里用正点原子交叉编译工具链编译。</li><li>文档里的简单示例主要是读图片并显示窗口，不是完整 Camera 工程教程。</li></ul>
+<p>暂时不用看：</p>
+<ul><li>Qt 版本 OpenCV。</li><li>Weston/HDMI 显示问题。</li><li>复杂 UI 显示。</li></ul>
+<h2>板端 OpenCV 环境确认</h2>
+<p>命令：</p>
+<pre><code class="language-bash">python3 - &lt;&lt;&#39;PY&#39;
+import sys
+print(&#39;python&#39;, sys.version)
+import cv2
+print(&#39;cv2 imported&#39;)
+print(&#39;cv2 version&#39;, cv2.__version__)
+PY</code></pre>
+<p>结果：</p>
+<pre><code class="language-text">python 3.8.6
+cv2 imported
+cv2 version 4.5.5</code></pre>
+<p>结论：</p>
+<pre><code class="language-text">板端 Python OpenCV 可用，当时阶段不需要先搭交叉编译环境。</code></pre>
+<h2>第一次尝试：默认 OpenCV 打开失败</h2>
+<p>测试代码：</p>
+<pre><code class="language-python">import cv2
+
+cap = cv2.VideoCapture(&#39;/dev/video0&#39;)
+print(&#39;opened&#39;, cap.isOpened())
+ret, frame = cap.read()
+print(&#39;ret&#39;, ret)
+print(&#39;shape&#39;, None if frame is None else frame.shape)
+cap.release()</code></pre>
+<p>结果：</p>
+<pre><code class="language-text">opened False
+ret False
+shape None</code></pre>
+<p>关键告警：</p>
+<pre><code class="language-text">OpenCV | GStreamer warning: unable to start pipeline</code></pre>
+<h2>第二次尝试：强制 V4L2 后端失败</h2>
+<p>测试代码：</p>
+<pre><code class="language-python">import cv2
+
+cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
+print(&#39;opened&#39;, cap.isOpened())
+ret, frame = cap.read()
+print(&#39;ret&#39;, ret)
+cap.release()</code></pre>
+<p>结果：</p>
+<pre><code class="language-text">VIDEOIO(V4L2:/dev/video0): can&#39;t open camera by index
+opened False
+ret False</code></pre>
+<p>判断：</p>
+<pre><code class="language-text">OpenCV 默认 V4L2 打开方式不适合当前 RKISP mplane Camera 节点。</code></pre>
+<p>这不代表 Camera 不行，因为同一时间 <code>v4l2-ctl</code> 可以正常抓帧。</p>
+<h2>重新确认底层 Camera 正常</h2>
+<p>命令：</p>
+<pre><code class="language-bash">v4l2-ctl -d /dev/video0 \
+  --set-fmt-video=width=1280,height=720,pixelformat=NV12 \
+  --stream-mmap=3 \
+  --stream-count=1 \
+  --stream-to=/tmp/check_v4l2.yuv</code></pre>
+<p>结果：</p>
+<pre><code class="language-text">/tmp/check_v4l2.yuv
+大小 1.4M</code></pre>
+<p>结论：</p>
+<pre><code class="language-text">底层 V4L2/RKISP 采集正常，问题在 OpenCV 打开方式。</code></pre>
+<h2>成功方案：OpenCV 使用显式 GStreamer pipeline</h2>
+<p>先确认 GStreamer 可以直接抓 NV12：</p>
+<pre><code class="language-bash">gst-launch-1.0 -q \
+  v4l2src device=/dev/video0 num-buffers=1 \
+  ! video/x-raw,format=NV12,width=1280,height=720 \
+  ! filesink location=/tmp/gst_check_nv12.yuv</code></pre>
+<p>结果：</p>
+<pre><code class="language-text">/tmp/gst_check_nv12.yuv
+大小 1.4M</code></pre>
+<p>OpenCV 测试代码：</p>
+<pre><code class="language-python">import cv2
+
+out = &#39;/tmp/opencv_frame_gst.jpg&#39;
+pipeline = (
+    &#39;v4l2src device=/dev/video0 &#39;
+    &#39;! video/x-raw,format=NV12,width=1280,height=720 &#39;
+    &#39;! videoconvert &#39;
+    &#39;! video/x-raw,format=BGR &#39;
+    &#39;! appsink drop=1 sync=false&#39;
+)
+
+cap = cv2.VideoCapture(pipeline, cv2.CAP_GSTREAMER)
+print(&#39;opened&#39;, cap.isOpened())
+if cap.isOpened():
+    print(&#39;backend&#39;, cap.getBackendName())
+
+ret, frame = cap.read()
+print(&#39;ret&#39;, ret)
+print(&#39;shape&#39;, None if frame is None else frame.shape)
+
+if ret:
+    ok = cv2.imwrite(out, frame)
+    print(&#39;write&#39;, ok, out)
+
+cap.release()</code></pre>
+<p>结果：</p>
+<pre><code class="language-text">opened True
+backend GSTREAMER
+ret True
+shape (720, 1280, 3)
+write True /tmp/opencv_frame_gst.jpg</code></pre>
+<p>文件：</p>
+<pre><code class="language-text">/tmp/opencv_frame_gst.jpg
+大小 266K
+JPEG 1280x720</code></pre>
+<p>Windows 取回位置：</p>
+<pre><code class="language-text">E:\RK3568\opencv_test\opencv_frame_gst.jpg</code></pre>
+<p>WSL 项目实验脚本：</p>
+<pre><code class="language-text">\\wsl$\Ubuntu-20.04\home\rk3568\work\rk3568_ai_camera\experiments\opencv_camera\opencv_capture_gst.py</code></pre>
+<p>完整产物索引见：</p>
+<ul><li>01-实验产物索引</li></ul>
+<h2>当前结论</h2>
+<p>已经跑通：</p>
+<pre><code class="language-text">/dev/video0 -&gt; GStreamer -&gt; OpenCV -&gt; BGR Mat -&gt; JPG</code></pre>
+<p>关键经验：</p>
+<ul><li>不要直接相信 <code>cv2.VideoCapture(0)</code> 一定能打开板端 Camera。</li><li>RK3568 的 Camera 是 RKISP/mplane 链路，OpenCV 默认打开方式可能失败。</li><li>本页实测稳定方案是显式写 GStreamer pipeline。</li><li>OpenCV 读到的 <code>frame.shape = (720, 1280, 3)</code>，说明已经从 NV12 转成 BGR 三通道图像。</li></ul>
+<p>历史决策：当时的下一步：</p>
+<pre><code class="language-text">把这个 Python 验证脚本固化成项目实验代码。
+然后再进入官方 AI 例程文档，不直接跳 RKNN 部署。</code></pre>
+<h2>关联</h2>
+<ul><li>V4L2命令行抓帧记录</li><li>01-下一步任务看板</li><li>01-实验产物索引</li></ul>
+<p>#OpenCV #Camera #GStreamer #V4L2 #RK3568</p>
+<h2>知识补充：为什么 pipeline 能救回 OpenCV</h2>
+<h3>状态：已验证 + 通用原理</h3>
+<p><code>cv2.VideoCapture(0)</code> 需要 OpenCV 自己选择设备、backend、格式和颜色转换；当前板端默认路径无法完成这组协商。显式 GStreamer pipeline 则把每个边界写出来：</p>
+<pre><code class="language-text">v4l2src -&gt; NV12 caps -&gt; videoconvert -&gt; BGR caps -&gt; appsink -&gt; OpenCV</code></pre>
+<p>排障要分层：</p>
+<p>1. <code>v4l2-ctl</code> 先证明设备能出帧。<br>2. <code>gst-launch-1.0</code> 证明 pipeline 和 caps 能协商。<br>3. Python/OpenCV 只验证 appsink 是否能取到 BGR 矩阵。</p>
+<p><code>caps</code> 是相邻元素对格式、宽高和帧率的契约；<code>appsink</code> 是从 GStreamer 回到应用的边界。若 caps 不匹配，问题通常是格式、分辨率、帧率或颜色转换，而不一定是 Camera 故障。</p>
+<h2>阶段验收</h2>
+<ul><li>能解释默认 backend 失败与底层 V4L2 失败不是同一件事。</li><li>能写出当前成功 pipeline，并说清每个元素的输入输出。</li><li>能用固定图片或单帧先验证 OpenCV，再接实时推理。</li></ul></article><footer class="footer"><a href="../notes.html">返回专项笔记导航</a> · <a href="../../index.html">返回驾驶舱首页</a></footer></main></div><script defer src="../../site.js"></script></body></html>

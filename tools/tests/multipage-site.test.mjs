@@ -180,7 +180,7 @@ test('Task 4 pages expose the shared shell and page-specific content contracts',
   for (const textValue of ['板端 Buildroot', 'Ubuntu / SDK', 'WSL2 / VSCode', '00-环境入口.md', '01-Ubuntu与SDK编译注意事项.md', '02-WSL2和VSCode使用说明.md', '03-WSL2开发环境现状.md', '00-附录入口.md']) assert.match(environment, new RegExp(textValue.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&'), 'u'));
 
   const notes = readHtml(task4Pages[3]);
-  for (const textValue of ['Camera', 'OpenCV', 'RKNN', 'Display', 'Streaming', 'System', 'IMX415驱动调试与最小demo路线.md', 'AI Camera系统数据流与模块边界.md', 'system-map.html']) assert.match(notes, new RegExp(textValue.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&'), 'u'));
+  for (const textValue of ['Camera', 'OpenCV', 'RKNN', 'Display', 'Streaming', 'System', '07-专项笔记--Camera-V4L2--IMX415驱动调试与最小demo路线.html', '07-专项笔记--系统--AI Camera系统数据流与模块边界.html', 'system-map.html']) assert.match(notes, new RegExp(textValue.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&'), 'u'));
 
   const archive = readHtml(task4Pages[4]);
   for (const textValue of ['网页当前入口', 'Obsidian 状态源', '00-重构归档说明.md', '00-归档说明.md', 'index.html', '01-下一步任务看板.md']) assert.match(archive, new RegExp(textValue.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&'), 'u'));
@@ -514,5 +514,22 @@ test('learning route stage cards expose acceptance, evidence, and Obsidian entri
     for (const kind of ['acceptance', 'evidence', 'obsidian']) {
       assert.match(card, new RegExp(`data-route-kind=["']${kind}["']`, 'u'), `stage ${index} missing ${kind} entry`);
     }
+  }
+});
+
+test('important Markdown notes are presented as generated HTML pages', () => {
+  const notesPage = readHtml(path.join(siteRoot, 'pages', 'notes.html'));
+  const openCvPage = path.join(siteRoot, 'pages', 'notes', '07-专项笔记--OpenCV--OpenCV读取Camera记录.html');
+  assert.equal(fs.existsSync(openCvPage), true, 'OpenCV note HTML page is missing');
+  assert.match(notesPage, /notes\/07-[^"']+\.html/iu);
+  assert.doesNotMatch(notesPage, /href=["'][^"']*专项笔记[^"']+\.md["']/iu);
+
+  const html = readHtml(openCvPage);
+  assert.match(html, /<article[^>]*class=["'][^"']*note-content/iu);
+  assert.match(html, /OpenCV读取Camera记录/iu);
+  assert.match(html, /在 Obsidian 中打开/iu);
+  assert.match(html, /查看原始 Markdown/iu);
+  for (const target of relativeHrefTargets(openCvPage)) {
+    assert.equal(fs.existsSync(target.target), true, `${path.basename(openCvPage)} -> ${target.href}`);
   }
 });

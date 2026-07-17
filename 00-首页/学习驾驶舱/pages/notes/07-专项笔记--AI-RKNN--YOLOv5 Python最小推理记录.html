@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>YOLOv5 Python最小推理记录 · RK3568</title><link rel="stylesheet" href="../../site.css"></head><body><div class="page-shell"><nav class="site-nav" data-site-nav aria-label="网站导航"><a class="site-nav__brand" href="../../index.html">RK3568 / 驾驶舱</a><div class="site-nav__links"><a href="../../index.html">驾驶舱首页</a><a href="../learning-route.html">学习路线</a><a href="../system-map.html">系统地图</a><a href="../notes.html" aria-current="page">专项笔记</a></div></nav><main id="main-content" class="note-page"><header class="hero"><p class="hero__eyebrow">GENERATED NOTE · 07-专项笔记/AI-RKNN</p><h1>YOLOv5 Python最小推理记录</h1><p>此页面由 Markdown 知识源自动生成，适合网页阅读；编辑仍请回到 Obsidian。</p><div class="hero__actions"><a class="button" href="obsidian://open?vault=RK3568&amp;file=07-%E4%B8%93%E9%A1%B9%E7%AC%94%E8%AE%B0%2FAI-RKNN%2FYOLOv5%20Python%E6%9C%80%E5%B0%8F%E6%8E%A8%E7%90%86%E8%AE%B0%E5%BD%95">在 Obsidian 中打开</a><a class="button button--quiet" href="../../../../07-专项笔记/AI-RKNN/YOLOv5 Python最小推理记录.md">查看原始 Markdown</a></div></header><article class="note-content"><h1>YOLOv5 Python最小推理记录</h1>
+<h2>当前目标</h2>
+<p>当前主线已经调整为：</p>
+<pre><code class="language-text">现在用 Python 冲完整闭环，后面用 C++ 做项目升级。</code></pre>
+<p>因此 YOLO 阶段不先继续 C++，而是先做 Python 最小推理：</p>
+<pre><code class="language-text">图片 -&gt; YOLOv5 RKNN -&gt; 后处理 -&gt; 检测框 -&gt; JPG</code></pre>
+<p>跑通后再接：</p>
+<pre><code class="language-text">Camera -&gt; YOLOv5 RKNN -&gt; MIPI屏</code></pre>
+<h2>为什么先用YOLOv5</h2>
+<p>当前板端系统是：</p>
+<pre><code class="language-text">Buildroot Linux 4.19</code></pre>
+<p>官方 4.19 AI 例程中有：</p>
+<pre><code class="language-text">01、源码/06_yolov5/rknn_yolov5_demo.zip</code></pre>
+<p>Linux5.10 AI 资料中才有：</p>
+<pre><code class="language-text">10_yolov8/yolov8.zip</code></pre>
+<p>所以当前优先选择 YOLOv5：</p>
+<pre><code class="language-text">先用当前系统资料里最匹配的官方 RKNN 模型跑通目标检测闭环。
+YOLOv8 后置。</code></pre>
+<h2>官方资料来源</h2>
+<pre><code class="language-text">E:\【正点原子】RK3568开发板资料（A盘）-基础资料\01、程序源码\01、AI例程\01、源码\06_yolov5\rknn_yolov5_demo.zip</code></pre>
+<p>已解压到：</p>
+<pre><code class="language-text">E:\RK3568\yolo_stage\rknn_yolov5_demo</code></pre>
+<p>官方模型文件：</p>
+<pre><code class="language-text">yolov5s_relu_tk2_RK356X_i8.rknn
+yolov5s_tk2_RK356X_i8.rknn
+yolov5m_tk2_RK356X_i8.rknn</code></pre>
+<p>当前优先使用：</p>
+<pre><code class="language-text">yolov5s_relu_tk2_RK356X_i8.rknn</code></pre>
+<p>原因：</p>
+<pre><code class="language-text">模型小，适合第一轮跑通。
+官方脚本 yolov5.sh 默认也使用这个模型。</code></pre>
+<h2>已整理文件</h2>
+<p>WSL 项目目录：</p>
+<pre><code class="language-text">\\wsl$\Ubuntu-20.04\home\rk3568\work\rk3568_ai_camera\experiments\yolov5_object</code></pre>
+<p>当前文件：</p>
+<pre><code class="language-text">main_image.py
+README.md
+yolov5s_relu_tk2_RK356X_i8.rknn
+RK_anchors_yolov5.txt
+coco_80_labels_list.txt</code></pre>
+<p>Windows 板端中转目录：</p>
+<pre><code class="language-text">E:\RK3568\yolo_stage\python_files</code></pre>
+<h2>当前脚本</h2>
+<pre><code class="language-text">main_image.py</code></pre>
+<p>职责：</p>
+<ul><li>读取图片。</li><li>letterbox 到 <code>640x640</code>。</li><li>BGR 转 RGB。</li><li>调用 <code>rknnlite</code> 加载 YOLOv5 RKNN 模型。</li><li>解析 3 个输出分支。</li><li>根据 anchors 和 stride 做 YOLOv5 后处理。</li><li>NMS。</li><li>把检测框映射回原图。</li><li>保存结果 JPG。</li></ul>
+<h2>当前验证状态</h2>
+<p>已完成：</p>
+<pre><code class="language-text">WSL 本地 py_compile 语法检查通过。
+模型、anchors、labels、脚本已放入 Windows 中转目录。
+文件已复制到板端 /userdata/aidemo/06_yolov5_python。
+YOLOv5 RKNN 单图推理已在板端跑通。</code></pre>
+<p>关键结论：</p>
+<pre><code class="language-text">RKNN inference 正常。
+output_shapes 已确认。
+Python 后处理能解析出目标框。
+结果图能正常写出。</code></pre>
+<h2>板端建议目录</h2>
+<pre><code class="language-text">/userdata/aidemo/06_yolov5_python</code></pre>
+<h2>板端运行命令</h2>
+<p>先准备一张测试图片。可以复用之前的 OpenCV 抓图：</p>
+<pre><code class="language-text">/tmp/opencv_frame_gst.jpg</code></pre>
+<p>如果板端没有这张图，可以先用 Camera 脚本重新保存一张，或者从 Windows 传入。</p>
+<p>运行：</p>
+<pre><code class="language-bash">cd /userdata/aidemo/06_yolov5_python
+python3 main_image.py \
+  --model yolov5s_relu_tk2_RK356X_i8.rknn \
+  --anchors RK_anchors_yolov5.txt \
+  --labels coco_80_labels_list.txt \
+  --image /tmp/opencv_frame_gst.jpg \
+  --output /tmp/yolov5_result.jpg</code></pre>
+<p>期望输出：</p>
+<pre><code class="language-text">output_shapes [...]
+detections N
+write True /tmp/yolov5_result.jpg</code></pre>
+<p>实测输出：</p>
+<pre><code class="language-text">output_shapes [(1, 255, 80, 80), (1, 255, 40, 40), (1, 255, 20, 20)]
+detections 0
+write True /tmp/yolov5_result.jpg</code></pre>
+<p>说明：</p>
+<pre><code class="language-text">/tmp/opencv_frame_gst.jpg 是当前桌面/线缆画面，没有明显 COCO 目标，所以 detections 0 是合理现象。
+这一步已经证明模型加载、NPU 推理、输出张量获取、结果图写出都正常。</code></pre>
+<h2>标准测试图验证</h2>
+<p>为了确认后处理逻辑不是空跑，使用 YOLO 官方常见测试图 <code>bus.jpg</code> 再跑一次。</p>
+<p>板端命令：</p>
+<pre><code class="language-bash">cd /userdata/aidemo/06_yolov5_python
+python3 main_image.py \
+  --model yolov5s_relu_tk2_RK356X_i8.rknn \
+  --anchors RK_anchors_yolov5.txt \
+  --labels coco_80_labels_list.txt \
+  --image bus.jpg \
+  --output /tmp/yolov5_bus_result.jpg</code></pre>
+<p>实测输出：</p>
+<pre><code class="language-text">output_shapes [(1, 255, 80, 80), (1, 255, 40, 40), (1, 255, 20, 20)]
+detections 4
+person 0.880 (215, 404, 349, 860)
+person 0.874 (674, 396, 808, 890)
+person 0.840 (52, 404, 255, 898)
+bus 0.693 (13, 223, 803, 776)
+write True /tmp/yolov5_bus_result.jpg</code></pre>
+<p>结果图：</p>
+<pre><code class="language-text">板端：/tmp/yolov5_bus_result.jpg
+Windows：E:\RK3568\yolo_stage\python_files\yolov5_bus_result.jpg
+Obsidian：05-实验与证据/实验产物/assets/yolov5_bus_result.jpg</code></pre>
+<p>预览：</p>
+<p><span class="note-embed">yolov5_bus_result.jpg</span></p>
+<h2>当前结论</h2>
+<pre><code class="language-text">图片 -&gt; YOLOv5 RKNN -&gt; 后处理 -&gt; 检测框 -&gt; JPG</code></pre>
+<p>已经跑通。</p>
+<p>在该验证点还没有接 Camera，不代表项目完成；它只说明 YOLOv5 RKNN 推理和后处理链路单独成立。</p>
+<p>历史决策：当时的下一步是：</p>
+<pre><code class="language-text">Camera -&gt; 单帧 -&gt; YOLOv5 RKNN -&gt; JPG</code></pre>
+<p>历史决策：当时再后一步是：</p>
+<pre><code class="language-text">Camera -&gt; YOLOv5 RKNN -&gt; MIPI屏实时显示</code></pre>
+<h2>Camera单帧验证</h2>
+<p>单图推理成功后，新增脚本：</p>
+<pre><code class="language-text">WSL：\\wsl$\Ubuntu-20.04\home\rk3568\work\rk3568_ai_camera\experiments\yolov5_object\main_gst_one_frame.py
+板端：/userdata/aidemo/06_yolov5_python/main_gst_one_frame.py</code></pre>
+<p>核心变化：</p>
+<pre><code class="language-text">main_image.py：从图片文件 cv2.imread() 输入。
+main_gst_one_frame.py：从 /dev/video0 通过 GStreamer pipeline 抓一帧输入。</code></pre>
+<p>板端命令：</p>
+<pre><code class="language-bash">cd /userdata/aidemo/06_yolov5_python
+python3 main_gst_one_frame.py \
+  --model yolov5s_relu_tk2_RK356X_i8.rknn \
+  --anchors RK_anchors_yolov5.txt \
+  --labels coco_80_labels_list.txt \
+  --output /tmp/yolov5_camera_result.jpg \
+  --raw-output /tmp/yolov5_camera_raw.jpg</code></pre>
+<p>实测输出：</p>
+<pre><code class="language-text">output_shapes [(1, 255, 80, 80), (1, 255, 40, 40), (1, 255, 20, 20)]
+detections 1
+person 0.684 (0, 0, 773, 719)
+write True /tmp/yolov5_camera_result.jpg</code></pre>
+<p>结果文件：</p>
+<pre><code class="language-text">原始抓图：/tmp/yolov5_camera_raw.jpg
+检测结果：/tmp/yolov5_camera_result.jpg
+Windows：E:\RK3568\yolo_stage\python_files\yolov5_camera_result.jpg
+Obsidian：05-实验与证据/实验产物/assets/yolov5_camera_result.jpg</code></pre>
+<p>预览：</p>
+<p><span class="note-embed">yolov5_camera_result.jpg</span></p>
+<p>说明：</p>
+<pre><code class="language-text">OpenCV 打印的 Cannot query video position 是实时流无法查询进度的普通警告，不影响采集和检测。</code></pre>
+<p>本页实测结论：</p>
+<pre><code class="language-text">Camera -&gt; 单帧 -&gt; YOLOv5 RKNN -&gt; 检测框 -&gt; JPG</code></pre>
+<p>已经跑通。</p>
+<p>历史决策：当时的下一步：</p>
+<pre><code class="language-text">Camera -&gt; YOLOv5 RKNN -&gt; cv2.imshow -&gt; MIPI屏实时显示</code></pre>
+<h2>MIPI屏实时显示验证</h2>
+<p>新增实时脚本：</p>
+<pre><code class="language-text">WSL：\\wsl$\Ubuntu-20.04\home\rk3568\work\rk3568_ai_camera\experiments\yolov5_object\main_gst_realtime.py
+板端：/userdata/aidemo/06_yolov5_python/main_gst_realtime.py</code></pre>
+<p>板端命令：</p>
+<pre><code class="language-bash">cd /userdata/aidemo/06_yolov5_python
+python3 main_gst_realtime.py \
+  --model yolov5s_relu_tk2_RK356X_i8.rknn \
+  --anchors RK_anchors_yolov5.txt \
+  --labels coco_80_labels_list.txt \
+  --frames 100 \
+  --display \
+  --save-every 50 \
+  --output /tmp/yolov5_realtime_last.jpg</code></pre>
+<p>实测输出：</p>
+<pre><code class="language-text">frame 50 fps 3.918 detections 2
+frame 100 fps 4.111 detections 2
+processed_frames 100
+elapsed_sec 24.424
+fps 4.094
+avg_detections_per_frame 2.180
+saved True /tmp/yolov5_realtime_last.jpg</code></pre>
+<p>结果文件：</p>
+<pre><code class="language-text">板端：/tmp/yolov5_realtime_last.jpg
+Windows：E:\RK3568\yolo_stage\python_files\yolov5_realtime_last.jpg
+Obsidian：05-实验与证据/实验产物/assets/yolov5_realtime_last.jpg</code></pre>
+<p>预览：</p>
+<p><span class="note-embed">yolov5_realtime_last.jpg</span></p>
+<p>当前结论：</p>
+<pre><code class="language-text">Camera -&gt; GStreamer -&gt; OpenCV -&gt; YOLOv5 RKNN -&gt; cv2.imshow -&gt; MIPI屏</code></pre>
+<p>已经跑通。</p>
+<p>注意：</p>
+<pre><code class="language-text">当前 YOLOv5s 单模型实时速度约 4 FPS，低于 SCRFD 的约 6.6 FPS。
+这一步目标是验证闭环，不是做性能优化。
+检测结果存在误检，例如局部物体被识别为 cup，后续可通过阈值、输入分辨率、模型选择再优化。</code></pre>
+<h2>2026-05-31 日志收口复测</h2>
+<p>复测原因：</p>
+<pre><code class="language-text">上一轮实时测试里每帧都会打印 output_shapes，日志太吵。
+已把 output_shapes 改成只有加 --verbose 时才打印。</code></pre>
+<p>复测命令：</p>
+<pre><code class="language-bash">cd /userdata/aidemo/06_yolov5_python
+python3 main_gst_realtime.py \
+  --model yolov5s_relu_tk2_RK356X_i8.rknn \
+  --anchors RK_anchors_yolov5.txt \
+  --labels coco_80_labels_list.txt \
+  --frames 30 \
+  --display \
+  --output /tmp/yolov5_realtime_clean_last.jpg</code></pre>
+<p>实测输出：</p>
+<pre><code class="language-text">frame 10 fps 3.001 detections 1
+frame 20 fps 3.594 detections 1
+frame 30 fps 3.862 detections 1
+processed_frames 30
+elapsed_sec 7.858
+fps 3.818
+avg_detections_per_frame 1.000
+saved True /tmp/yolov5_realtime_clean_last.jpg</code></pre>
+<p>结果文件：</p>
+<pre><code class="language-text">板端：/tmp/yolov5_realtime_clean_last.jpg
+Windows：E:\RK3568\yolo_stage\python_files\yolov5_realtime_clean_last.jpg
+Obsidian：05-实验与证据/实验产物/assets/yolov5_realtime_clean_last.jpg</code></pre>
+<p>预览：</p>
+<p><span class="note-embed">yolov5_realtime_clean_last.jpg</span></p>
+<p>日志结论：</p>
+<pre><code class="language-text">脚本自己的 output_shapes 噪声已经消失。
+RKNN runtime 的 warning 仍然会输出，而且不是普通 stderr 重定向能完全压住。
+这些 warning 不影响当前功能，后续如果需要干净终端，再做外层日志过滤。</code></pre>
+<h2>风险点</h2>
+<p>当前 Python 后处理是按官方 C++ <code>yolo.cc</code> 移植的第一版。</p>
+<p>可能需要根据板端实际 <code>output_shapes</code> 微调：</p>
+<ul><li>输出是否是 CHW。</li><li>输出是否已经反量化成 float。</li><li>输出分支顺序是否对应 stride <code>8/16/32</code>。</li><li><code>sigmoid</code> 是否需要补回。</li></ul>
+<p>这些风险点已经通过 <code>bus.jpg</code> 初步排除：</p>
+<pre><code class="language-text">输出是 CHW 结构。
+输出已经是 float32，数值范围大约 0.0 ~ 0.98，不需要手动反量化。
+3 个输出分支顺序对应 stride 8/16/32。
+当前 sigmoid + anchors + NMS 后处理能得到合理检测框。</code></pre>
+<p>#YOLOv5 #RKNN #Python #目标检测</p>
+<h2>知识补充：从图像到检测框</h2>
+<h3>状态：已验证 + 通用原理</h3>
+<p>完整推理不是“调用一次 <code>inference</code> 就得到框”，而是：</p>
+<pre><code class="language-text">BGR frame
+-&gt; resize / letterbox
+-&gt; RGB 或模型要求的通道顺序
+-&gt; NHWC/NCHW 排布
+-&gt; dtype / quantization
+-&gt; RKNN inference
+-&gt; 输出 tensor 解码
+-&gt; confidence filter
+-&gt; NMS
+-&gt; padding/scale 反变换
+-&gt; 原图坐标框</code></pre>
+<p>常见错位原因：</p>
+<ul><li>训练或转换要求 RGB，却把 BGR 直接送入模型。</li><li>模型要求 NCHW，却传入 NHWC。</li><li>letterbox 后忘记去除 padding，导致框整体偏移。</li><li>量化模型仍按浮点模型的范围和 dtype 送入。</li><li>NMS 前后的坐标尺度不一致。</li></ul>
+<p>调试时先保存一张固定输入、前处理后的 tensor 摘要、原始输出 shape 和最终框，先让单图结果正确，再接 Camera 和显示。</p>
+<h2>阶段验收</h2>
+<ul><li>能区分 Toolkit/转换阶段、板端 Runtime、NPU 驱动和 Python 应用。</li><li>能说明模型输入 shape、颜色顺序、dtype 和量化配置的来源。</li><li>能用固定图片复测框位置，再解释 Camera 场景的坐标回映。</li><li>性能记录至少包含输入分辨率、推理耗时或帧率，不能只写“实时”。</li></ul></article><footer class="footer"><a href="../notes.html">返回专项笔记导航</a> · <a href="../../index.html">返回驾驶舱首页</a></footer></main></div><script defer src="../../site.js"></script></body></html>

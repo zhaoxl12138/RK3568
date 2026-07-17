@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>03-Python MVP演示手册 · RK3568</title><link rel="stylesheet" href="../../site.css"></head><body><div class="page-shell"><nav class="site-nav" data-site-nav aria-label="网站导航"><a class="site-nav__brand" href="../../index.html">RK3568 / 驾驶舱</a><div class="site-nav__links"><a href="../../index.html">驾驶舱首页</a><a href="../learning-route.html">学习路线</a><a href="../system-map.html">系统地图</a><a href="../notes.html" aria-current="page">专项笔记</a></div></nav><main id="main-content" class="note-page"><header class="hero"><p class="hero__eyebrow">GENERATED NOTE · 04-项目</p><h1>03-Python MVP演示手册</h1><p>此页面由 Markdown 知识源自动生成，适合网页阅读；编辑仍请回到 Obsidian。</p><div class="hero__actions"><a class="button" href="obsidian://open?vault=RK3568&amp;file=04-%E9%A1%B9%E7%9B%AE%2F03-Python%20MVP%E6%BC%94%E7%A4%BA%E6%89%8B%E5%86%8C">在 Obsidian 中打开</a><a class="button button--quiet" href="../../../../04-项目/03-Python MVP演示手册.md">查看原始 Markdown</a></div></header><article class="note-content"><h1>Python MVP演示手册</h1>
+<p>这份文档负责复现与验证已经跑通的 YOLOv5 Python AI Camera 闭环，不负责维护全局任务或宣称 YOLOv8n、C++、Linux 5.10 已完成。</p>
+<ul><li>从哪里进入：先确认 项目版本基线；学习原理看 02-从零到Python MVP学习路线。</li><li>完成后去哪里：把复现证据归入 05-实验与证据 / 实验产物索引；实时进展回到 06-任务 / 下一步任务看板。</li></ul>
+<h2>演示链路</h2>
+<pre><code class="language-text">IMX415 MIPI Camera
+-&gt; RKISP / V4L2
+-&gt; GStreamer
+-&gt; OpenCV
+-&gt; YOLOv5 RKNN / NPU
+-&gt; 检测框绘制
+-&gt; MIPI屏显示
+-&gt; RTMP/HLS推流
+-&gt; Windows播放验证</code></pre>
+<h2>复现前先确认</h2>
+<p>板端 IP：</p>
+<pre><code class="language-text">192.168.0.230</code></pre>
+<p>板端目录：</p>
+<pre><code class="language-text">/userdata/aidemo/06_yolov5_python</code></pre>
+<p>WSL 项目目录：</p>
+<pre><code class="language-text">/home/rk3568/work/rk3568_ai_camera</code></pre>
+<p>Windows 工作目录：</p>
+<pre><code class="language-text">E:\RK3568</code></pre>
+<h2>部署</h2>
+<p>在 WSL 中执行：</p>
+<pre><code class="language-bash">cd /home/rk3568/work/rk3568_ai_camera
+./scripts/deploy_yolov5_demo.sh</code></pre>
+<p>这一步会同步：</p>
+<ul><li>YOLOv5 Python 脚本。</li><li>RKNN 模型。</li><li>anchors 文件。</li><li>labels 文件。</li><li>一键启动脚本。</li></ul>
+<h2>启动完整演示</h2>
+<p>板端执行：</p>
+<pre><code class="language-bash">cd /userdata/aidemo/06_yolov5_python
+SHOW_MIPI=1 FRAMES=0 ./start_yolov5_hls_demo.sh</code></pre>
+<p>含义：</p>
+<ul><li><code>SHOW_MIPI=1</code> 开启板端 MIPI 屏显示。</li><li><code>FRAMES=0</code> 表示持续运行。</li><li>脚本会准备 HLS 目录、检查 Nginx、启动 YOLOv5 推流。</li></ul>
+<h2>短测试</h2>
+<p>如果只想快速验证：</p>
+<pre><code class="language-bash">cd /userdata/aidemo/06_yolov5_python
+SHOW_MIPI=1 FRAMES=60 STREAM_NAME=yolo_test ./start_yolov5_hls_demo.sh</code></pre>
+<p>短测试建议至少 60 帧，因为 HLS 需要时间生成 <code>.m3u8</code>。</p>
+<h2>Windows 拉流</h2>
+<p>必须在 Windows PowerShell / Windows Terminal 执行：</p>
+<pre><code class="language-powershell">ffplay http://192.168.0.230/hls/yolo.m3u8</code></pre>
+<p>如果使用短测试名称：</p>
+<pre><code class="language-powershell">ffplay http://192.168.0.230/hls/yolo_test.m3u8</code></pre>
+<p>保存 2 秒视频：</p>
+<pre><code class="language-powershell">ffmpeg -y -i http://192.168.0.230/hls/yolo.m3u8 -t 2 -c copy E:\RK3568\yolo_pull_test.mp4</code></pre>
+<h2>项目版本基线：默认方向</h2>
+<pre><code class="language-text">ROTATE=none
+DISPLAY_ROTATE=ccw
+STREAM_ROTATE=ccw</code></pre>
+<p>含义：</p>
+<ul><li><code>ROTATE</code> 影响模型输入前的 Camera 帧。</li><li><code>DISPLAY_ROTATE</code> 只影响 MIPI 屏显示。</li><li><code>STREAM_ROTATE</code> 只影响 HLS/Windows 拉流。</li></ul>
+<p>不要再优先使用：</p>
+<pre><code class="language-bash">DISPLAY=1</code></pre>
+<p>原因：</p>
+<pre><code class="language-text">DISPLAY 是 Linux 图形环境变量，容易和 OpenCV/Qt 冲突。
+当前统一使用 SHOW_MIPI=1。</code></pre>
+<h2>分辨率和比例</h2>
+<p>本页实测状态：MIPI 屏按竖屏处理：</p>
+<pre><code class="language-bash">SHOW_MIPI=1 DISPLAY_WIDTH=720 DISPLAY_HEIGHT=1280 ./start_yolov5_hls_demo.sh</code></pre>
+<p>推流分辨率：</p>
+<pre><code class="language-bash">STREAM_WIDTH=640 STREAM_HEIGHT=360 STREAM_FPS=5 ./start_yolov5_hls_demo.sh</code></pre>
+<p>本页实测状态：推流端已使用等比例缩放补边，避免 Windows 画面被强制拉伸。</p>
+<h2>常见问题</h2>
+<h3>1. 板端 ffplay 报 No available video device</h3>
+<p>现象：</p>
+<pre><code class="language-text">Could not initialize SDL - No available video device</code></pre>
+<p>原因：</p>
+<pre><code class="language-text">你在板子 SSH 终端里运行了 ffplay。
+SSH 环境没有图形显示设备给 ffplay 使用。</code></pre>
+<p>处理：</p>
+<pre><code class="language-text">Windows 拉流命令必须在 Windows 终端执行。</code></pre>
+<h3>2. Windows 拉流 404</h3>
+<p>常见原因：</p>
+<ul><li>Python demo 没有运行。</li><li>HLS <code>.m3u8</code> 还没生成。</li><li>Camera 被其他程序占用，demo 没启动成功。</li><li>使用了错误的 <code>STREAM_NAME</code>。</li></ul>
+<p>检查：</p>
+<pre><code class="language-bash">ls -lh /tmp/hls
+wget -O - http://127.0.0.1/hls/yolo.m3u8</code></pre>
+<h3>3. /dev/video0 busy</h3>
+<p>现象：</p>
+<pre><code class="language-text">Device or resource busy</code></pre>
+<p>原因：</p>
+<pre><code class="language-text">屏幕 Camera 应用或旧 demo 正在占用 /dev/video0。</code></pre>
+<p>处理：</p>
+<pre><code class="language-text">关闭屏幕相机应用或停止旧 demo。</code></pre>
+<h3>4. MIPI 和 Windows 方向不同</h3>
+<p>处理原则：</p>
+<pre><code class="language-text">不要用一个 ROTATE 同时修 MIPI 和 HLS。
+分别调 DISPLAY_ROTATE 和 STREAM_ROTATE。</code></pre>
+<h2>已验证结果</h2>
+<pre><code class="language-text">YOLOv5 + MIPI屏实时显示：约 3.8 - 4.1 FPS
+YOLOv5 + RTMP/HLS 输出：约 4.9 - 5.0 FPS</code></pre>
+<p>这说明链路已通，但不是最终性能。</p>
+<h2>本页实测结论</h2>
+<p>Python MVP 已经完成第一轮完整闭环。</p>
+<p>升级方向：</p>
+<pre><code class="language-text">按 [[02-从零到Python MVP学习路线]] 把每个阶段原理补齐。
+补齐后再进入 C++17/CMake 工程化升级。</code></pre>
+<p>相关笔记：</p>
+<ul><li>YOLOv5 Python最小推理记录</li><li>MIPI屏显示链路</li><li>RTMP-HLS推流记录</li><li>OpenCV读取Camera记录</li><li>01-实验产物索引</li></ul>
+<p>#PythonMVP #演示 #YOLOv5 #RKNN #MIPI #HLS</p></article><footer class="footer"><a href="../notes.html">返回专项笔记导航</a> · <a href="../../index.html">返回驾驶舱首页</a></footer></main></div><script defer src="../../site.js"></script></body></html>

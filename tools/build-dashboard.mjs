@@ -32,6 +32,139 @@ const QUICK_LINKS = [
   ['outputMoc', '09-输出沉淀/00-输出沉淀入口.md'],
 ];
 
+const EXTRA_NOTE_PATHS = [
+  '05-实验与证据/01-板子到手验机记录.md',
+  '07-专项笔记/Camera-V4L2/V4L2命令行抓帧记录.md',
+  '07-专项笔记/AI-RKNN/YOLOv5 Python最小推理记录.md',
+];
+
+const NOTE_PAGE_DIRECTORY = '00-首页/学习驾驶舱/pages/notes';
+
+function normalizeVaultPath(filePath) {
+  return filePath.replace(/\\/gu, '/').replace(/^\.\//u, '');
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/gu, '&amp;')
+    .replace(/</gu, '&lt;')
+    .replace(/>/gu, '&gt;')
+    .replace(/"/gu, '&quot;')
+    .replace(/'/gu, '&#39;');
+}
+
+function notePageName(filePath) {
+  return `${normalizeVaultPath(filePath).replace(/\.md$/iu, '').replace(/\//gu, '--')}.html`;
+}
+
+function notePagePath(filePath) {
+  return path.posix.join('pages/notes', notePageName(filePath));
+}
+
+function resolveNoteLink(target, linkMap) {
+  const normalized = normalizeVaultPath(target).replace(/\.md$/iu, '.md');
+  return linkMap.get(normalized) ?? linkMap.get(path.posix.basename(normalized));
+}
+
+function renderInline(value, linkMap = new Map()) {
+  let text = String(value ?? '');
+  text = text.replace(/!\[\[([^\]]+)\]\]/gu, (_, target) => {
+    const safeTarget = escapeHtml(target.split('|', 1)[0]);
+    return `<span class="note-embed">${safeTarget}</span>`;
+  });
+  text = text.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/gu, (_, target, label) => {
+    const href = resolveNoteLink(target.trim(), linkMap);
+    return href
+      ? `<a href="${escapeHtml(href)}">${escapeHtml(label ?? target)}</a>`
+      : escapeHtml(label ?? target);
+  });
+  text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/gu, (_, label, target) => (
+    `<a href="${escapeHtml(target)}">${escapeHtml(label)}</a>`
+  ));
+  text = escapeHtml(text)
+    .replace(/`([^`]+)`/gu, '<code>$1</code>')
+    .replace(/\*\*([^*]+)\*\*/gu, '<strong>$1</strong>')
+    .replace(/__([^_]+)__/gu, '<strong>$1</strong>')
+    .replace(/\*([^*]+)\*/gu, '<em>$1</em>');
+  return text
+    .replace(/&lt;span class=&quot;note-embed&quot;&gt;([^<]+)&lt;\/span&gt;/gu, '<span class="note-embed">$1</span>')
+    .replace(/&lt;a href=&quot;([^&]+)&quot;&gt;([^<]+)&lt;\/a&gt;/gu, '<a href="$1">$2</a>');
+}
+
+export function renderMarkdown(markdown, { linkMap = new Map() } = {}) {
+  const lines = String(markdown ?? '').replace(/\r\n?/gu, '\n').split('\n');
+  const output = [];
+  let index = 0;
+  while (index < lines.length) {
+    const line = lines[index];
+    const fence = line.match(/^\s*(```+|~~~+)\s*([^\s]*)\s*$/u);
+    if (fence) {
+      const code = [];
+      index += 1;
+      while (index < lines.length && !new RegExp(`^\\s*${fence[1]}\\s*$`, 'u').test(lines[index])) {
+        code.push(lines[index]);
+        index += 1;
+      }
+      if (index < lines.length) index += 1;
+      const language = fence[2] ? ` class="language-${escapeHtml(fence[2])}"` : '';
+      output.push(`<pre><code${language}>${escapeHtml(code.join('\n'))}</code></pre>`);
+      continue;
+    }
+    const heading = line.match(/^\s*(#{1,6})\s+(.+?)\s*#*\s*$/u);
+    if (heading) {
+      output.push(`<h${heading[1].length}>${renderInline(heading[2], linkMap)}</h${heading[1].length}>`);
+      index += 1;
+      continue;
+    }
+    if (/^\s*[-*+]\s+/u.test(line)) {
+      const items = [];
+      while (index < lines.length && /^\s*[-*+]\s+/u.test(lines[index])) {
+        items.push(`<li>${renderInline(lines[index].replace(/^\s*[-*+]\s+/u, ''), linkMap)}</li>`);
+        index += 1;
+      }
+      output.push(`<ul>${items.join('')}</ul>`);
+      continue;
+    }
+    if (/^\s*>\s?/u.test(line)) {
+      const items = [];
+      while (index < lines.length && /^\s*>\s?/u.test(lines[index])) {
+        items.push(renderInline(lines[index].replace(/^\s*>\s?/u, ''), linkMap));
+        index += 1;
+      }
+      output.push(`<blockquote>${items.join('<br>')}</blockquote>`);
+      continue;
+    }
+    if (line.includes('|') && index + 1 < lines.length && /^\s*\|?\s*:?-{3,}:?\s*(?:\|\s*:?-{3,}:?\s*)+\|?\s*$/u.test(lines[index + 1])) {
+      const cells = (value) => value.trim().replace(/^\|/u, '').replace(/\|$/u, '').split('|').map((cell) => cell.trim());
+      const headers = cells(line);
+      const rows = [];
+      index += 2;
+      while (index < lines.length && lines[index].includes('|') && lines[index].trim()) {
+        rows.push(cells(lines[index]));
+        index += 1;
+      }
+      output.push(`<table><thead><tr>${headers.map((cell) => `<th>${renderInline(cell, linkMap)}</th>`).join('')}</tr></thead><tbody>${rows.map((row) => `<tr>${headers.map((_, cellIndex) => `<td>${renderInline(row[cellIndex] ?? '', linkMap)}</td>`).join('')}</tr>`).join('')}</tbody></table>`);
+      continue;
+    }
+    if (!line.trim()) {
+      index += 1;
+      continue;
+    }
+    const paragraph = [line];
+    index += 1;
+    while (index < lines.length && lines[index].trim() && !/^\s*(?:#{1,6}\s|[-*+]\s|>\s?|```|~~~)/u.test(lines[index])) {
+      paragraph.push(lines[index]);
+      index += 1;
+    }
+    output.push(`<p>${paragraph.map((value) => renderInline(value, linkMap)).join('<br>')}</p>`);
+  }
+  return output.join('\n');
+}
+
+function notePageTemplate(note, body) {
+  return `<!doctype html>\n<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escapeHtml(note.title)} · RK3568</title><link rel="stylesheet" href="../../site.css"></head><body><div class="page-shell"><nav class="site-nav" data-site-nav aria-label="网站导航"><a class="site-nav__brand" href="../../index.html">RK3568 / 驾驶舱</a><div class="site-nav__links"><a href="../../index.html">驾驶舱首页</a><a href="../learning-route.html">学习路线</a><a href="../system-map.html">系统地图</a><a href="../notes.html" aria-current="page">专项笔记</a></div></nav><main id="main-content" class="note-page"><header class="hero"><p class="hero__eyebrow">GENERATED NOTE · ${escapeHtml(note.folder)}</p><h1>${escapeHtml(note.title)}</h1><p>此页面由 Markdown 知识源自动生成，适合网页阅读；编辑仍请回到 Obsidian。</p><div class="hero__actions"><a class="button" href="${escapeHtml(note.obsidianUrl)}">在 Obsidian 中打开</a><a class="button button--quiet" href="../../../../${escapeHtml(normalizeVaultPath(note.filePath))}">查看原始 Markdown</a></div></header><article class="note-content">${body}</article><footer class="footer"><a href="../notes.html">返回专项笔记导航</a> · <a href="../../index.html">返回驾驶舱首页</a></footer></main></div><script defer src="../../site.js"></script></body></html>`;
+}
+
 function section(markdown, heading) {
   const match = markdown.match(new RegExp(`^##\\s+${heading}\\s*$([\\s\\S]*?)(?=^##\\s|(?![\\s\\S]))`, 'mu'));
   return match ? match[1] : '';
@@ -155,6 +288,55 @@ export function parseStageTable(markdown) {
 export function buildObsidianUrl(vault, filePath) {
   const normalizedPath = filePath.replace(/\\/gu, '/').replace(/\.md$/iu, '');
   return `obsidian://open?vault=${encodeURIComponent(vault)}&file=${encodeURIComponent(normalizedPath)}`;
+}
+
+function noteSources() {
+  return [...new Set([
+    ...DOMAIN_MAP.map(([, filePath]) => filePath),
+    ...QUICK_LINKS.map(([, filePath]) => filePath),
+    ...EXTRA_NOTE_PATHS,
+  ])];
+}
+
+async function buildNoteCatalog(rootDir, vaultName = DEFAULT_VAULT_NAME) {
+  const sources = noteSources();
+  const byPath = new Map();
+  const byBasename = new Map();
+  const notes = [];
+  const warnings = [];
+  for (const filePath of sources) {
+    const normalizedPath = normalizeVaultPath(filePath);
+    const webPath = notePagePath(normalizedPath);
+    const note = {
+      filePath: normalizedPath,
+      webPath,
+      obsidianUrl: buildObsidianUrl(vaultName, normalizedPath),
+      title: path.posix.basename(normalizedPath, '.md'),
+      folder: path.posix.dirname(normalizedPath),
+      contents: '',
+    };
+    try {
+      note.contents = await readFile(path.join(rootDir, ...normalizedPath.split('/')), 'utf8');
+      notes.push(note);
+      byPath.set(normalizedPath, webPath);
+      byBasename.set(path.posix.basename(normalizedPath), webPath);
+    } catch (error) {
+      if (error.code === 'ENOENT') warnings.push(`Missing note source: ${normalizedPath}`);
+      else throw error;
+    }
+  }
+  const linkMap = new Map([...byPath, ...byBasename]);
+  return { notes, byPath, byBasename, linkMap, warnings };
+}
+
+async function writeNotePages(rootDir, notes, linkMap) {
+  const outputDirectory = path.join(rootDir, ...NOTE_PAGE_DIRECTORY.split('/'));
+  await mkdir(outputDirectory, { recursive: true });
+  for (const note of notes) {
+    const pageFile = path.join(outputDirectory, notePageName(note.filePath));
+    const body = renderMarkdown(note.contents, { linkMap });
+    await writeFile(pageFile, notePageTemplate(note, body), 'utf8');
+  }
 }
 
 async function readOptional(rootDir, relativePath, description) {
@@ -372,7 +554,14 @@ export async function buildDashboardData(rootDir, vaultName = DEFAULT_VAULT_NAME
 
   const evidenceResult = await indexEvidence(rootDir, evidenceIndex);
   warnings.push(...evidenceResult.warnings);
-  const link = ([name, filePath]) => ({ name, filePath, url: buildObsidianUrl(vaultName, filePath) });
+  const noteCatalog = await buildNoteCatalog(rootDir, vaultName);
+  warnings.push(...noteCatalog.warnings);
+  const link = ([name, filePath]) => ({
+    name,
+    filePath,
+    url: buildObsidianUrl(vaultName, filePath),
+    webPath: noteCatalog.byPath.get(normalizeVaultPath(filePath)) ?? notePagePath(filePath),
+  });
 
   return {
     currentStage,
@@ -387,6 +576,8 @@ export async function buildDashboardData(rootDir, vaultName = DEFAULT_VAULT_NAME
 
 export async function writeDashboardData(rootDir, outputFile) {
   const data = await buildDashboardData(rootDir);
+  const noteCatalog = await buildNoteCatalog(rootDir);
+  await writeNotePages(rootDir, noteCatalog.notes, noteCatalog.linkMap);
   await mkdir(path.dirname(outputFile), { recursive: true });
   await writeFile(outputFile, `window.RK3568_VAULT_DATA = ${JSON.stringify(data, null, 2)};\n`, 'utf8');
   return data;

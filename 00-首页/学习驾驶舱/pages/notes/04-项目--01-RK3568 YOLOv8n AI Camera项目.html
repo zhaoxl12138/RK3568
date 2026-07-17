@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>01-RK3568 YOLOv8n AI Camera项目 · RK3568</title><link rel="stylesheet" href="../../site.css"></head><body><div class="page-shell"><nav class="site-nav" data-site-nav aria-label="网站导航"><a class="site-nav__brand" href="../../index.html">RK3568 / 驾驶舱</a><div class="site-nav__links"><a href="../../index.html">驾驶舱首页</a><a href="../learning-route.html">学习路线</a><a href="../system-map.html">系统地图</a><a href="../notes.html" aria-current="page">专项笔记</a></div></nav><main id="main-content" class="note-page"><header class="hero"><p class="hero__eyebrow">GENERATED NOTE · 04-项目</p><h1>01-RK3568 YOLOv8n AI Camera项目</h1><p>此页面由 Markdown 知识源自动生成，适合网页阅读；编辑仍请回到 Obsidian。</p><div class="hero__actions"><a class="button" href="obsidian://open?vault=RK3568&amp;file=04-%E9%A1%B9%E7%9B%AE%2F01-RK3568%20YOLOv8n%20AI%20Camera%E9%A1%B9%E7%9B%AE">在 Obsidian 中打开</a><a class="button button--quiet" href="../../../../04-项目/01-RK3568 YOLOv8n AI Camera项目.md">查看原始 Markdown</a></div></header><article class="note-content"><h1>RK3568 YOLOv8n AI Camera项目</h1>
+<p>文件名说明：</p>
+<pre><code class="language-text">文件名保留 YOLOv8n，是因为这是最终目标项目。
+项目版本基线是 YOLOv5 RKNN Python MVP。
+本文件同时记录最终目标和稳定版本，不代表已经完成 YOLOv8n。</code></pre>
+<p>本文件负责项目基线、实现结构、验证结果、已知限制和升级方向，不承担学习路线或全局任务管理。</p>
+<ul><li>项目入口：00-项目可视化入口</li><li>学习路线：01-AI视觉系统主线、02-从零到Python MVP学习路线</li><li>实时进展与唯一任务：01-下一步任务看板</li><li>验证证据：05-实验与证据 / 实验产物索引</li></ul>
+<h2>版本基线</h2>
+<table><thead><tr><th>项目</th><th>项目版本基线</th></tr></thead><tbody><tr><td>Camera 输入</td><td>已验证：IMX415 -&gt; RKISP/V4L2 -&gt; GStreamer</td></tr><tr><td>AI 推理</td><td>已验证：YOLOv5 RKNN Python MVP</td></tr><tr><td>本地显示</td><td>已验证：MIPI 屏实时显示</td></tr><tr><td>网络输出</td><td>已验证：RTMP -&gt; Nginx -&gt; HLS -&gt; Windows 播放</td></tr><tr><td>YOLOv8n</td><td>最终目标，未完成</td></tr><tr><td>C++ 工程化</td><td>骨架已建立，不属于稳定版本</td></tr></tbody></table>
+<p>项目验证证据集中在 05-实验与证据 / 实验产物索引；实时进展只在 01-下一步任务看板 维护。</p>
+<h2>项目目标</h2>
+<p>做一个可以用于 GitHub 展示和求职说明的 AI 视觉系统工程项目。</p>
+<p>不是训练新模型，而是把 Camera、Linux、多媒体、AI 推理、推流做成完整闭环。</p>
+<h2>硬件</h2>
+<ul><li>RK3568 正点原子开发板</li><li>4G + 64G</li><li>IMX415 MIPI Camera</li></ul>
+<h2>最终闭环</h2>
+<p>Camera -&gt; V4L2/GStreamer -&gt; OpenCV -&gt; YOLOv8n -&gt; NCNN/RKNN -&gt; RTSP/RTMP -&gt; Linux部署</p>
+<h2>软件目标</h2>
+<ul><li>Python 优先跑通完整闭环</li><li>C++17/CMake 后置升级</li><li>Linux 工程化</li><li>模块化</li><li>可维护</li><li>可写 README</li><li>可放 GitHub</li></ul>
+<h2>计划模块</h2>
+<ul><li><code>camera</code>: V4L2/GStreamer 采集</li><li><code>preprocess</code>: 图像格式转换和缩放</li><li><code>detector</code>: YOLOv8n 推理</li><li><code>postprocess</code>: NMS、画框、结果输出</li><li><code>streamer</code>: RTSP/RTMP 推流</li><li><code>config</code>: 配置文件</li><li><code>app</code>: 主程序入口</li></ul>
+<h2>历史决策：实现路线</h2>
+<pre><code class="language-text">现在用 Python 冲完整闭环，后面用 C++ 做项目升级。</code></pre>
+<p>原因：</p>
+<pre><code class="language-text">当前最重要的是先跑通 Camera -&gt; AI -&gt; MIPI屏 -&gt; 推流。
+C++ 骨架已经建立，但暂时不继续作为主线推进。</code></pre>
+<p>当前 YOLO 阶段策略：</p>
+<pre><code class="language-text">优先使用 4.19 官方 YOLOv5 RKNN 模型做 Python 最小推理。
+YOLOv8 后置，因为官方 YOLOv8 例程在 Linux5.10 资料中，当前板端系统是 4.19。</code></pre>
+<p>当时的学习策略：</p>
+<pre><code class="language-text">功能已经跑通 Python MVP。
+先按 [[02-从零到Python MVP学习路线]] 从头复盘原理，再考虑升级 YOLOv8n 或 C++。</code></pre>
+<h2>本页实测状态：C++ 工程骨架</h2>
+<p>代码仓库：</p>
+<pre><code class="language-text">\\wsl$\Ubuntu-20.04\home\rk3568\work\rk3568_ai_camera</code></pre>
+<p>已建立 C++17/CMake 骨架：</p>
+<pre><code class="language-text">CameraSource -&gt; Detector -&gt; DisplaySink -&gt; StreamSink</code></pre>
+<p>实测涉及文件：</p>
+<pre><code class="language-text">CMakeLists.txt
+include/rk3568_ai_camera/
+src/
+docs/C++17-CMake项目骨架设计.md</code></pre>
+<p>本页实测状态：</p>
+<pre><code class="language-text">骨架已创建，WSL 主机编译和运行已通过。</code></pre>
+<p>验证命令：</p>
+<pre><code class="language-bash">cmake -S . -B build
+cmake --build build
+./build/ai_camera_demo</code></pre>
+<p>关键输出：</p>
+<pre><code class="language-text">processed_frames 1</code></pre>
+<p>本页实测状态：OpenCV C++ 接入</p>
+<pre><code class="language-text">WSL 已安装 libopencv-dev。
+CMake 已找到 OpenCV 4.2.0。
+OpenCvCameraSource / OpenCvDisplaySink 已加入工程并编译通过。
+当前主程序已支持 --mode stub 和 --mode opencv。
+已用测试 JPG 验证 C++ OpenCV 输入链路。</code></pre>
+<p>验证命令：</p>
+<pre><code class="language-bash">./build/ai_camera_demo --mode opencv --source /mnt/e/RK3568/opencv_test/opencv_frame_gst.jpg --frames 1 --no-display</code></pre>
+<p>关键输出：</p>
+<pre><code class="language-text">detect frame 1280x720 BGR888
+processed_frames 1</code></pre>
+<p>关联：</p>
+<ul><li>MIPI屏显示链路</li><li>SCRFD源码拆解与复用点</li></ul>
+<p>#项目 #YOLOv8n #RKNN #Camera #RTSP</p>
+<h2>项目版本基线（2026-05-31）</h2>
+<p>该版本按实际成果描述为：</p>
+<pre><code class="language-text">RK3568 YOLOv5 RKNN AI Camera Python MVP</code></pre>
+<p>说明：最终目标仍可升级到 YOLOv8n，但该基线在 Buildroot 4.19 出厂系统上跑通的是官方 YOLOv5 RKNN 模型。</p>
+<p>该版本已验证能力：</p>
+<ul><li>IMX415 MIPI Camera 实时采集。</li><li>GStreamer pipeline 输入 OpenCV。</li><li>YOLOv5 RKNN 模型 NPU 推理。</li><li>检测框绘制。</li><li>MIPI 竖屏全屏显示。</li><li>FFmpeg 推 RTMP。</li><li>Nginx 输出 HLS。</li><li>Windows <code>ffplay</code> 拉流显示。</li><li>一键启动脚本和 WSL 部署脚本。</li></ul>
+<p>该版本板端启动：</p>
+<pre><code class="language-bash">cd /userdata/aidemo/06_yolov5_python
+SHOW_MIPI=1 FRAMES=0 ./start_yolov5_hls_demo.sh</code></pre>
+<p>该版本 Windows 拉流：</p>
+<pre><code class="language-powershell">ffplay http://192.168.0.230/hls/yolo.m3u8</code></pre>
+<p>该版本默认方向：</p>
+<pre><code class="language-text">ROTATE=none
+DISPLAY_ROTATE=ccw
+STREAM_ROTATE=ccw</code></pre>
+<p>该版本项目定位：</p>
+<pre><code class="language-text">这已经不是单个 AI demo，而是一个 AI Camera 系统最小闭环。</code></pre>
+<h2>已知限制</h2>
+<ul><li>稳定版本仍是 Buildroot 4.19 上的 YOLOv5 RKNN Python MVP，未完成 YOLOv8n 或 Linux 5.10 迁移。</li><li>C++17/CMake 只验证了工程骨架和 OpenCV 图片输入，未完成 C++ RKNN AI Camera 闭环。</li><li>演示性能以 03-Python MVP演示手册 的实测数据为准，不代表最终性能。</li></ul>
+<h2>升级方向</h2>
+<ul><li>固化 README 和演示步骤。</li><li>整理代码结构。</li><li>再做 C++17/CMake 工程化升级。</li></ul></article><footer class="footer"><a href="../notes.html">返回专项笔记导航</a> · <a href="../../index.html">返回驾驶舱首页</a></footer></main></div><script defer src="../../site.js"></script></body></html>

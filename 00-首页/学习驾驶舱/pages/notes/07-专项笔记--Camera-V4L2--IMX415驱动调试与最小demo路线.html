@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>IMX415驱动调试与最小demo路线 · RK3568</title><link rel="stylesheet" href="../../site.css"></head><body><div class="page-shell"><nav class="site-nav" data-site-nav aria-label="网站导航"><a class="site-nav__brand" href="../../index.html">RK3568 / 驾驶舱</a><div class="site-nav__links"><a href="../../index.html">驾驶舱首页</a><a href="../learning-route.html">学习路线</a><a href="../system-map.html">系统地图</a><a href="../notes.html" aria-current="page">专项笔记</a></div></nav><main id="main-content" class="note-page"><header class="hero"><p class="hero__eyebrow">GENERATED NOTE · 07-专项笔记/Camera-V4L2</p><h1>IMX415驱动调试与最小demo路线</h1><p>此页面由 Markdown 知识源自动生成，适合网页阅读；编辑仍请回到 Obsidian。</p><div class="hero__actions"><a class="button" href="obsidian://open?vault=RK3568&amp;file=07-%E4%B8%93%E9%A1%B9%E7%AC%94%E8%AE%B0%2FCamera-V4L2%2FIMX415%E9%A9%B1%E5%8A%A8%E8%B0%83%E8%AF%95%E4%B8%8E%E6%9C%80%E5%B0%8Fdemo%E8%B7%AF%E7%BA%BF">在 Obsidian 中打开</a><a class="button button--quiet" href="../../../../07-专项笔记/Camera-V4L2/IMX415驱动调试与最小demo路线.md">查看原始 Markdown</a></div></header><article class="note-content"><h1>IMX415驱动调试与最小demo路线</h1>
+<h2>你要达成什么</h2>
+<p>这份笔记只服务一件事：</p>
+<pre><code class="language-text">你自己把 IMX415 的 Linux camera 驱动调出来，再写一个最小 demo，完整走一遍
+Sensor -&gt; MIPI -&gt; RKISP -&gt; /dev/video0 -&gt; 用户态抓帧 -&gt; 保存/显示</code></pre>
+<p>不是先写大而全的 AI demo，也不是先做 C++ 工程化。</p>
+<h2>学习顺序</h2>
+<h3>第一步：确认驱动入口</h3>
+<p>先找清楚这几个东西：</p>
+<ul><li>Sensor 节点在哪里</li><li>IMX415 是不是已经在 <code>media</code> 拓扑里注册</li><li><code>reset</code>、<code>pwdn</code>、<code>mclk</code>、<code>lane</code>、<code>link-frequencies</code> 有没有配对</li><li><code>rkisp</code> 是否已经创建出主采集通道</li></ul>
+<p>你要看的不是“代码写得漂不漂亮”，而是：</p>
+<pre><code class="language-text">内核启动后，IMX415 有没有真的 probe 成功</code></pre>
+<h3>第二步：确认板端节点</h3>
+<p>重点节点：</p>
+<ul><li><code>/dev/media0</code></li><li><code>/dev/video0</code></li><li><code>/dev/video-camera0</code></li></ul>
+<p>你要确认：</p>
+<ul><li><code>/dev/video0</code> 是否真的是 <code>rkisp_mainpath</code></li><li>默认格式是不是 <code>1280x720 NV12</code></li><li><code>v4l2-ctl --list-devices</code> 能不能正确看到拓扑</li><li><code>v4l2-ctl -d /dev/video0 --all</code> 能不能读到格式信息</li></ul>
+<h3>第三步：先做最小抓帧 demo</h3>
+<p>最小 demo 只做三件事：</p>
+<p>1. 打开 <code>/dev/video0</code><br>2. 抓一帧<br>3. 保存成文件或直接显示</p>
+<p>你先不要一开始就写：</p>
+<ul><li>多线程</li><li>OpenCV 完整项目</li><li>RKNN 推理</li><li>HLS 推流</li></ul>
+<h3>第四步：再做可复用 demo 骨架</h3>
+<p>当单帧能稳定跑通后，再拆成最小结构：</p>
+<ul><li><code>camera_source</code></li><li><code>frame_sink</code></li><li><code>demo_app</code></li></ul>
+<p>建议 demo 从低到高分三版：</p>
+<p>1. <code>v0</code>：命令行抓帧脚本<br>2. <code>v1</code>：Python demo<br>3. <code>v2</code>：C++ demo</p>
+<h2>驱动调试清单</h2>
+<h3>1. 先看启动日志</h3>
+<pre><code class="language-bash">dmesg | rg -i &quot;imx415|rkisp|csi|v4l2|media&quot;</code></pre>
+<p>你要找的是：</p>
+<ul><li>IMX415 有没有 probe</li><li>RKISP 有没有初始化成功</li><li>有没有 I2C 读 ID 失败</li><li>有没有 clock / reset / lane 配置错误</li></ul>
+<h3>2. 再看 media 拓扑</h3>
+<pre><code class="language-bash">media-ctl -p
+v4l2-ctl --list-devices</code></pre>
+<p>你要确认链路是：</p>
+<pre><code class="language-text">IMX415 -&gt; CSI -&gt; RKISP -&gt; /dev/video0</code></pre>
+<h3>3. 再看视频节点</h3>
+<pre><code class="language-bash">v4l2-ctl -d /dev/video0 --all
+v4l2-ctl -d /dev/video0 --list-formats-ext</code></pre>
+<p>重点看：</p>
+<ul><li>分辨率</li><li>Pixel Format</li><li>是否是 <code>Video Capture Multiplanar</code></li><li>是否支持 <code>NV12</code></li></ul>
+<h3>4. 再做单帧抓取</h3>
+<pre><code class="language-bash">v4l2-ctl -d /dev/video0 \
+  --set-fmt-video=width=1280,height=720,pixelformat=NV12 \
+  --stream-mmap=3 \
+  --stream-count=1 \
+  --stream-to=/tmp/imx415_1frame.yuv</code></pre>
+<p>验收：</p>
+<ul><li>文件不是 0 字节</li><li>文件大小符合 <code>1280 <em> 720 </em> 1.5</code></li><li><code>ffplay</code> 能在 Windows 上看出来画面</li></ul>
+<h3>5. 再做连续帧</h3>
+<pre><code class="language-bash">v4l2-ctl -d /dev/video0 \
+  --set-fmt-video=width=1280,height=720,pixelformat=NV12 \
+  --stream-mmap=3 \
+  --stream-count=30 \
+  --stream-to=/tmp/imx415_30frames.yuv</code></pre>
+<p>验收：</p>
+<ul><li>连续采集稳定</li><li>没有明显掉帧</li><li>没有 <code>Device or resource busy</code></li></ul>
+<h2>最小 demo 骨架</h2>
+<h3>Python 版最小 demo</h3>
+<p>只保留这三步：</p>
+<pre><code class="language-python">1. 打开 /dev/video0
+2. 抓一帧或连续抓帧
+3. 保存为 yuv / jpg / png</code></pre>
+<p>如果你要接 OpenCV，就走显式 GStreamer pipeline：</p>
+<pre><code class="language-text">v4l2src device=/dev/video0
+! video/x-raw,format=NV12,width=1280,height=720
+! videoconvert
+! video/x-raw,format=BGR
+! appsink drop=1 sync=false</code></pre>
+<h3>C++ 版最小 demo</h3>
+<p>先别写完整框架，先拆成三个文件就够：</p>
+<pre><code class="language-text">main.cpp
+camera_source.cpp/.h
+frame_sink.cpp/.h</code></pre>
+<p>职责只定义成：</p>
+<ul><li><code>camera_source</code>：打开节点、配置格式、拿帧</li><li><code>frame_sink</code>：保存或显示</li><li><code>main</code>：串起来</li></ul>
+<h2>常见问题</h2>
+<ul><li><code>Device or resource busy</code></li><li>说明节点被屏幕 Camera demo 或其他进程占用</li><li><code>opened False</code></li><li>说明 OpenCV 默认打开方式不适配当前节点</li><li><code>No such file or directory</code></li><li>说明节点/拓扑没起来，先回头看驱动和 <code>media-ctl</code></li><li><code>画面花屏</code></li><li>先查分辨率、像素格式、stride、旋转方向</li></ul>
+<h2>入口</h2>
+<ul><li>V4L2命令行抓帧记录</li><li>OpenCV读取Camera记录</li><li>01-AI视觉系统主线</li><li>02-从零到Python MVP学习路线</li></ul>
+<p>#Camera #IMX415 #V4L2 #RKISP #Demo #Linux驱动</p></article><footer class="footer"><a href="../notes.html">返回专项笔记导航</a> · <a href="../../index.html">返回驾驶舱首页</a></footer></main></div><script defer src="../../site.js"></script></body></html>

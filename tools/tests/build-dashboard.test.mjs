@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import {
   buildDashboardData,
   buildObsidianUrl,
+  renderMarkdown,
   parseStageTable,
   parseTaskBoard,
   writeDashboardData,
@@ -434,7 +435,7 @@ test('buildDashboardData sorts normalized evidence names and warnings determinis
     'Missing optional acceptance table: 07-专项笔记/系统/AI Camera分阶段验收标准.md',
   ]);
   assert.equal(new Set(first.warnings).size, first.warnings.length);
-  assert.deepEqual(first.warnings.slice(-3), [
+  assert.deepEqual(first.warnings.filter((warning) => warning.startsWith('Evidence has unknown stage:')), [
     'Evidence has unknown stage: a.jpg',
     'Evidence has unknown stage: é.jpg',
     'Evidence has unknown stage: 中.jpg',
@@ -523,11 +524,10 @@ test('buildDashboardData returns the dashboard shape and warns for missing optio
     'Camera', 'OpenCV', 'RKNN', 'Display', 'Streaming', 'System',
   ]);
   assert.equal(data.quickLinks.length, 9);
-  assert.deepEqual(data.quickLinks.find(({ name }) => name === 'projectTalk'), {
-    name: 'projectTalk',
-    filePath: '04-项目/02-AI Camera项目讲解稿.md',
-    url: buildObsidianUrl('RK3568', '04-项目/02-AI Camera项目讲解稿.md'),
-  });
+  const projectTalk = data.quickLinks.find(({ name }) => name === 'projectTalk');
+  assert.equal(projectTalk.name, 'projectTalk');
+  assert.equal(projectTalk.url, buildObsidianUrl('RK3568', projectTalk.filePath));
+  assert.match(projectTalk.webPath, /^pages\/notes\/.+\.html$/u);
   assert.ok([...data.domains, ...data.quickLinks].every(({ url }) => url.includes('vault=RK3568&')));
   assert.ok(data.warnings.some((warning) => warning.includes('evidence')));
 });
@@ -543,6 +543,47 @@ test('writeDashboardData emits a valid pretty JSON assignment with the required 
   assert.ok(JSON.parse(emitted.slice(prefix.length, -2)).quickLinks.every(
     ({ url }) => url.includes('vault=RK3568&'),
   ));
+});
+
+test('renderMarkdown turns note structure into escaped HTML and safe links', () => {
+  const html = renderMarkdown([
+    '# Camera 记录',
+    '',
+    '结论：使用 `appsink` 读取图像。',
+    '',
+    '- 第一项',
+    '- 第二项',
+    '',
+    '> 注意：不要把用户输入当 HTML。',
+    '',
+    '```python',
+    'print("<camera>")',
+    '```',
+    '',
+    '| 输入 | 输出 |',
+    '| --- | --- |',
+    '| NV12 | BGR |',
+    '',
+    '参见 [[系统地图|系统地图]]。',
+  ].join('\n'), { linkMap: new Map([['系统地图', 'system-map.html']]) });
+
+  assert.match(html, /<h1>Camera 记录<\/h1>/u);
+  assert.match(html, /<code>appsink<\/code>/u);
+  assert.match(html, /&lt;camera&gt;/u);
+  assert.match(html, /<table>[\s\S]*<th>输入<\/th>[\s\S]*<td>BGR<\/td>/u);
+  assert.match(html, /href="system-map\.html">系统地图<\/a>/u);
+  assert.doesNotMatch(html, /<script>/iu);
+});
+
+test('buildDashboardData exposes generated web paths and warns for missing important notes', async () => {
+  await writeFixture('06-任务/01-下一步任务看板.md', '## 当前阶段\n- 阶段：1 Buildroot\n\n## 本轮唯一任务\n- [ ] 验机');
+  await writeFixture('07-专项笔记/系统/AI Camera分阶段验收标准.md', '## 阶段总表\n| 阶段 | 要回答的问题 | 最小输出证据 | 通过标准 | 证据入口 | 状态 |\n| --- | --- | --- | --- | --- | --- |\n| 1 Buildroot | Q | E | C | [[缺失笔记]] | 计划 |');
+  await writeFixture('05-实验与证据/实验产物/01-实验产物索引.md');
+
+  const data = await buildDashboardData(vaultDir);
+  const taskBoard = data.quickLinks.find(({ name }) => name === 'taskBoard');
+  assert.match(taskBoard.webPath, /pages\/notes\/[^/]+\.html$/u);
+  assert.ok(data.warnings.some((warning) => warning.includes('Missing note source')));
 });
 
 test('CLI rejects unknown options and nonexistent roots concisely with nonzero exits', async () => {

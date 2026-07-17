@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>01-板子到手验机记录 · RK3568</title><link rel="stylesheet" href="../../site.css"></head><body><div class="page-shell"><nav class="site-nav" data-site-nav aria-label="网站导航"><a class="site-nav__brand" href="../../index.html">RK3568 / 驾驶舱</a><div class="site-nav__links"><a href="../../index.html">驾驶舱首页</a><a href="../learning-route.html">学习路线</a><a href="../system-map.html">系统地图</a><a href="../notes.html" aria-current="page">专项笔记</a></div></nav><main id="main-content" class="note-page"><header class="hero"><p class="hero__eyebrow">GENERATED NOTE · 05-实验与证据</p><h1>01-板子到手验机记录</h1><p>此页面由 Markdown 知识源自动生成，适合网页阅读；编辑仍请回到 Obsidian。</p><div class="hero__actions"><a class="button" href="obsidian://open?vault=RK3568&amp;file=05-%E5%AE%9E%E9%AA%8C%E4%B8%8E%E8%AF%81%E6%8D%AE%2F01-%E6%9D%BF%E5%AD%90%E5%88%B0%E6%89%8B%E9%AA%8C%E6%9C%BA%E8%AE%B0%E5%BD%95">在 Obsidian 中打开</a><a class="button button--quiet" href="../../../../05-实验与证据/01-板子到手验机记录.md">查看原始 Markdown</a></div></header><article class="note-content"><h1>板子到手验机记录</h1>
+<h2>当前结论</h2>
+<p>RK3568 开发板已经完成最小验机，出厂 Buildroot 系统可以正常启动，串口、WiFi、SSH 和屏幕 Camera 出图链路已经打通。</p>
+<h2>已确认信息</h2>
+<ul><li>串口：Type-C UART</li><li>串口设备：<code>COM3 USB-Enhanced-SERIAL CH343</code></li><li>串口登录用户：<code>root</code></li><li>当前固定 SSH 地址：<code>root@192.168.0.230</code></li><li>曾用 DHCP 地址：<code>root@192.168.0.103</code>、<code>root@192.168.0.102</code></li><li>系统：<code>Buildroot 2018.02-rc3</code></li><li>内核：<code>Linux 4.19.232</code></li><li>架构：<code>aarch64</code></li><li>主机名：<code>ATK-DLRK3568</code></li><li>内存：约 <code>3.6GiB</code></li><li>rootfs：约 <code>5.9G</code></li><li>userdata：约 <code>52G</code></li></ul>
+<h2>验机结果</h2>
+<h3>2026-05-28</h3>
+<ul><li>串口登录正常。</li><li>出厂 Buildroot 4.19 系统正常。</li><li>WiFi 和 SSH 正常，SSH 地址为 <code>root@192.168.0.103</code>。</li><li>屏幕 Camera 出图正常。</li><li>V4L2 主采集节点确认为 <code>/dev/video0</code> / <code>/dev/video-camera0</code>。</li><li>主采集默认格式为 <code>1280x720 NV12</code>。</li><li>主采集支持最大范围为 <code>3840x2160</code>。</li><li>命令行抓帧正常，文件为 <code>/tmp/frame_1280x720_nv12.yuv</code>。</li><li>Windows <code>ffplay</code> 可以正常显示 NV12 原始帧。</li></ul>
+<h3>2026-05-30</h3>
+<ul><li>确认板端 WiFi 由 ConnMan 管理，不适合直接改 <code>/etc/network/interfaces</code>。</li><li>确认 <code>192.168.0.103</code> 已有设备响应，不能继续作为固定 IP。</li><li>保留 ConnMan/DHCP 负责 WiFi 连接。</li><li>新增 <code>/etc/init.d/S99wlan0-static-alias</code>，在 <code>wlan0</code> 上追加固定别名 IP <code>192.168.0.230/24</code>。</li><li>重启验证通过：开机后 <code>wlan0</code> 同时存在 DHCP 地址和固定别名地址 <code>192.168.0.230/24</code>。</li><li>Windows 侧 <code>ping 192.168.0.230</code> 正常。</li></ul>
+<h2>关键命令</h2>
+<p>固定访问地址：</p>
+<pre><code class="language-text">root@192.168.0.230</code></pre>
+<p>抓取单帧：</p>
+<pre><code class="language-bash">v4l2-ctl -d /dev/video0 \
+  --set-fmt-video=width=1280,height=720,pixelformat=NV12 \
+  --stream-mmap=3 \
+  --stream-count=1 \
+  --stream-to=/tmp/frame_1280x720_nv12.yuv
+
+ls -lh /tmp/frame_1280x720_nv12.yuv</code></pre>
+<p>抓帧成功后文件大小应约为：</p>
+<pre><code class="language-text">1280 * 720 * 1.5 = 1382400 bytes</code></pre>
+<p>如果 <code>v4l2-ctl</code> 不存在：</p>
+<pre><code class="language-bash">find / -name &quot;v4l2-ctl&quot; 2&gt;/dev/null</code></pre>
+<h2>关联</h2>
+<ul><li>01-下一步任务看板</li><li>02-每日进度记录</li><li>V4L2命令行抓帧记录</li><li>01-AI视觉系统主线</li><li>01-RK3568 YOLOv8n AI Camera项目</li></ul>
+<p>#验机 #Buildroot #Camera #SSH #串口</p></article><footer class="footer"><a href="../notes.html">返回专项笔记导航</a> · <a href="../../index.html">返回驾驶舱首页</a></footer></main></div><script defer src="../../site.js"></script></body></html>

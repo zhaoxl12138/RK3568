@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>V4L2命令行抓帧记录 · RK3568</title><link rel="stylesheet" href="../../site.css"></head><body><div class="page-shell"><nav class="site-nav" data-site-nav aria-label="网站导航"><a class="site-nav__brand" href="../../index.html">RK3568 / 驾驶舱</a><div class="site-nav__links"><a href="../../index.html">驾驶舱首页</a><a href="../learning-route.html">学习路线</a><a href="../system-map.html">系统地图</a><a href="../notes.html" aria-current="page">专项笔记</a></div></nav><main id="main-content" class="note-page"><header class="hero"><p class="hero__eyebrow">GENERATED NOTE · 07-专项笔记/Camera-V4L2</p><h1>V4L2命令行抓帧记录</h1><p>此页面由 Markdown 知识源自动生成，适合网页阅读；编辑仍请回到 Obsidian。</p><div class="hero__actions"><a class="button" href="obsidian://open?vault=RK3568&amp;file=07-%E4%B8%93%E9%A1%B9%E7%AC%94%E8%AE%B0%2FCamera-V4L2%2FV4L2%E5%91%BD%E4%BB%A4%E8%A1%8C%E6%8A%93%E5%B8%A7%E8%AE%B0%E5%BD%95">在 Obsidian 中打开</a><a class="button button--quiet" href="../../../../07-专项笔记/Camera-V4L2/V4L2命令行抓帧记录.md">查看原始 Markdown</a></div></header><article class="note-content"><h1>V4L2命令行抓帧记录</h1>
+<h2>2026-05-28</h2>
+<h2>我今天跑通了什么</h2>
+<p>今天跑通的是从 RK3568 摄像头节点直接抓一帧原始图像：</p>
+<pre><code class="language-text">IMX415 MIPI Camera -&gt; RKISP -&gt; /dev/video0 -&gt; NV12 原始帧 -&gt; Windows ffplay 显示</code></pre>
+<p>这一步很关键，因为它证明我不是只能依赖屏幕上的相机软件，而是可以用命令行直接拿到摄像头数据。</p>
+<h2>V4L2 是什么</h2>
+<p><code>V4L2</code> 全称是 <code>Video4Linux2</code>，是 Linux 下访问摄像头、采集卡、视频输入设备的标准接口。</p>
+<p>可以把它理解为 Linux 给应用程序提供的一套 Camera API。应用程序不用直接操作 MIPI、ISP、Sensor 寄存器，而是通过 <code>/dev/videoX</code> 这样的设备节点拿图像。</p>
+<p>常见关系：</p>
+<pre><code class="language-text">Sensor / MIPI / ISP 驱动
+-&gt; Linux 内核 V4L2 框架
+-&gt; /dev/video0
+-&gt; 用户态程序读取帧</code></pre>
+<p>我后面写 C++ 程序时，本质上也是通过 V4L2 或封装了 V4L2 的库去拿帧。</p>
+<h2>v4l2-ctl 是什么</h2>
+<p><code>v4l2-ctl</code> 是一个命令行测试工具，用来查看和控制 V4L2 设备。</p>
+<p>它可以做这些事：</p>
+<ul><li>查看有哪些摄像头节点</li><li>查看节点支持什么格式和分辨率</li><li>设置分辨率、像素格式</li><li>直接抓帧到文件</li><li>查看曝光、增益、翻转等控制项</li></ul>
+<p>它不是最终项目程序，但很适合做底层验证。</p>
+<h2>当前识别到的节点</h2>
+<p>命令：</p>
+<pre><code class="language-bash">v4l2-ctl --list-devices</code></pre>
+<p>关键结果：</p>
+<pre><code class="language-text">rkisp_mainpath:
+  /dev/video0
+  /dev/video-camera0
+
+rkisp_selfpath:
+  /dev/video1
+
+rkisp raw/stat/params:
+  /dev/video2 ~ /dev/video8</code></pre>
+<p>当前最重要的节点：</p>
+<pre><code class="language-text">/dev/video0</code></pre>
+<p>它是 <code>rkisp_mainpath</code>，也就是主采集通道。</p>
+<p><code>/dev/video-camera0</code> 和 <code>/dev/video0</code> 指向同一个主采集能力，可以理解为便捷入口。</p>
+<h2>当前默认图像格式</h2>
+<p>命令：</p>
+<pre><code class="language-bash">v4l2-ctl -d /dev/video0 --all</code></pre>
+<p>关键结果：</p>
+<pre><code class="language-text">Width/Height : 1280/720
+Pixel Format : NV12
+Size Image   : 1382400</code></pre>
+<p>含义：</p>
+<ul><li>当前输出分辨率是 <code>1280x720</code></li><li>当前像素格式是 <code>NV12</code></li><li>一帧大小是 <code>1382400</code> 字节</li></ul>
+<p>计算方式：</p>
+<pre><code class="language-text">1280 * 720 * 1.5 = 1382400</code></pre>
+<h2>NV12 是什么</h2>
+<p><code>NV12</code> 是一种 YUV 4:2:0 图像格式。</p>
+<p>它不是 JPG，也不是 PNG，不能直接用普通图片查看器打开。</p>
+<p>它由两部分组成：</p>
+<pre><code class="language-text">Y 平面：亮度
+UV 平面：色度，交错排列</code></pre>
+<p>对 <code>1280x720</code> 来说：</p>
+<pre><code class="language-text">Y  大小 = 1280 * 720
+UV 大小 = 1280 * 720 / 2
+总大小 = 1280 * 720 * 1.5</code></pre>
+<p>所以今天生成的 <code>1.4M</code> 文件大小是合理的。</p>
+<h2>抓帧命令</h2>
+<p>命令：</p>
+<pre><code class="language-bash">v4l2-ctl -d /dev/video0 \
+  --set-fmt-video=width=1280,height=720,pixelformat=NV12 \
+  --stream-mmap=3 \
+  --stream-count=1 \
+  --stream-to=/tmp/frame_1280x720_nv12.yuv</code></pre>
+<p>含义：</p>
+<ul><li><code>-d /dev/video0</code>：选择主摄像头采集节点</li><li><code>--set-fmt-video=...</code>：设置输出格式为 <code>1280x720 NV12</code></li><li><code>--stream-mmap=3</code>：使用 mmap 方式申请 3 个缓冲区</li><li><code>--stream-count=1</code>：只抓 1 帧</li><li><code>--stream-to=...</code>：保存到指定文件</li></ul>
+<h2>遇到的问题</h2>
+<p>第一次抓帧时报错：</p>
+<pre><code class="language-text">Device or resource busy</code></pre>
+<p>原因是屏幕上的相机软件正在占用 <code>/dev/video0</code>。</p>
+<p>处理方法：</p>
+<pre><code class="language-text">关闭屏幕上的相机软件
+重新执行抓帧命令</code></pre>
+<p>关闭后抓帧成功：</p>
+<pre><code class="language-text">/tmp/frame_1280x720_nv12.yuv
+大小 1.4M</code></pre>
+<h2>把文件取回 Windows</h2>
+<p>使用 <code>scp</code>：</p>
+<pre><code class="language-powershell">scp root@192.168.0.103:/tmp/frame_1280x720_nv12.yuv E:\RK3568\</code></pre>
+<p>第一次连接时会提示是否信任主机指纹，输入：</p>
+<pre><code class="language-text">yes</code></pre>
+<h2>Windows 上查看 NV12</h2>
+<p>安装 <code>ffmpeg</code> 后使用 <code>ffplay</code>：</p>
+<pre><code class="language-powershell">ffplay -f rawvideo -pixel_format nv12 -video_size 1280x720 E:\RK3568\frame_1280x720_nv12.yuv</code></pre>
+<p>这条命令告诉 <code>ffplay</code>：</p>
+<ul><li>这是原始视频数据，不是封装格式</li><li>像素格式是 <code>NV12</code></li><li>分辨率是 <code>1280x720</code></li></ul>
+<p>验证结果：</p>
+<pre><code class="language-text">ffplay 可以正常显示画面</code></pre>
+<h2>当前结论</h2>
+<p>今天已经确认：</p>
+<pre><code class="language-text">Camera 硬件链路正常
+V4L2 节点正常
+/dev/video0 可以抓 NV12 原始帧
+Windows 可以用 ffplay 查看抓到的帧</code></pre>
+<p>历史决策：当时的下一步：</p>
+<ul><li>把 V4L2 抓帧流程写成 C/C++ 程序</li><li>再接 OpenCV 或 AI 推理</li></ul>
+<p>本页实测状态：</p>
+<pre><code class="language-text">后续已经接通 OpenCV、RKNN、MIPI 和 HLS。
+这里保留当时的下一步判断，作为 V4L2 阶段记录。</code></pre>
+<h2>连续采集验证</h2>
+<h3>1280x720 NV12 连续 30 帧</h3>
+<p>命令：</p>
+<pre><code class="language-bash">v4l2-ctl -d /dev/video0 \
+  --set-fmt-video=width=1280,height=720,pixelformat=NV12 \
+  --stream-mmap=3 \
+  --stream-count=30 \
+  --stream-to=/tmp/frame_1280x720_30frames_nv12.yuv</code></pre>
+<p>结果：</p>
+<pre><code class="language-text">/tmp/frame_1280x720_30frames_nv12.yuv
+大小：41472000 字节，约 40M</code></pre>
+<p>计算：</p>
+<pre><code class="language-text">1280 * 720 * 1.5 * 30 = 41472000</code></pre>
+<p>结论：</p>
+<pre><code class="language-text">1280x720 NV12 连续采集稳定。</code></pre>
+<h3>1920x1080 NV12 单帧</h3>
+<p>命令：</p>
+<pre><code class="language-bash">v4l2-ctl -d /dev/video0 \
+  --set-fmt-video=width=1920,height=1080,pixelformat=NV12 \
+  --stream-mmap=3 \
+  --stream-count=1 \
+  --stream-to=/tmp/frame_1920x1080_1frame_nv12.yuv</code></pre>
+<p>结果：</p>
+<pre><code class="language-text">/tmp/frame_1920x1080_1frame_nv12.yuv
+大小：3110400 字节，约 3.0M</code></pre>
+<p>计算：</p>
+<pre><code class="language-text">1920 * 1080 * 1.5 = 3110400</code></pre>
+<p>结论：</p>
+<pre><code class="language-text">1920x1080 NV12 抓帧正常。</code></pre>
+<h2>当前 Camera 阶段结论</h2>
+<p>已经确认：</p>
+<ul><li><code>/dev/video0</code> 可以稳定抓取 NV12。</li><li><code>1280x720</code> 连续 30 帧正常。</li><li><code>1920x1080</code> 单帧正常。</li><li>Camera 命令行采集链路可以进入下一阶段。</li></ul>
+<p>历史决策：当时的下一步：</p>
+<pre><code class="language-text">先读 OpenCV4 使用手册，再验证 OpenCV 读取 /dev/video0。</code></pre>
+<h2>关联</h2>
+<ul><li>01-板子到手验机记录</li><li>01-下一步任务看板</li><li>01-AI视觉系统主线</li></ul>
+<h2>如果你要自己调 IMX415 驱动并写最小 demo</h2>
+<ul><li>IMX415驱动调试与最小demo路线</li><li>先把 <code>dmesg</code>、<code>media-ctl -p</code>、<code>v4l2-ctl --list-devices</code> 跑通。</li><li>再做 <code>/dev/video0</code> 单帧抓取。</li><li>最后再写自己的 demo 骨架。</li></ul>
+<p>#V4L2 #Camera #NV12 #抓帧 #RKISP</p>
+<h2>知识补充：节点、拓扑和 stride</h2>
+<h3>状态：已验证 + 通用原理</h3>
+<ul><li><code>sensor</code> 是图像源，不等于 <code>/dev/video0</code>。</li><li><code>/dev/media0</code> 描述 sensor、CSI、ISP 和 video node 之间的 entity、pad、link 拓扑。</li><li><code>/dev/video0</code> 是应用进行格式协商、申请 buffer 和取帧的数据入口。</li><li><code>width <em> height </em> 1.5</code> 只适用于紧密排列的 NV12；驱动可能按对齐要求提供更大的每行 stride。</li></ul>
+<p>因此排障顺序应是：先看 <code>media-ctl -p</code> 的拓扑，再看 <code>v4l2-ctl --all</code> 的能力和当前格式，最后抓帧验证文件大小、帧数和内容。节点存在只能证明注册完成，不能证明 sensor、链路和 ISP 都已经稳定工作。</p>
+<h2>阶段验收</h2>
+<ul><li>能指出 <code>/dev/media0</code> 与 <code>/dev/video0</code> 的职责差异。</li><li>能计算 1280x720 紧密 NV12 帧的理论大小，并说明 stride 会造成偏差。</li><li>能提供单帧和连续帧证据，而不是只贴命令。</li><li>失败时先检查驱动/拓扑/格式，不直接跳到 OpenCV 或 RKNN。</li></ul></article><footer class="footer"><a href="../notes.html">返回专项笔记导航</a> · <a href="../../index.html">返回驾驶舱首页</a></footer></main></div><script defer src="../../site.js"></script></body></html>

@@ -114,6 +114,21 @@ a:focus {
 .flow__item { position: relative; flex: 1 0 9rem; padding: 1rem; border: 1px solid var(--site-line); border-radius: 12px; text-align: center; background: rgb(20 30 59 / 85%); }
 .flow__item:not(:last-child)::after { content: "→"; position: absolute; left: calc(100% + .7rem); top: 50%; color: var(--site-purple); transform: translateY(-50%); }
 
+.note-page { max-width: 980px; }
+.note-content { max-width: 860px; margin: 0 auto; padding: clamp(1.4rem, 4vw, 2.5rem); border: 1px solid var(--site-line); border-radius: var(--site-radius); background: rgb(255 255 255 / 4%); box-shadow: var(--site-shadow); }
+.note-content h1, .note-content h2, .note-content h3, .note-content h4 { margin: 2rem 0 .7rem; line-height: 1.2; }
+.note-content h1:first-child, .note-content h2:first-child { margin-top: 0; }
+.note-content p, .note-content li { color: var(--site-muted); }
+.note-content ul { padding-left: 1.4rem; }
+.note-content blockquote { margin: 1rem 0; padding: .7rem 1rem; border-left: 3px solid var(--site-blue); color: #b7c7df; background: rgb(66 165 245 / 7%); }
+.note-content pre { overflow-x: auto; margin: 1.2rem 0; padding: 1rem; border: 1px solid var(--site-line); border-radius: 12px; background: #050810; }
+.note-content pre code { color: #d4e4ff; font-family: "Cascadia Code", Consolas, monospace; white-space: pre; }
+.note-content code { padding: .12rem .3rem; border-radius: 5px; color: #b9d7ff; background: rgb(66 165 245 / 12%); font-family: "Cascadia Code", Consolas, monospace; }
+.note-content table { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; }
+.note-content th, .note-content td { min-width: 9rem; padding: .6rem .75rem; border: 1px solid var(--site-line); text-align: left; vertical-align: top; }
+.note-content th { color: var(--site-text); background: rgb(66 165 245 / 10%); }
+.note-embed { color: #8fb9f2; font-weight: 700; }
+
 @media (max-width: 760px) {
   .page-shell { --site-nav-space: 0; }
   .site-nav { position: relative; }

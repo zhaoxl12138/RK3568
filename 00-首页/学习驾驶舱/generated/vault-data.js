@@ -39,7 +39,7 @@ window.RK3568_VAULT_DATA = {
       "minimumEvidence": "串口、SSH、系统信息、Camera 出图",
       "criteria": "能区分硬件故障、系统故障和应用故障",
       "evidenceEntry": "[[01-板子到手验机记录]]",
-      "status": "unknown"
+      "status": "planned"
     },
     {
       "id": "2",
@@ -50,7 +50,7 @@ window.RK3568_VAULT_DATA = {
       "minimumEvidence": "节点、media topology、格式列表",
       "criteria": "能解释 node、entity、pad、link 的关系",
       "evidenceEntry": "[[V4L2命令行抓帧记录]]",
-      "status": "unknown"
+      "status": "planned"
     },
     {
       "id": "3",
@@ -61,7 +61,7 @@ window.RK3568_VAULT_DATA = {
       "minimumEvidence": "一帧 NV12 文件和尺寸计算",
       "criteria": "能解释 Y/UV 平面、stride 和查看方式",
       "evidenceEntry": "[[V4L2命令行抓帧记录]]",
-      "status": "unknown"
+      "status": "planned"
     },
     {
       "id": "4",
@@ -72,7 +72,7 @@ window.RK3568_VAULT_DATA = {
       "minimumEvidence": "成功 pipeline 和 BGR 图像",
       "criteria": "能定位 backend、caps、颜色转换问题",
       "evidenceEntry": "[[OpenCV读取Camera记录]]",
-      "status": "unknown"
+      "status": "planned"
     },
     {
       "id": "5",
@@ -83,7 +83,7 @@ window.RK3568_VAULT_DATA = {
       "minimumEvidence": "`01_lenet` 输出和 runtime 版本",
       "criteria": "能区分模型、runtime、驱动和应用",
       "evidenceEntry": "[[官方AI例程运行记录]]",
-      "status": "unknown"
+      "status": "planned"
     },
     {
       "id": "6",
@@ -94,7 +94,7 @@ window.RK3568_VAULT_DATA = {
       "minimumEvidence": "单帧/实时检测结果",
       "criteria": "能解释 resize、布局、量化、后处理和坐标回映",
       "evidenceEntry": "[[YOLOv5 Python最小推理记录]]",
-      "status": "unknown"
+      "status": "planned"
     },
     {
       "id": "7",
@@ -105,7 +105,7 @@ window.RK3568_VAULT_DATA = {
       "minimumEvidence": "屏幕方向、分辨率和实时画面",
       "criteria": "能说明 Camera MIPI 与 Display MIPI 是两条链路",
       "evidenceEntry": "[[MIPI屏显示链路]]",
-      "status": "unknown"
+      "status": "planned"
     },
     {
       "id": "8",
@@ -116,7 +116,7 @@ window.RK3568_VAULT_DATA = {
       "minimumEvidence": "服务端地址和 Windows 播放结果",
       "criteria": "能区分编码、封装、协议、服务端和播放器",
       "evidenceEntry": "[[RTMP-HLS推流记录]]",
-      "status": "unknown"
+      "status": "planned"
     },
     {
       "id": "9",
@@ -127,7 +127,7 @@ window.RK3568_VAULT_DATA = {
       "minimumEvidence": "从启动到拉流的复测记录",
       "criteria": "不依赖逐行提示，能解释失败定位顺序",
       "evidenceEntry": "[[03-Python MVP演示手册]]",
-      "status": "unknown"
+      "status": "planned"
     },
     {
       "id": "10",
@@ -138,39 +138,45 @@ window.RK3568_VAULT_DATA = {
       "minimumEvidence": "设计草图或独立实验",
       "criteria": "当前复盘完成前不作为主线验收",
       "evidenceEntry": "[[02-从零到Python MVP学习路线]]",
-      "status": "unknown"
+      "status": "planned"
     }
   ],
   "domains": [
     {
       "name": "Camera",
       "filePath": "07-专项笔记/Camera-V4L2/IMX415驱动调试与最小demo路线.md",
-      "url": "obsidian://open?vault=RK3568&file=07-%E4%B8%93%E9%A1%B9%E7%AC%94%E8%AE%B0%2FCamera-V4L2%2FIMX415%E9%A9%B1%E5%8A%A8%E8%B0%83%E8%AF%95%E4%B8%8E%E6%9C%80%E5%B0%8Fdemo%E8%B7%AF%E7%BA%BF"
+      "url": "obsidian://open?vault=RK3568&file=07-%E4%B8%93%E9%A1%B9%E7%AC%94%E8%AE%B0%2FCamera-V4L2%2FIMX415%E9%A9%B1%E5%8A%A8%E8%B0%83%E8%AF%95%E4%B8%8E%E6%9C%80%E5%B0%8Fdemo%E8%B7%AF%E7%BA%BF",
+      "webPath": "pages/notes/07-专项笔记--Camera-V4L2--IMX415驱动调试与最小demo路线.html"
     },
     {
       "name": "OpenCV",
       "filePath": "07-专项笔记/OpenCV/OpenCV读取Camera记录.md",
-      "url": "obsidian://open?vault=RK3568&file=07-%E4%B8%93%E9%A1%B9%E7%AC%94%E8%AE%B0%2FOpenCV%2FOpenCV%E8%AF%BB%E5%8F%96Camera%E8%AE%B0%E5%BD%95"
+      "url": "obsidian://open?vault=RK3568&file=07-%E4%B8%93%E9%A1%B9%E7%AC%94%E8%AE%B0%2FOpenCV%2FOpenCV%E8%AF%BB%E5%8F%96Camera%E8%AE%B0%E5%BD%95",
+      "webPath": "pages/notes/07-专项笔记--OpenCV--OpenCV读取Camera记录.html"
     },
     {
       "name": "RKNN",
       "filePath": "07-专项笔记/AI-RKNN/官方AI例程运行记录.md",
-      "url": "obsidian://open?vault=RK3568&file=07-%E4%B8%93%E9%A1%B9%E7%AC%94%E8%AE%B0%2FAI-RKNN%2F%E5%AE%98%E6%96%B9AI%E4%BE%8B%E7%A8%8B%E8%BF%90%E8%A1%8C%E8%AE%B0%E5%BD%95"
+      "url": "obsidian://open?vault=RK3568&file=07-%E4%B8%93%E9%A1%B9%E7%AC%94%E8%AE%B0%2FAI-RKNN%2F%E5%AE%98%E6%96%B9AI%E4%BE%8B%E7%A8%8B%E8%BF%90%E8%A1%8C%E8%AE%B0%E5%BD%95",
+      "webPath": "pages/notes/07-专项笔记--AI-RKNN--官方AI例程运行记录.html"
     },
     {
       "name": "Display",
       "filePath": "07-专项笔记/Display-MIPI/MIPI屏显示链路.md",
-      "url": "obsidian://open?vault=RK3568&file=07-%E4%B8%93%E9%A1%B9%E7%AC%94%E8%AE%B0%2FDisplay-MIPI%2FMIPI%E5%B1%8F%E6%98%BE%E7%A4%BA%E9%93%BE%E8%B7%AF"
+      "url": "obsidian://open?vault=RK3568&file=07-%E4%B8%93%E9%A1%B9%E7%AC%94%E8%AE%B0%2FDisplay-MIPI%2FMIPI%E5%B1%8F%E6%98%BE%E7%A4%BA%E9%93%BE%E8%B7%AF",
+      "webPath": "pages/notes/07-专项笔记--Display-MIPI--MIPI屏显示链路.html"
     },
     {
       "name": "Streaming",
       "filePath": "07-专项笔记/Streaming/RTMP-HLS推流记录.md",
-      "url": "obsidian://open?vault=RK3568&file=07-%E4%B8%93%E9%A1%B9%E7%AC%94%E8%AE%B0%2FStreaming%2FRTMP-HLS%E6%8E%A8%E6%B5%81%E8%AE%B0%E5%BD%95"
+      "url": "obsidian://open?vault=RK3568&file=07-%E4%B8%93%E9%A1%B9%E7%AC%94%E8%AE%B0%2FStreaming%2FRTMP-HLS%E6%8E%A8%E6%B5%81%E8%AE%B0%E5%BD%95",
+      "webPath": "pages/notes/07-专项笔记--Streaming--RTMP-HLS推流记录.html"
     },
     {
       "name": "System",
       "filePath": "07-专项笔记/系统/AI Camera系统数据流与模块边界.md",
-      "url": "obsidian://open?vault=RK3568&file=07-%E4%B8%93%E9%A1%B9%E7%AC%94%E8%AE%B0%2F%E7%B3%BB%E7%BB%9F%2FAI%20Camera%E7%B3%BB%E7%BB%9F%E6%95%B0%E6%8D%AE%E6%B5%81%E4%B8%8E%E6%A8%A1%E5%9D%97%E8%BE%B9%E7%95%8C"
+      "url": "obsidian://open?vault=RK3568&file=07-%E4%B8%93%E9%A1%B9%E7%AC%94%E8%AE%B0%2F%E7%B3%BB%E7%BB%9F%2FAI%20Camera%E7%B3%BB%E7%BB%9F%E6%95%B0%E6%8D%AE%E6%B5%81%E4%B8%8E%E6%A8%A1%E5%9D%97%E8%BE%B9%E7%95%8C",
+      "webPath": "pages/notes/07-专项笔记--系统--AI Camera系统数据流与模块边界.html"
     }
   ],
   "evidence": [
@@ -289,60 +295,59 @@ window.RK3568_VAULT_DATA = {
     {
       "name": "taskBoard",
       "filePath": "06-任务/01-下一步任务看板.md",
-      "url": "obsidian://open?vault=RK3568&file=06-%E4%BB%BB%E5%8A%A1%2F01-%E4%B8%8B%E4%B8%80%E6%AD%A5%E4%BB%BB%E5%8A%A1%E7%9C%8B%E6%9D%BF"
+      "url": "obsidian://open?vault=RK3568&file=06-%E4%BB%BB%E5%8A%A1%2F01-%E4%B8%8B%E4%B8%80%E6%AD%A5%E4%BB%BB%E5%8A%A1%E7%9C%8B%E6%9D%BF",
+      "webPath": "pages/notes/06-任务--01-下一步任务看板.html"
     },
     {
       "name": "activeRoute",
       "filePath": "01-主线/02-从零到Python MVP学习路线.md",
-      "url": "obsidian://open?vault=RK3568&file=01-%E4%B8%BB%E7%BA%BF%2F02-%E4%BB%8E%E9%9B%B6%E5%88%B0Python%20MVP%E5%AD%A6%E4%B9%A0%E8%B7%AF%E7%BA%BF"
+      "url": "obsidian://open?vault=RK3568&file=01-%E4%B8%BB%E7%BA%BF%2F02-%E4%BB%8E%E9%9B%B6%E5%88%B0Python%20MVP%E5%AD%A6%E4%B9%A0%E8%B7%AF%E7%BA%BF",
+      "webPath": "pages/notes/01-主线--02-从零到Python MVP学习路线.html"
     },
     {
       "name": "dailyRecord",
       "filePath": "05-实验与证据/02-每日进度记录.md",
-      "url": "obsidian://open?vault=RK3568&file=05-%E5%AE%9E%E9%AA%8C%E4%B8%8E%E8%AF%81%E6%8D%AE%2F02-%E6%AF%8F%E6%97%A5%E8%BF%9B%E5%BA%A6%E8%AE%B0%E5%BD%95"
+      "url": "obsidian://open?vault=RK3568&file=05-%E5%AE%9E%E9%AA%8C%E4%B8%8E%E8%AF%81%E6%8D%AE%2F02-%E6%AF%8F%E6%97%A5%E8%BF%9B%E5%BA%A6%E8%AE%B0%E5%BD%95",
+      "webPath": "pages/notes/05-实验与证据--02-每日进度记录.html"
     },
     {
       "name": "acceptance",
       "filePath": "07-专项笔记/系统/AI Camera分阶段验收标准.md",
-      "url": "obsidian://open?vault=RK3568&file=07-%E4%B8%93%E9%A1%B9%E7%AC%94%E8%AE%B0%2F%E7%B3%BB%E7%BB%9F%2FAI%20Camera%E5%88%86%E9%98%B6%E6%AE%B5%E9%AA%8C%E6%94%B6%E6%A0%87%E5%87%86"
+      "url": "obsidian://open?vault=RK3568&file=07-%E4%B8%93%E9%A1%B9%E7%AC%94%E8%AE%B0%2F%E7%B3%BB%E7%BB%9F%2FAI%20Camera%E5%88%86%E9%98%B6%E6%AE%B5%E9%AA%8C%E6%94%B6%E6%A0%87%E5%87%86",
+      "webPath": "pages/notes/07-专项笔记--系统--AI Camera分阶段验收标准.html"
     },
     {
       "name": "project",
       "filePath": "04-项目/01-RK3568 YOLOv8n AI Camera项目.md",
-      "url": "obsidian://open?vault=RK3568&file=04-%E9%A1%B9%E7%9B%AE%2F01-RK3568%20YOLOv8n%20AI%20Camera%E9%A1%B9%E7%9B%AE"
+      "url": "obsidian://open?vault=RK3568&file=04-%E9%A1%B9%E7%9B%AE%2F01-RK3568%20YOLOv8n%20AI%20Camera%E9%A1%B9%E7%9B%AE",
+      "webPath": "pages/notes/04-项目--01-RK3568 YOLOv8n AI Camera项目.html"
     },
     {
       "name": "projectTalk",
       "filePath": "04-项目/02-AI Camera项目讲解稿.md",
-      "url": "obsidian://open?vault=RK3568&file=04-%E9%A1%B9%E7%9B%AE%2F02-AI%20Camera%E9%A1%B9%E7%9B%AE%E8%AE%B2%E8%A7%A3%E7%A8%BF"
+      "url": "obsidian://open?vault=RK3568&file=04-%E9%A1%B9%E7%9B%AE%2F02-AI%20Camera%E9%A1%B9%E7%9B%AE%E8%AE%B2%E8%A7%A3%E7%A8%BF",
+      "webPath": "pages/notes/04-项目--02-AI Camera项目讲解稿.html"
     },
     {
       "name": "demo",
       "filePath": "04-项目/03-Python MVP演示手册.md",
-      "url": "obsidian://open?vault=RK3568&file=04-%E9%A1%B9%E7%9B%AE%2F03-Python%20MVP%E6%BC%94%E7%A4%BA%E6%89%8B%E5%86%8C"
+      "url": "obsidian://open?vault=RK3568&file=04-%E9%A1%B9%E7%9B%AE%2F03-Python%20MVP%E6%BC%94%E7%A4%BA%E6%89%8B%E5%86%8C",
+      "webPath": "pages/notes/04-项目--03-Python MVP演示手册.html"
     },
     {
       "name": "evidenceMoc",
       "filePath": "05-实验与证据/00-实验与证据入口.md",
-      "url": "obsidian://open?vault=RK3568&file=05-%E5%AE%9E%E9%AA%8C%E4%B8%8E%E8%AF%81%E6%8D%AE%2F00-%E5%AE%9E%E9%AA%8C%E4%B8%8E%E8%AF%81%E6%8D%AE%E5%85%A5%E5%8F%A3"
+      "url": "obsidian://open?vault=RK3568&file=05-%E5%AE%9E%E9%AA%8C%E4%B8%8E%E8%AF%81%E6%8D%AE%2F00-%E5%AE%9E%E9%AA%8C%E4%B8%8E%E8%AF%81%E6%8D%AE%E5%85%A5%E5%8F%A3",
+      "webPath": "pages/notes/05-实验与证据--00-实验与证据入口.html"
     },
     {
       "name": "outputMoc",
       "filePath": "09-输出沉淀/00-输出沉淀入口.md",
-      "url": "obsidian://open?vault=RK3568&file=09-%E8%BE%93%E5%87%BA%E6%B2%89%E6%B7%80%2F00-%E8%BE%93%E5%87%BA%E6%B2%89%E6%B7%80%E5%85%A5%E5%8F%A3"
+      "url": "obsidian://open?vault=RK3568&file=09-%E8%BE%93%E5%87%BA%E6%B2%89%E6%B7%80%2F00-%E8%BE%93%E5%87%BA%E6%B2%89%E6%B7%80%E5%85%A5%E5%8F%A3",
+      "webPath": "pages/notes/09-输出沉淀--00-输出沉淀入口.html"
     }
   ],
   "warnings": [
-    "Unknown stage status: 1 Buildroot 验机",
-    "Unknown stage status: 2 Camera/V4L2",
-    "Unknown stage status: 3 NV12 抓帧",
-    "Unknown stage status: 4 OpenCV/GStreamer",
-    "Unknown stage status: 5 RKNN 最小例程",
-    "Unknown stage status: 6 Camera + RKNN",
-    "Unknown stage status: 7 MIPI 显示",
-    "Unknown stage status: 8 RTMP/HLS",
-    "Unknown stage status: 9 Python MVP",
-    "Unknown stage status: 10 C++ 工程化",
     "Evidence has unknown stage: scrfd_realtime_last.jpg",
     "Evidence has unknown stage: yolov5_camera_raw.jpg",
     "Evidence has unknown stage: yolov5_camera_result.jpg",

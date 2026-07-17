@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>AI Camera分阶段验收标准 · RK3568</title><link rel="stylesheet" href="../../site.css"></head><body><div class="page-shell"><nav class="site-nav" data-site-nav aria-label="网站导航"><a class="site-nav__brand" href="../../index.html">RK3568 / 驾驶舱</a><div class="site-nav__links"><a href="../../index.html">驾驶舱首页</a><a href="../learning-route.html">学习路线</a><a href="../system-map.html">系统地图</a><a href="../notes.html" aria-current="page">专项笔记</a></div></nav><main id="main-content" class="note-page"><header class="hero"><p class="hero__eyebrow">GENERATED NOTE · 07-专项笔记/系统</p><h1>AI Camera分阶段验收标准</h1><p>此页面由 Markdown 知识源自动生成，适合网页阅读；编辑仍请回到 Obsidian。</p><div class="hero__actions"><a class="button" href="obsidian://open?vault=RK3568&amp;file=07-%E4%B8%93%E9%A1%B9%E7%AC%94%E8%AE%B0%2F%E7%B3%BB%E7%BB%9F%2FAI%20Camera%E5%88%86%E9%98%B6%E6%AE%B5%E9%AA%8C%E6%94%B6%E6%A0%87%E5%87%86">在 Obsidian 中打开</a><a class="button button--quiet" href="../../../../07-专项笔记/系统/AI Camera分阶段验收标准.md">查看原始 Markdown</a></div></header><article class="note-content"><h1>AI Camera 分阶段验收标准</h1>
+<p>这份笔记把“阶段完成”定义为可观察、可复测的证据，而不是命令没有报错。每次复盘都记录：现象、证据、解释、仍待验证的问题。</p>
+<h2>验收规则</h2>
+<ul><li><code>已验证</code>：有当前板卡的命令输出、日志、截图、产物或复测记录。</li><li><code>通用原理</code>：来自技术机制或官方资料，尚未必在当前板卡逐项复现。</li><li><code>待验证</code>：合理假设或后续任务，不写成已完成事实。</li><li>阶段通过条件：至少有一个可观察输出、一个证据入口、一个能用自己的话解释的原因。</li></ul>
+<h2>阶段总表</h2>
+<table><thead><tr><th>阶段</th><th>要回答的问题</th><th>最小输出证据</th><th>通过标准</th><th>证据入口</th></tr></thead><tbody><tr><td>0 系统地图</td><td>数据从 Camera 怎样到显示和网络</td><td>一张数据流/控制流图</td><td>能说清每层输入、输出和边界</td><td>AI Camera系统数据流与模块边界</td></tr><tr><td>1 Buildroot 验机</td><td>板子、系统、网络是否可用</td><td>串口、SSH、系统信息、Camera 出图</td><td>能区分硬件故障、系统故障和应用故障</td><td>01-板子到手验机记录</td></tr><tr><td>2 Camera/V4L2</td><td><code>/dev/video0</code> 代表什么</td><td>节点、media topology、格式列表</td><td>能解释 node、entity、pad、link 的关系</td><td>V4L2命令行抓帧记录</td></tr><tr><td>3 NV12 抓帧</td><td>原始帧是什么格式</td><td>一帧 NV12 文件和尺寸计算</td><td>能解释 Y/UV 平面、stride 和查看方式</td><td>V4L2命令行抓帧记录</td></tr><tr><td>4 OpenCV/GStreamer</td><td>为什么不用默认摄像头打开</td><td>成功 pipeline 和 BGR 图像</td><td>能定位 backend、caps、颜色转换问题</td><td>OpenCV读取Camera记录</td></tr><tr><td>5 RKNN 最小例程</td><td>Python 如何调用 NPU</td><td><code>01_lenet</code> 输出和 runtime 版本</td><td>能区分模型、runtime、驱动和应用</td><td>官方AI例程运行记录</td></tr><tr><td>6 Camera + RKNN</td><td>图像如何进入模型并产生框</td><td>单帧/实时检测结果</td><td>能解释 resize、布局、量化、后处理和坐标回映</td><td>YOLOv5 Python最小推理记录</td></tr><tr><td>7 MIPI 显示</td><td>推理结果如何显示</td><td>屏幕方向、分辨率和实时画面</td><td>能说明 Camera MIPI 与 Display MIPI 是两条链路</td><td>MIPI屏显示链路</td></tr><tr><td>8 RTMP/HLS</td><td>画面如何离开板子</td><td>服务端地址和 Windows 播放结果</td><td>能区分编码、封装、协议、服务端和播放器</td><td>RTMP-HLS推流记录</td></tr><tr><td>9 Python MVP</td><td>能否独立复现完整链路</td><td>从启动到拉流的复测记录</td><td>不依赖逐行提示，能解释失败定位顺序</td><td>03-Python MVP演示手册</td></tr><tr><td>10 C++ 工程化</td><td>如何提升可维护性和性能</td><td>设计草图或独立实验</td><td>当前复盘完成前不作为主线验收</td><td>02-从零到Python MVP学习路线</td></tr></tbody></table>
+<h2>每阶段复盘模板</h2>
+<pre><code class="language-markdown">### 本阶段结论
+
+- 状态：已验证 / 通用原理 / 待验证
+- 观察到的输入：
+- 观察到的输出：
+- 我能解释的原因：
+- 证据链接：
+- 仍不确定：
+- 下一阶段接口：</code></pre>
+<h2>验收时不要混淆</h2>
+<ul><li>设备节点存在，不代表 sensor 已经稳定出帧。</li><li>V4L2 能抓帧，不代表 OpenCV backend 和颜色格式已经匹配。</li><li>模型推理返回结果，不代表前处理、量化和坐标映射正确。</li><li>MIPI Camera 和 MIPI Display 都叫 MIPI，但属于输入和输出两条不同链路。</li><li>RTMP 推送成功，不代表 HLS 播放延迟、端口和播放器缓存都符合预期。</li></ul></article><footer class="footer"><a href="../notes.html">返回专项笔记导航</a> · <a href="../../index.html">返回驾驶舱首页</a></footer></main></div><script defer src="../../site.js"></script></body></html>
