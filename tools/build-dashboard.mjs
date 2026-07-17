@@ -33,12 +33,31 @@ const QUICK_LINKS = [
 ];
 
 const EXTRA_NOTE_PATHS = [
+  '01-主线/02-从零到Python MVP学习路线.md',
+  '03-环境/00-环境入口.md',
+  '03-环境/01-Ubuntu与SDK编译注意事项.md',
+  '03-环境/02-WSL2和VSCode使用说明.md',
+  '03-环境/03-WSL2开发环境现状.md',
+  '04-项目/01-RK3568 YOLOv8n AI Camera项目.md',
+  '04-项目/02-AI Camera项目讲解稿.md',
+  '04-项目/03-Python MVP演示手册.md',
+  '05-实验与证据/00-实验与证据入口.md',
   '05-实验与证据/01-板子到手验机记录.md',
+  '05-实验与证据/02-每日进度记录.md',
+  '05-实验与证据/实验产物/01-实验产物索引.md',
   '07-专项笔记/Camera-V4L2/V4L2命令行抓帧记录.md',
   '07-专项笔记/AI-RKNN/YOLOv5 Python最小推理记录.md',
+  '08-附录/00-附录入口.md',
+  '09-输出沉淀/06-AI-Camera项目五分钟讲解.md',
+  '99-归档/00-归档说明.md',
+  '99-归档/重构前/00-重构归档说明.md',
 ];
 
 const NOTE_PAGE_DIRECTORY = '00-首页/学习驾驶舱/pages/notes';
+const PRESERVED_MARKDOWN_PATHS = new Set([
+  '06-任务/01-下一步任务看板.md',
+  '00-首页/00-RK3568学习主入口.md',
+]);
 
 function normalizeVaultPath(filePath) {
   return filePath.replace(/\\/gu, '/').replace(/^\.\//u, '');
@@ -91,7 +110,7 @@ function renderInline(value, linkMap = new Map()) {
     .replace(/&lt;a href=&quot;([^&]+)&quot;&gt;([^<]+)&lt;\/a&gt;/gu, '<a href="$1">$2</a>');
 }
 
-export function renderMarkdown(markdown, { linkMap = new Map() } = {}) {
+export function renderMarkdown(markdown, { linkMap = new Map(), demoteH1 = false } = {}) {
   const lines = String(markdown ?? '').replace(/\r\n?/gu, '\n').split('\n');
   const output = [];
   let index = 0;
@@ -112,7 +131,8 @@ export function renderMarkdown(markdown, { linkMap = new Map() } = {}) {
     }
     const heading = line.match(/^\s*(#{1,6})\s+(.+?)\s*#*\s*$/u);
     if (heading) {
-      output.push(`<h${heading[1].length}>${renderInline(heading[2], linkMap)}</h${heading[1].length}>`);
+      const level = demoteH1 && heading[1].length === 1 ? 2 : heading[1].length;
+      output.push(`<h${level}>${renderInline(heading[2], linkMap)}</h${level}>`);
       index += 1;
       continue;
     }
@@ -290,16 +310,44 @@ export function buildObsidianUrl(vault, filePath) {
   return `obsidian://open?vault=${encodeURIComponent(vault)}&file=${encodeURIComponent(normalizedPath)}`;
 }
 
-function noteSources() {
+async function linkedMarkdownPaths(rootDir) {
+  const siteRoot = path.join(rootDir, ...'00-首页/学习驾驶舱'.split('/'));
+  const pageRoot = path.join(siteRoot, 'pages');
+  let pageEntries;
+  try {
+    pageEntries = await readdir(pageRoot, { withFileTypes: true });
+  } catch (error) {
+    if (error.code === 'ENOENT') return [];
+    throw error;
+  }
+  const htmlFiles = [path.join(siteRoot, 'index.html'), ...pageEntries
+    .filter((entry) => entry.isFile() && entry.name.endsWith('.html'))
+    .map((entry) => path.join(pageRoot, entry.name))];
+  const sources = [];
+  for (const htmlFile of htmlFiles) {
+    const html = await readFile(htmlFile, 'utf8');
+    for (const match of html.matchAll(/href=["']([^"']+\.md(?:#[^"']*)?)["']/giu)) {
+      const href = match[1].split(/[?#]/u, 1)[0];
+      if (/^(?:[a-z][a-z\d+.-]*:|\/\/|#)/iu.test(href)) continue;
+      const target = path.resolve(path.dirname(htmlFile), href);
+      const relativePath = normalizeVaultPath(path.relative(rootDir, target));
+      if (relativePath.endsWith('.md') && !relativePath.startsWith('../')) sources.push(relativePath);
+    }
+  }
+  return sources;
+}
+
+async function noteSources(rootDir) {
   return [...new Set([
     ...DOMAIN_MAP.map(([, filePath]) => filePath),
     ...QUICK_LINKS.map(([, filePath]) => filePath),
     ...EXTRA_NOTE_PATHS,
+    ...(await linkedMarkdownPaths(rootDir)).filter((filePath) => !PRESERVED_MARKDOWN_PATHS.has(filePath)),
   ])];
 }
 
 async function buildNoteCatalog(rootDir, vaultName = DEFAULT_VAULT_NAME) {
-  const sources = noteSources();
+  const sources = await noteSources(rootDir);
   const byPath = new Map();
   const byBasename = new Map();
   const notes = [];
@@ -334,8 +382,47 @@ async function writeNotePages(rootDir, notes, linkMap) {
   await mkdir(outputDirectory, { recursive: true });
   for (const note of notes) {
     const pageFile = path.join(outputDirectory, notePageName(note.filePath));
-    const body = renderMarkdown(note.contents, { linkMap });
+    const contents = note.contents.replace(/^\s*#\s+.+?\s*(?:\r?\n){1,2}/u, '');
+    const body = renderMarkdown(contents, { linkMap, demoteH1: true });
     await writeFile(pageFile, notePageTemplate(note, body), 'utf8');
+  }
+}
+
+async function rewriteSiteMarkdownLinks(rootDir, noteCatalog) {
+  const siteRoot = path.join(rootDir, ...'00-首页/学习驾驶舱'.split('/'));
+  const pageRoot = path.join(siteRoot, 'pages');
+  try {
+    await readFile(path.join(siteRoot, 'index.html'), 'utf8');
+  } catch (error) {
+    if (error.code === 'ENOENT') return;
+    throw error;
+  }
+  let pageEntries;
+  try {
+    pageEntries = await readdir(pageRoot, { withFileTypes: true });
+  } catch (error) {
+    if (error.code === 'ENOENT') return;
+    throw error;
+  }
+  const htmlFiles = [path.join(siteRoot, 'index.html'), ...pageEntries
+    .filter((entry) => entry.isFile() && entry.name.endsWith('.html'))
+    .map((entry) => path.join(pageRoot, entry.name))];
+  for (const htmlFile of htmlFiles) {
+    const original = await readFile(htmlFile, 'utf8');
+    const updated = original.replace(/(href=["'])([^"']+\.md(?:#[^"']*)?)(["'])/giu, (full, prefix, href, suffix) => {
+      const target = href.split(/[?#]/u, 1)[0];
+      if (/^(?:[a-z][a-z\d+.-]*:|\/\/|#)/iu.test(target)) return full;
+      const absolute = path.resolve(path.dirname(htmlFile), target);
+      const sourcePath = normalizeVaultPath(path.relative(rootDir, absolute));
+      if (PRESERVED_MARKDOWN_PATHS.has(sourcePath)) return full;
+      const webPath = noteCatalog.byPath.get(sourcePath);
+      if (!webPath) return full;
+      const generated = path.join(rootDir, ...NOTE_PAGE_DIRECTORY.split('/'), notePageName(sourcePath));
+      const relative = normalizeVaultPath(path.relative(path.dirname(htmlFile), generated));
+      const hash = href.slice(target.length);
+      return `${prefix}${relative}${hash}${suffix}`;
+    });
+    if (updated !== original) await writeFile(htmlFile, updated, 'utf8');
   }
 }
 
@@ -578,6 +665,7 @@ export async function writeDashboardData(rootDir, outputFile) {
   const data = await buildDashboardData(rootDir);
   const noteCatalog = await buildNoteCatalog(rootDir);
   await writeNotePages(rootDir, noteCatalog.notes, noteCatalog.linkMap);
+  await rewriteSiteMarkdownLinks(rootDir, noteCatalog);
   await mkdir(path.dirname(outputFile), { recursive: true });
   await writeFile(outputFile, `window.RK3568_VAULT_DATA = ${JSON.stringify(data, null, 2)};\n`, 'utf8');
   return data;

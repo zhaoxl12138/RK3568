@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>01-实验产物索引 · RK3568</title><link rel="stylesheet" href="../../site.css"></head><body><div class="page-shell"><nav class="site-nav" data-site-nav aria-label="网站导航"><a class="site-nav__brand" href="../../index.html">RK3568 / 驾驶舱</a><div class="site-nav__links"><a href="../../index.html">驾驶舱首页</a><a href="../learning-route.html">学习路线</a><a href="../system-map.html">系统地图</a><a href="../notes.html" aria-current="page">专项笔记</a></div></nav><main id="main-content" class="note-page"><header class="hero"><p class="hero__eyebrow">GENERATED NOTE · 05-实验与证据/实验产物</p><h1>01-实验产物索引</h1><p>此页面由 Markdown 知识源自动生成，适合网页阅读；编辑仍请回到 Obsidian。</p><div class="hero__actions"><a class="button" href="obsidian://open?vault=RK3568&amp;file=05-%E5%AE%9E%E9%AA%8C%E4%B8%8E%E8%AF%81%E6%8D%AE%2F%E5%AE%9E%E9%AA%8C%E4%BA%A7%E7%89%A9%2F01-%E5%AE%9E%E9%AA%8C%E4%BA%A7%E7%89%A9%E7%B4%A2%E5%BC%95">在 Obsidian 中打开</a><a class="button button--quiet" href="../../../../05-实验与证据/实验产物/01-实验产物索引.md">查看原始 Markdown</a></div></header><article class="note-content"><h2>证据状态规则</h2>
+<p>每个关键产物尽量记录四个字段：</p>
+<ul><li>阶段：对应主线阶段 0–9。</li><li>首次验证：第一次成功产生该产物的日期。</li><li>最近复测：最后一次确认仍可复现的日期；未复测就写“待复测”。</li><li>证据类型：日志、原始帧、图片、屏幕照片、网络播放或命令输出。</li></ul>
+<p>产物只证明它对应的那一层，不自动证明整条链路已经通过。例如一张 NV12 原始帧证明采集和格式，不证明 RKNN 前处理正确。</p>
+<p>当前基线证据链：NV12 原始帧 -&gt; OpenCV JPG -&gt; LeNet/RKNN -&gt; YOLOv5 检测图 -&gt; MIPI 实时画面 -&gt; RTMP/HLS 拉流。</p>
+<p>本文件只记录“跑实验过程中产生或用到的文件”。</p>
+<p>规则：</p>
+<ul><li>主线文档只写结论。</li><li>专项笔记写技术过程。</li><li>具体脚本、图片、板端路径、Windows 临时目录、WSL 项目路径统一登记在这里。</li></ul>
+<h2>当前最重要产物 Top 10</h2>
+<p>本节混合记录仓库内文件、Windows 本地文件、WSL 路径和板端路径；是否已进入 Git，以具体路径说明为准。</p>
+<p>1. 板端启动脚本：<code>/userdata/aidemo/06_yolov5_python/start_yolov5_hls_demo.sh</code><br>2. WSL 部署脚本：<code>\\wsl$\Ubuntu-20.04\home\rk3568\work\rk3568_ai_camera\scripts\deploy_yolov5_demo.sh</code><br>3. WSL 主推流脚本：<code>\\wsl$\Ubuntu-20.04\home\rk3568\work\rk3568_ai_camera\experiments\yolov5_object\main_gst_rtmp_hls.py</code><br>4. YOLOv5 RKNN 模型：<code>yolov5s_relu_tk2_RK356X_i8.rknn</code><br>5. 板端运行目录：<code>/userdata/aidemo/06_yolov5_python</code><br>6. HLS 拉流地址：<code>http://192.168.0.230/hls/yolo.m3u8</code><br>7. MIPI 结果图：<code>05-实验与证据/实验产物/assets/yolov5_realtime_clean_last.jpg</code><br>8. HLS 结果视频和截图：<code>05-实验与证据/实验产物/assets/yolo_hls_pull_test.mp4</code>、<code>05-实验与证据/实验产物/assets/yolo_hls_pull_test_frame.jpg</code><br>9. Python MVP 演示手册：04-项目 / Python MVP演示手册<br>10. 五分钟项目讲解：09-输出沉淀 / AI-Camera项目五分钟讲解</p>
+<p>这一段只做当前关键产物速查，不替代后面的详细索引。</p>
+<h2>当前固定决策</h2>
+<pre><code class="language-text">整理优先级最高。</code></pre>
+<p>含义：</p>
+<ul><li>每跑通一个阶段，先整理脚本、图片、记录。</li><li>不继续堆临时脚本。</li><li>新实验必须能回溯：用到哪个脚本、产生哪张图、板端放在哪里、Windows/WSL 放在哪里。</li></ul>
+<h2>功能完成记录规则</h2>
+<pre><code class="language-text">每成功一个功能，必须同步文档。</code></pre>
+<p>同步范围：</p>
+<ul><li>02-每日进度记录</li><li>对应专项笔记</li><li>本实验产物索引</li><li>WSL 项目实验目录 README</li></ul>
+<p>WSL 规则文档：</p>
+<pre><code class="language-text">\\wsl$\Ubuntu-20.04\home\rk3568\work\rk3568_ai_camera\docs\功能完成记录规则.md</code></pre>
+<h2>WSL项目目录</h2>
+<p>当前实验项目目录：</p>
+<pre><code class="language-text">\\wsl$\Ubuntu-20.04\home\rk3568\work\rk3568_ai_camera</code></pre>
+<p>Linux 路径：</p>
+<pre><code class="language-text">/home/rk3568/work/rk3568_ai_camera</code></pre>
+<p>当前结构：</p>
+<pre><code class="language-text">rk3568_ai_camera/
+  README.md
+  docs/
+  experiments/
+    README.md
+    opencv_camera/
+      opencv_capture_gst.py
+    scrfd_face/
+      README.md
+      camera_gst.py
+      scrfd_detector.py
+      main_gst_one_frame.py
+      main_gst_realtime.py</code></pre>
+<p>用途：</p>
+<pre><code class="language-text">存放已经验证过、后续可复用的实验脚本。</code></pre>
+<p>GitHub 私有仓库：</p>
+<pre><code class="language-text">https://github.com/zhaoxl12138/rk3568_ai_camera</code></pre>
+<p>当前分支：</p>
+<pre><code class="language-text">main</code></pre>
+<p>初始化提交：</p>
+<pre><code class="language-text">初始化RK3568 AI Camera实验项目</code></pre>
+<h2>板端固定路径</h2>
+<h3>AI例程目录</h3>
+<pre><code class="language-text">/userdata/aidemo</code></pre>
+<p>用途：</p>
+<pre><code class="language-text">存放官方或改造后的 AI demo。</code></pre>
+<p>当前已用：</p>
+<pre><code class="language-text">/userdata/aidemo/01_lenet
+/userdata/aidemo/11_facedet_scrfd_npu</code></pre>
+<h3>RKNN安装临时目录</h3>
+<pre><code class="language-text">/userdata/ai_stage</code></pre>
+<p>用途：</p>
+<pre><code class="language-text">存放安装 rknn-toolkit-lite2 和更新 RKNN runtime 时传到板端的临时文件。</code></pre>
+<p>当前包含过：</p>
+<pre><code class="language-text">rknn_toolkit_lite2-1.5.0-cp38-cp38-linux_aarch64.whl
+runtime/librknnrt.so
+runtime/rknn_server
+runtime/start_rknn.sh
+runtime/restart_rknn.sh</code></pre>
+<h3>RKNN旧版本备份</h3>
+<pre><code class="language-text">/userdata/rknn_backup_1.3.0</code></pre>
+<p>用途：</p>
+<pre><code class="language-text">备份出厂 1.3.0 版本的 RKNN runtime，方便必要时回滚。</code></pre>
+<p>备份文件：</p>
+<pre><code class="language-text">librknnrt.so.1.3.0
+rknn_server.1.3.0
+start_rknn.sh.1.3.0
+restart_rknn.sh.1.3.0
+backup_time.txt</code></pre>
+<h2>Windows临时目录</h2>
+<p>这些目录是实验中间产物，不是长期项目源码。</p>
+<h3>OpenCV测试图片</h3>
+<pre><code class="language-text">E:\RK3568\opencv_test</code></pre>
+<p>用到阶段：</p>
+<pre><code class="language-text">OpenCV 读取 Camera。</code></pre>
+<p>关键文件：</p>
+<pre><code class="language-text">opencv_frame_gst.jpg</code></pre>
+<p>来源：</p>
+<pre><code class="language-text">板端 /tmp/opencv_frame_gst.jpg</code></pre>
+<p>说明：</p>
+<pre><code class="language-text">验证 /dev/video0 -&gt; GStreamer -&gt; OpenCV -&gt; JPG。</code></pre>
+<h3>AI安装暂存</h3>
+<pre><code class="language-text">E:\RK3568\ai_stage</code></pre>
+<p>用到阶段：</p>
+<pre><code class="language-text">安装 RKNN Lite2，更新 RKNN runtime，跑 01_lenet。</code></pre>
+<p>关键文件：</p>
+<pre><code class="language-text">rknn_toolkit_lite2-1.5.0-cp38-cp38-linux_aarch64.whl
+runtime/librknnrt.so
+runtime/rknn_server
+runtime/start_rknn.sh
+runtime/restart_rknn.sh
+01_lenet/5.png
+01_lenet/atk_lenet_demo.py
+01_lenet/LeNet5_mnist_model.rknn</code></pre>
+<p>说明：</p>
+<pre><code class="language-text">这些文件来自正点原子 A 盘资料包。
+通过 Windows 临时 HTTP 服务传到板端。</code></pre>
+<h3>SCRFD人脸检测暂存</h3>
+<pre><code class="language-text">E:\RK3568\face_stage</code></pre>
+<p>用到阶段：</p>
+<pre><code class="language-text">AI 手册第 6 章，SCRFD 人脸检测。</code></pre>
+<p>关键文件：</p>
+<pre><code class="language-text">main_original.py
+camera_gst.py
+scrfd_detector.py
+main_gst_one_frame.py
+main_gst_realtime.py
+scrfd.rknn
+result/scrfd_result.jpg
+result/scrfd_result_rotated.jpg
+result/scrfd_realtime_last.jpg</code></pre>
+<p>说明：</p>
+<ul><li><code>main_original.py</code> 是官方原始脚本备份。</li><li><code>camera_gst.py</code> 是拆分后的 GStreamer Camera 打开模块。</li><li><code>scrfd_detector.py</code> 是拆分后的 SCRFD RKNN 推理与后处理模块。</li><li><code>main_gst_one_frame.py</code> 是改造后的单帧检测脚本。</li><li><code>main_gst_realtime.py</code> 是改造后的实时检测脚本（支持帧数限制和 FPS 统计）。</li><li><code>scrfd_result.jpg</code> 是未旋转版本结果，检测为 <code>faces 0</code>。</li><li><code>scrfd_result_rotated.jpg</code> 是旋转后结果，检测为 <code>faces 1</code>。</li><li><code>scrfd_realtime_last.jpg</code> 是实时 90 帧测试最后保存图。</li></ul>
+<h3>YOLOv5目标检测暂存</h3>
+<pre><code class="language-text">E:\RK3568\yolo_stage</code></pre>
+<p>用到阶段：</p>
+<pre><code class="language-text">Python YOLOv5 RKNN 最小推理。</code></pre>
+<p>官方解压目录：</p>
+<pre><code class="language-text">E:\RK3568\yolo_stage\rknn_yolov5_demo</code></pre>
+<p>板端中转目录：</p>
+<pre><code class="language-text">E:\RK3568\yolo_stage\python_files</code></pre>
+<p>关键文件：</p>
+<pre><code class="language-text">main_image.py
+yolov5s_relu_tk2_RK356X_i8.rknn
+RK_anchors_yolov5.txt
+coco_80_labels_list.txt</code></pre>
+<p>WSL 实验目录：</p>
+<pre><code class="language-text">\\wsl$\Ubuntu-20.04\home\rk3568\work\rk3568_ai_camera\experiments\yolov5_object</code></pre>
+<p>本页实测状态：</p>
+<pre><code class="language-text">脚本已创建，py_compile 已通过，板端单图推理已跑通。</code></pre>
+<p>板端运行目录：</p>
+<pre><code class="language-text">/userdata/aidemo/06_yolov5_python</code></pre>
+<p>板端输入文件：</p>
+<pre><code class="language-text">/userdata/aidemo/06_yolov5_python/bus.jpg
+/tmp/opencv_frame_gst.jpg</code></pre>
+<p>板端输出文件：</p>
+<pre><code class="language-text">/tmp/yolov5_bus_result.jpg
+/tmp/yolov5_result.jpg</code></pre>
+<p>Windows 结果图：</p>
+<pre><code class="language-text">E:\RK3568\yolo_stage\python_files\yolov5_bus_result.jpg</code></pre>
+<p>仓库内备份：</p>
+<pre><code class="language-text">05-实验与证据/实验产物/assets/yolov5_bus_result.jpg</code></pre>
+<p>预览：</p>
+<p><span class="note-embed">yolov5_bus_result.jpg</span></p>
+<h2>关键实验产物</h2>
+<h3>1. NV12原始帧</h3>
+<p>板端路径：</p>
+<pre><code class="language-text">/tmp/frame_1280x720_nv12.yuv
+/tmp/frame_1280x720_30frames_nv12.yuv
+/tmp/frame_1920x1080_1frame_nv12.yuv</code></pre>
+<p>用到阶段：</p>
+<pre><code class="language-text">V4L2 命令行抓帧。</code></pre>
+<p>验证内容：</p>
+<ul><li><code>/dev/video0</code> 可以输出 NV12。</li><li><code>1280x720</code> 单帧和 30 帧采集正常。</li><li><code>1920x1080</code> 单帧采集正常。</li></ul>
+<p>关联：</p>
+<ul><li>V4L2命令行抓帧记录</li></ul>
+<h3>2. OpenCV单帧JPG</h3>
+<p>板端路径：</p>
+<pre><code class="language-text">/tmp/opencv_frame_gst.jpg</code></pre>
+<p>Windows路径：</p>
+<pre><code class="language-text">E:\RK3568\opencv_test\opencv_frame_gst.jpg</code></pre>
+<p>仓库内备份：</p>
+<pre><code class="language-text">05-实验与证据/实验产物/assets/opencv_frame_gst.jpg</code></pre>
+<p>图片预览：</p>
+<p><span class="note-embed">opencv_frame_gst.jpg</span></p>
+<p>WSL脚本：</p>
+<pre><code class="language-text">\\wsl$\Ubuntu-20.04\home\rk3568\work\rk3568_ai_camera\experiments\opencv_camera\opencv_capture_gst.py</code></pre>
+<p>用到阶段：</p>
+<pre><code class="language-text">OpenCV 读取 Camera。</code></pre>
+<p>验证内容：</p>
+<pre><code class="language-text">/dev/video0 -&gt; GStreamer -&gt; OpenCV Mat -&gt; JPG</code></pre>
+<p>关联：</p>
+<ul><li>OpenCV读取Camera记录</li></ul>
+<h3>3. LeNet最小RKNN推理</h3>
+<p>板端路径：</p>
+<pre><code class="language-text">/userdata/aidemo/01_lenet</code></pre>
+<p>关键文件：</p>
+<pre><code class="language-text">5.png
+atk_lenet_demo.py
+LeNet5_mnist_model.rknn</code></pre>
+<p>用到阶段：</p>
+<pre><code class="language-text">AI 手册第 5 章，最小 RKNN 推理闭环。</code></pre>
+<p>验证内容：</p>
+<pre><code class="language-text">Python -&gt; rknnlite -&gt; RKNN模型 -&gt; NPU -&gt; [5]: 1.0</code></pre>
+<p>关联：</p>
+<ul><li>官方AI例程运行记录</li></ul>
+<h3>4. SCRFD人脸检测结果图</h3>
+<p>板端路径：</p>
+<pre><code class="language-text">/tmp/scrfd_result.jpg</code></pre>
+<p>Windows路径：</p>
+<pre><code class="language-text">E:\RK3568\face_stage\result\scrfd_result_rotated.jpg</code></pre>
+<p>仓库内备份：</p>
+<pre><code class="language-text">05-实验与证据/实验产物/assets/scrfd_result_rotated.jpg</code></pre>
+<p>图片预览：</p>
+<p><span class="note-embed">scrfd_result_rotated.jpg</span></p>
+<p>WSL脚本：</p>
+<pre><code class="language-text">\\wsl$\Ubuntu-20.04\home\rk3568\work\rk3568_ai_camera\experiments\scrfd_face\camera_gst.py
+\\wsl$\Ubuntu-20.04\home\rk3568\work\rk3568_ai_camera\experiments\scrfd_face\scrfd_detector.py
+\\wsl$\Ubuntu-20.04\home\rk3568\work\rk3568_ai_camera\experiments\scrfd_face\main_gst_one_frame.py</code></pre>
+<p>板端脚本：</p>
+<pre><code class="language-text">/userdata/aidemo/11_facedet_scrfd_npu/main_gst_one_frame.py</code></pre>
+<p>用到阶段：</p>
+<pre><code class="language-text">AI 手册第 6 章，Camera + RKNN 人脸检测。</code></pre>
+<p>验证内容：</p>
+<pre><code class="language-text">Camera -&gt; GStreamer -&gt; OpenCV Mat -&gt; SCRFD RKNN -&gt; 人脸框/5点关键点 -&gt; JPG</code></pre>
+<p>关键输出：</p>
+<pre><code class="language-text">faces 1</code></pre>
+<p>关联：</p>
+<ul><li>官方AI例程运行记录</li><li>AI Camera系统数据流与模块边界</li></ul>
+<h3>5. SCRFD实时90帧结果图</h3>
+<p>板端路径：</p>
+<pre><code class="language-text">/tmp/scrfd_realtime_last.jpg</code></pre>
+<p>Windows路径：</p>
+<pre><code class="language-text">E:\RK3568\face_stage\result\scrfd_realtime_last.jpg</code></pre>
+<p>仓库内备份：</p>
+<pre><code class="language-text">05-实验与证据/实验产物/assets/scrfd_realtime_last.jpg</code></pre>
+<p>图片预览：</p>
+<p><span class="note-embed">scrfd_realtime_last.jpg</span></p>
+<p>WSL脚本：</p>
+<pre><code class="language-text">\\wsl$\Ubuntu-20.04\home\rk3568\work\rk3568_ai_camera\experiments\scrfd_face\camera_gst.py
+\\wsl$\Ubuntu-20.04\home\rk3568\work\rk3568_ai_camera\experiments\scrfd_face\scrfd_detector.py
+\\wsl$\Ubuntu-20.04\home\rk3568\work\rk3568_ai_camera\experiments\scrfd_face\main_gst_realtime.py</code></pre>
+<p>板端脚本：</p>
+<pre><code class="language-text">/userdata/aidemo/11_facedet_scrfd_npu/main_gst_realtime.py</code></pre>
+<p>验证内容：</p>
+<pre><code class="language-text">连续处理 90 帧 Camera 输入，输出 FPS、平均人脸数，并保存最后一帧结果图。</code></pre>
+<p>关键输出：</p>
+<pre><code class="language-text">processed_frames 90
+elapsed_sec 13.238
+fps 6.798
+avg_faces_per_frame 0.889
+saved True /tmp/scrfd_realtime_last.jpg</code></pre>
+<h3>6. SCRFD MIPI屏实时显示</h3>
+<p>板端命令：</p>
+<pre><code class="language-bash">cd /userdata/aidemo/11_facedet_scrfd_npu
+python3 main_gst_realtime.py --frames 300 --save-every 60 --display</code></pre>
+<p>用到脚本：</p>
+<pre><code class="language-text">/userdata/aidemo/11_facedet_scrfd_npu/main_gst_realtime.py</code></pre>
+<p>验证内容：</p>
+<pre><code class="language-text">Camera -&gt; GStreamer -&gt; OpenCV -&gt; SCRFD RKNN -&gt; cv2.imshow -&gt; MIPI屏</code></pre>
+<p>关键输出：</p>
+<pre><code class="language-text">processed_frames 300
+elapsed_sec 45.322
+fps 6.619
+avg_faces_per_frame 0.913</code></pre>
+<p>现象：</p>
+<pre><code class="language-text">MIPI 屏实时显示画面和人脸检测框。</code></pre>
+<p>备注：</p>
+<pre><code class="language-text">该项是功能现象记录，无新增文件产物。</code></pre>
+<h3>7. YOLOv5单图目标检测结果图</h3>
+<p>板端命令：</p>
+<pre><code class="language-bash">cd /userdata/aidemo/06_yolov5_python
+python3 main_image.py \
+  --model yolov5s_relu_tk2_RK356X_i8.rknn \
+  --anchors RK_anchors_yolov5.txt \
+  --labels coco_80_labels_list.txt \
+  --image bus.jpg \
+  --output /tmp/yolov5_bus_result.jpg</code></pre>
+<p>验证内容：</p>
+<pre><code class="language-text">图片 -&gt; YOLOv5 RKNN -&gt; 后处理 -&gt; 检测框 -&gt; JPG</code></pre>
+<p>关键输出：</p>
+<pre><code class="language-text">detections 4
+person 0.880
+person 0.874
+person 0.840
+bus 0.693
+write True /tmp/yolov5_bus_result.jpg</code></pre>
+<p>板端路径：</p>
+<pre><code class="language-text">/tmp/yolov5_bus_result.jpg</code></pre>
+<p>Windows路径：</p>
+<pre><code class="language-text">E:\RK3568\yolo_stage\python_files\yolov5_bus_result.jpg</code></pre>
+<p>仓库内备份：</p>
+<pre><code class="language-text">05-实验与证据/实验产物/assets/yolov5_bus_result.jpg</code></pre>
+<p>预览：</p>
+<p><span class="note-embed">yolov5_bus_result.jpg</span></p>
+<p>关联：</p>
+<ul><li>YOLOv5 Python最小推理记录</li></ul>
+<h3>8. YOLOv5 Camera单帧目标检测结果图</h3>
+<p>板端命令：</p>
+<pre><code class="language-bash">cd /userdata/aidemo/06_yolov5_python
+python3 main_gst_one_frame.py \
+  --model yolov5s_relu_tk2_RK356X_i8.rknn \
+  --anchors RK_anchors_yolov5.txt \
+  --labels coco_80_labels_list.txt \
+  --output /tmp/yolov5_camera_result.jpg \
+  --raw-output /tmp/yolov5_camera_raw.jpg</code></pre>
+<p>验证内容：</p>
+<pre><code class="language-text">Camera -&gt; GStreamer -&gt; OpenCV Mat -&gt; YOLOv5 RKNN -&gt; 检测框 -&gt; JPG</code></pre>
+<p>关键输出：</p>
+<pre><code class="language-text">detections 1
+person 0.684
+write True /tmp/yolov5_camera_result.jpg</code></pre>
+<p>板端路径：</p>
+<pre><code class="language-text">/tmp/yolov5_camera_raw.jpg
+/tmp/yolov5_camera_result.jpg</code></pre>
+<p>Windows路径：</p>
+<pre><code class="language-text">E:\RK3568\yolo_stage\python_files\yolov5_camera_raw.jpg
+E:\RK3568\yolo_stage\python_files\yolov5_camera_result.jpg</code></pre>
+<p>仓库内备份：</p>
+<pre><code class="language-text">05-实验与证据/实验产物/assets/yolov5_camera_raw.jpg
+05-实验与证据/实验产物/assets/yolov5_camera_result.jpg</code></pre>
+<p>预览：</p>
+<p><span class="note-embed">yolov5_camera_result.jpg</span></p>
+<p>关联：</p>
+<ul><li>YOLOv5 Python最小推理记录</li></ul>
+<h3>9. YOLOv5 MIPI屏实时显示结果图</h3>
+<p>板端命令：</p>
+<pre><code class="language-bash">cd /userdata/aidemo/06_yolov5_python
+python3 main_gst_realtime.py \
+  --model yolov5s_relu_tk2_RK356X_i8.rknn \
+  --anchors RK_anchors_yolov5.txt \
+  --labels coco_80_labels_list.txt \
+  --frames 100 \
+  --display \
+  --save-every 50 \
+  --output /tmp/yolov5_realtime_last.jpg</code></pre>
+<p>验证内容：</p>
+<pre><code class="language-text">Camera -&gt; GStreamer -&gt; OpenCV Mat -&gt; YOLOv5 RKNN -&gt; cv2.imshow -&gt; MIPI屏</code></pre>
+<p>关键输出：</p>
+<pre><code class="language-text">processed_frames 100
+elapsed_sec 24.424
+fps 4.094
+avg_detections_per_frame 2.180
+saved True /tmp/yolov5_realtime_last.jpg</code></pre>
+<p>板端路径：</p>
+<pre><code class="language-text">/tmp/yolov5_realtime_last.jpg</code></pre>
+<p>Windows路径：</p>
+<pre><code class="language-text">E:\RK3568\yolo_stage\python_files\yolov5_realtime_last.jpg</code></pre>
+<p>仓库内备份：</p>
+<pre><code class="language-text">05-实验与证据/实验产物/assets/yolov5_realtime_last.jpg</code></pre>
+<p>预览：</p>
+<p><span class="note-embed">yolov5_realtime_last.jpg</span></p>
+<p>关联：</p>
+<ul><li>YOLOv5 Python最小推理记录</li><li>MIPI屏显示链路</li></ul>
+<h3>10. YOLOv5 MIPI屏实时显示日志收口复测</h3>
+<p>板端命令：</p>
+<pre><code class="language-bash">cd /userdata/aidemo/06_yolov5_python
+python3 main_gst_realtime.py \
+  --model yolov5s_relu_tk2_RK356X_i8.rknn \
+  --anchors RK_anchors_yolov5.txt \
+  --labels coco_80_labels_list.txt \
+  --frames 30 \
+  --display \
+  --output /tmp/yolov5_realtime_clean_last.jpg</code></pre>
+<p>验证内容：</p>
+<pre><code class="language-text">确认关闭 output_shapes 默认打印后，YOLOv5 MIPI 实时链路仍然可跑。</code></pre>
+<p>关键输出：</p>
+<pre><code class="language-text">processed_frames 30
+elapsed_sec 7.858
+fps 3.818
+avg_detections_per_frame 1.000
+saved True /tmp/yolov5_realtime_clean_last.jpg</code></pre>
+<p>板端路径：</p>
+<pre><code class="language-text">/tmp/yolov5_realtime_clean_last.jpg</code></pre>
+<p>Windows路径：</p>
+<pre><code class="language-text">E:\RK3568\yolo_stage\python_files\yolov5_realtime_clean_last.jpg</code></pre>
+<p>仓库内备份：</p>
+<pre><code class="language-text">05-实验与证据/实验产物/assets/yolov5_realtime_clean_last.jpg</code></pre>
+<p>预览：</p>
+<p><span class="note-embed">yolov5_realtime_clean_last.jpg</span></p>
+<p>关联：</p>
+<ul><li>YOLOv5 Python最小推理记录</li></ul>
+<h3>11. YOLOv5 RTMP-HLS网络拉流结果</h3>
+<p>板端脚本：</p>
+<pre><code class="language-text">/userdata/aidemo/06_yolov5_python/main_gst_rtmp_hls.py</code></pre>
+<p>WSL脚本：</p>
+<pre><code class="language-text">\\wsl$\Ubuntu-20.04\home\rk3568\work\rk3568_ai_camera\experiments\yolov5_object\main_gst_rtmp_hls.py</code></pre>
+<p>板端命令：</p>
+<pre><code class="language-bash">cd /userdata/aidemo/06_yolov5_python
+python3 main_gst_rtmp_hls.py \
+  --model yolov5s_relu_tk2_RK356X_i8.rknn \
+  --anchors RK_anchors_yolov5.txt \
+  --labels coco_80_labels_list.txt \
+  --frames 60 \
+  --stream-width 640 \
+  --stream-height 360 \
+  --stream-fps 5 \
+  --output /tmp/yolov5_rtmp_last.jpg</code></pre>
+<p>验证内容：</p>
+<pre><code class="language-text">Camera -&gt; YOLOv5 RKNN -&gt; FFmpeg编码 -&gt; RTMP -&gt; Nginx -&gt; HLS -&gt; Windows拉流</code></pre>
+<p>关键输出：</p>
+<pre><code class="language-text">processed_frames 60
+elapsed_sec 11.867
+fps 5.056
+avg_detections_per_frame 1.100
+rtmp_url rtmp://127.0.0.1/live/yolo
+saved True /tmp/yolov5_rtmp_last.jpg</code></pre>
+<p>Windows拉流地址：</p>
+<pre><code class="language-text">http://192.168.0.230/hls/yolo.m3u8</code></pre>
+<p>Windows产物：</p>
+<pre><code class="language-text">E:\RK3568\yolo_hls_pull_test.mp4
+E:\RK3568\yolo_hls_pull_test_frame.jpg
+E:\RK3568\yolo_stage\python_files\yolov5_rtmp_last.jpg</code></pre>
+<p>仓库内备份：</p>
+<pre><code class="language-text">05-实验与证据/实验产物/assets/yolo_hls_pull_test.mp4
+05-实验与证据/实验产物/assets/yolo_hls_pull_test_frame.jpg
+05-实验与证据/实验产物/assets/yolov5_rtmp_last.jpg</code></pre>
+<p>预览：</p>
+<p><span class="note-embed">yolo_hls_pull_test_frame.jpg</span></p>
+<p>关联：</p>
+<ul><li>RTMP-HLS推流记录</li><li>YOLOv5 Python最小推理记录</li></ul>
+<h2>临时服务</h2>
+<h3>Windows临时HTTP服务</h3>
+<p>用途：</p>
+<pre><code class="language-text">从 Windows 给板端传文件。</code></pre>
+<p>使用过的端口：</p>
+<pre><code class="language-text">8000: AI安装和 01_lenet 文件传输
+8001: SCRFD 文件传输</code></pre>
+<p>状态：</p>
+<pre><code class="language-text">用完关闭，不作为长期服务。</code></pre>
+<h3>板端Python HTTP服务</h3>
+<p>用途：</p>
+<pre><code class="language-text">从板端 /tmp 下载测试图片到 Windows。</code></pre>
+<p>使用过：</p>
+<pre><code class="language-text">python3 -m http.server 8080</code></pre>
+<p>状态：</p>
+<pre><code class="language-text">仅用于临时取图。</code></pre>
+<h2>后续整理规则</h2>
+<p>每新增一个实验，必须补齐：</p>
+<ul><li>实验目的。</li><li>板端路径。</li><li>Windows 临时目录。</li><li>WSL 项目脚本路径。</li><li>输入文件。</li><li>输出文件。</li><li>是否已取回 Windows。</li><li>对应专项笔记链接。</li></ul>
+<p>#附录 #实验产物 #脚本 #图片 #路径索引</p>
+<h2>2026-05-31 当前最新产物</h2>
+<p>当前最新可复现链路：</p>
+<pre><code class="language-text">Camera -&gt; YOLOv5 RKNN -&gt; MIPI显示 -&gt; RTMP/HLS -&gt; Windows拉流</code></pre>
+<p>板端一键脚本：</p>
+<pre><code class="language-text">/userdata/aidemo/06_yolov5_python/start_yolov5_hls_demo.sh</code></pre>
+<p>WSL 部署脚本：</p>
+<pre><code class="language-text">\\wsl$\Ubuntu-20.04\home\rk3568\work\rk3568_ai_camera\scripts\deploy_yolov5_demo.sh</code></pre>
+<p>WSL 主推流脚本：</p>
+<pre><code class="language-text">\\wsl$\Ubuntu-20.04\home\rk3568\work\rk3568_ai_camera\experiments\yolov5_object\main_gst_rtmp_hls.py</code></pre>
+<p>板端运行命令：</p>
+<pre><code class="language-bash">cd /userdata/aidemo/06_yolov5_python
+SHOW_MIPI=1 FRAMES=0 ./start_yolov5_hls_demo.sh</code></pre>
+<p>Windows 拉流：</p>
+<pre><code class="language-powershell">ffplay http://192.168.0.230/hls/yolo.m3u8</code></pre>
+<p>当前默认方向：</p>
+<pre><code class="language-text">ROTATE=none
+DISPLAY_ROTATE=ccw
+STREAM_ROTATE=ccw</code></pre>
+<p>当前关键修正：</p>
+<ul><li>HLS 编码端固定 GOP，避免只生成 <code>.ts</code> 不生成 <code>.m3u8</code>。</li><li>MIPI 和 HLS 旋转参数拆分，避免一个方向修好另一个方向坏。</li><li>HLS 推流帧使用 <code>fit_to_canvas()</code>，避免 Windows 画面拉伸变形。</li></ul></article><footer class="footer"><a href="../notes.html">返回专项笔记导航</a> · <a href="../../index.html">返回驾驶舱首页</a></footer></main></div><script defer src="../../site.js"></script></body></html>

@@ -165,7 +165,7 @@ test('Task 4 pages expose the shared shell and page-specific content contracts',
   }
 
   const project = readHtml(task4Pages[0]);
-  for (const textValue of ['RK3568 + Buildroot 4.19 + YOLOv5 RKNN Python MVP', '01-RK3568 YOLOv8n AI Camera项目.md', '02-AI Camera项目讲解稿.md', '03-Python MVP演示手册.md', '06-AI-Camera项目五分钟讲解.md', '10-Phase0-可视化总入口.html']) {
+  for (const textValue of ['RK3568 + Buildroot 4.19 + YOLOv5 RKNN Python MVP', '04-项目--01-RK3568 YOLOv8n AI Camera项目.html', '04-项目--02-AI Camera项目讲解稿.html', '04-项目--03-Python MVP演示手册.html', '09-输出沉淀--06-AI-Camera项目五分钟讲解.html', '10-Phase0-可视化总入口.html']) {
     assert.match(project, new RegExp(textValue.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&'), 'u'), `project missing ${textValue}`);
   }
 
@@ -174,16 +174,16 @@ test('Task 4 pages expose the shared shell and page-specific content contracts',
   assert.match(evidence, /createElement\(["'](?:img|video)["']\)/u);
   assert.match(evidence, /controls/iu);
   assert.match(evidence, /missing|unknown|不可用/iu);
-  for (const target of ['00-实验与证据入口.md', '01-实验产物索引.md', '02-每日进度记录.md']) assert.match(evidence, new RegExp(target.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&'), 'u'));
+  for (const target of ['05-实验与证据--00-实验与证据入口.html', '05-实验与证据--实验产物--01-实验产物索引.html', '05-实验与证据--02-每日进度记录.html']) assert.match(evidence, new RegExp(target.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&'), 'u'));
 
   const environment = readHtml(task4Pages[2]);
-  for (const textValue of ['板端 Buildroot', 'Ubuntu / SDK', 'WSL2 / VSCode', '00-环境入口.md', '01-Ubuntu与SDK编译注意事项.md', '02-WSL2和VSCode使用说明.md', '03-WSL2开发环境现状.md', '00-附录入口.md']) assert.match(environment, new RegExp(textValue.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&'), 'u'));
+  for (const textValue of ['板端 Buildroot', 'Ubuntu / SDK', 'WSL2 / VSCode', '03-环境--00-环境入口.html', '03-环境--01-Ubuntu与SDK编译注意事项.html', '03-环境--02-WSL2和VSCode使用说明.html', '03-环境--03-WSL2开发环境现状.html', '08-附录--00-附录入口.html']) assert.match(environment, new RegExp(textValue.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&'), 'u'));
 
   const notes = readHtml(task4Pages[3]);
   for (const textValue of ['Camera', 'OpenCV', 'RKNN', 'Display', 'Streaming', 'System', '07-专项笔记--Camera-V4L2--IMX415驱动调试与最小demo路线.html', '07-专项笔记--系统--AI Camera系统数据流与模块边界.html', 'system-map.html']) assert.match(notes, new RegExp(textValue.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&'), 'u'));
 
   const archive = readHtml(task4Pages[4]);
-  for (const textValue of ['网页当前入口', 'Obsidian 状态源', '00-重构归档说明.md', '00-归档说明.md', 'index.html', '01-下一步任务看板.md']) assert.match(archive, new RegExp(textValue.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&'), 'u'));
+  for (const textValue of ['网页当前入口', 'Obsidian 状态源', '99-归档--重构前--00-重构归档说明.html', '99-归档--00-归档说明.html', 'index.html', '01-下一步任务看板.md']) assert.match(archive, new RegExp(textValue.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&'), 'u'));
   assert.doesNotMatch(archive, /href=["'][^"']*(?:重构前|历史版|旧路线)[^"']*["'][^>]*>[^<]*旧路线[^<]*当前入口/iu);
 });
 
@@ -236,10 +236,10 @@ test('learning route presents Phase 0 through Phase 10 without a hardcoded curre
   assert.doesNotMatch(html, /阶段\s*1[^<]*当前/iu);
   assert.match(html, /阶段 1[\s\S]*(?:要回答的问题|通过标准|入口)/iu);
   for (const target of [
-    '../../../01-主线/02-从零到Python MVP学习路线.md',
+    'notes/01-主线--02-从零到Python MVP学习路线.html',
     '../../../06-任务/01-下一步任务看板.md',
-    '../../../05-实验与证据/01-板子到手验机记录.md',
-    '../../../07-专项笔记/系统/AI Camera系统数据流与模块边界.md'
+    'notes/05-实验与证据--01-板子到手验机记录.html',
+    'notes/07-专项笔记--系统--AI Camera系统数据流与模块边界.html'
   ]) assert.ok(html.includes(`href="${target}"`), `missing route link: ${target}`);
 });
 
@@ -248,15 +248,15 @@ test('system map presents the Camera to Display and Streaming chain with module 
   const modules = ['Camera', 'V4L2', 'GStreamer', 'OpenCV', 'RKNN', 'Display', 'Streaming'];
   for (const module of modules) assert.match(html, new RegExp(module, 'iu'));
   assert.match(html, /Camera[\s\S]*V4L2[\s\S]*GStreamer[\s\S]*OpenCV[\s\S]*RKNN[\s\S]*Display[\s\S]*Streaming/iu);
-  assert.match(html, /07-专项笔记\/系统\/AI Camera系统数据流与模块边界\.md/u);
+  assert.match(html, /07-专项笔记--系统--AI Camera系统数据流与模块边界\.html/u);
   assert.match(html, /04-项目\/15-Phase0-RK3568全系统框架图\.html/u);
   for (const target of [
-    '../../../07-专项笔记/Camera-V4L2/IMX415驱动调试与最小demo路线.md',
-    '../../../07-专项笔记/Camera-V4L2/V4L2命令行抓帧记录.md',
-    '../../../07-专项笔记/OpenCV/OpenCV读取Camera记录.md',
-    '../../../07-专项笔记/AI-RKNN/官方AI例程运行记录.md',
-    '../../../07-专项笔记/Display-MIPI/MIPI屏显示链路.md',
-    '../../../07-专项笔记/Streaming/RTMP-HLS推流记录.md'
+    'notes/07-专项笔记--Camera-V4L2--IMX415驱动调试与最小demo路线.html',
+    'notes/07-专项笔记--Camera-V4L2--V4L2命令行抓帧记录.html',
+    'notes/07-专项笔记--OpenCV--OpenCV读取Camera记录.html',
+    'notes/07-专项笔记--AI-RKNN--官方AI例程运行记录.html',
+    'notes/07-专项笔记--Display-MIPI--MIPI屏显示链路.html',
+    'notes/07-专项笔记--Streaming--RTMP-HLS推流记录.html'
   ]) assert.ok(html.includes(`href="${target}"`), `missing system link: ${target}`);
 });
 
@@ -527,9 +527,25 @@ test('important Markdown notes are presented as generated HTML pages', () => {
   const html = readHtml(openCvPage);
   assert.match(html, /<article[^>]*class=["'][^"']*note-content/iu);
   assert.match(html, /OpenCV读取Camera记录/iu);
+  assert.equal((html.match(/<h1\b/giu) || []).length, 1, 'generated note pages should have one page title');
   assert.match(html, /在 Obsidian 中打开/iu);
   assert.match(html, /查看原始 Markdown/iu);
   for (const target of relativeHrefTargets(openCvPage)) {
     assert.equal(fs.existsSync(target.target), true, `${path.basename(openCvPage)} -> ${target.href}`);
   }
+});
+
+test('active web pages do not open content Markdown files directly', () => {
+  const allowedMarkdown = [
+    '06-任务/01-下一步任务看板.md',
+    '00-首页/00-RK3568学习主入口.md',
+  ];
+  const violations = existingPages().flatMap((filePath) => {
+    const html = readHtml(filePath);
+    return [...html.matchAll(/<a\b[^>]*\bhref=["']([^"']+\.md(?:#[^"']*)?)["']/giu)]
+      .map((match) => match[1].split('#', 1)[0])
+      .filter((href) => !allowedMarkdown.some((allowed) => href.endsWith(allowed)))
+      .map((href) => `${path.relative(repoRoot, filePath)} -> ${href}`);
+  });
+  assert.deepEqual(violations, [], `content links still open Markdown directly:\n${violations.join('\n')}`);
 });

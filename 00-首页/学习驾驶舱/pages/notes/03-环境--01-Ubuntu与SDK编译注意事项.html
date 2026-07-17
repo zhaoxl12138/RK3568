@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>01-Ubuntu与SDK编译注意事项 · RK3568</title><link rel="stylesheet" href="../../site.css"></head><body><div class="page-shell"><nav class="site-nav" data-site-nav aria-label="网站导航"><a class="site-nav__brand" href="../../index.html">RK3568 / 驾驶舱</a><div class="site-nav__links"><a href="../../index.html">驾驶舱首页</a><a href="../learning-route.html">学习路线</a><a href="../system-map.html">系统地图</a><a href="../notes.html" aria-current="page">专项笔记</a></div></nav><main id="main-content" class="note-page"><header class="hero"><p class="hero__eyebrow">GENERATED NOTE · 03-环境</p><h1>01-Ubuntu与SDK编译注意事项</h1><p>此页面由 Markdown 知识源自动生成，适合网页阅读；编辑仍请回到 Obsidian。</p><div class="hero__actions"><a class="button" href="obsidian://open?vault=RK3568&amp;file=03-%E7%8E%AF%E5%A2%83%2F01-Ubuntu%E4%B8%8ESDK%E7%BC%96%E8%AF%91%E6%B3%A8%E6%84%8F%E4%BA%8B%E9%A1%B9">在 Obsidian 中打开</a><a class="button button--quiet" href="../../../../03-环境/01-Ubuntu与SDK编译注意事项.md">查看原始 Markdown</a></div></header><article class="note-content"><h2>官方建议</h2>
+<p>正点原子资料明确建议使用 <code>Ubuntu20</code>。</p>
+<p>原因：</p>
+<ul><li>Ubuntu22/24 这类高版本可能编译不过。</li><li>SDK 对 Python、GCC、系统库版本比较敏感。</li><li>如果用户改过 Python/GCC 或引入其他 GCC 环境，也可能导致编译失败。</li></ul>
+<h2>路径规则</h2>
+<p>Ubuntu 下：</p>
+<ul><li>SDK 路径不要有中文。</li><li>SDK 路径不要有空格。</li><li>不要用 <code>sudo</code> 或 <code>root</code> 解压 SDK。</li><li>不要用 <code>sudo</code> 或 <code>root</code> 编译 SDK。</li></ul>
+<p>推荐路径：</p>
+<pre><code class="language-bash">/home/rk3568/work/rk3568_sdk</code></pre>
+<h2>资源建议</h2>
+<p>资料中建议：</p>
+<ul><li>虚拟机内存建议 16G。</li><li>8G 是最低要求。</li><li>磁盘读写太慢可能导致编译很慢甚至卡住。</li></ul>
+<p>我的宿主机：</p>
+<ul><li>Windows 10</li><li>Ryzen 5 5600</li><li>32GB 内存</li><li>当前主力环境：Ubuntu-20.04 WSL2</li></ul>
+<h2>当前策略</h2>
+<ul><li>Ubuntu-20.04 WSL2：当前主力环境，已安装到 <code>E:\wsl\Ubuntu-20.04</code>，用于 SDK 编译和项目主开发，更贴合官方资料。</li><li>Ubuntu-22.04 WSL2：旧环境记录，可用于普通实验，但不作为当前主线。</li></ul>
+<h2>相关笔记</h2>
+<ul><li>03-WSL2开发环境现状</li><li>03-资料汇总PDF注意事项</li><li>01-下一步任务看板</li></ul>
+<p>#Ubuntu #WSL2 #SDK #Buildroot</p></article><footer class="footer"><a href="../notes.html">返回专项笔记导航</a> · <a href="../../index.html">返回驾驶舱首页</a></footer></main></div><script defer src="../../site.js"></script></body></html>
