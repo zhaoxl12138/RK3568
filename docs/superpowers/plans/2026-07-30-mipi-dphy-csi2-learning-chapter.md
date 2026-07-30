@@ -12,7 +12,7 @@
 
 ## 文件边界
 
-- Create: `06-任务/RK3568-MIPI-DPHY-CSI2源码对照.md`
+- Create: `06-任务/Camera驱动第2章-MIPI-DPHY与CSI2.md`
   - 第二章唯一学习记录；学习期间禁止生成 HTML。
 - Modify: `tools/build-dashboard.mjs`
   - 识别 Markdown front matter 中的 `web-publish: false` 并跳过该文档。
@@ -22,7 +22,7 @@
   - 只在第二章验收完成后增加正式章节按钮。
 - Modify after chapter acceptance: `06-任务/RK3568-Camera驱动学习总入口.md`
   - 第二章完成后更新章节状态和下一学习节点。
-- Generated after chapter acceptance: `00-首页/学习驾驶舱/pages/notes/06-任务--RK3568-MIPI-DPHY-CSI2源码对照.html`
+- Generated after chapter acceptance: `00-首页/学习驾驶舱/pages/notes/06-任务--Camera驱动第2章-MIPI-DPHY与CSI2.html`
   - 正式发布产物，不在学习过程中手工创建。
 
 ### 真实资料和源码
@@ -174,7 +174,7 @@ git commit -m "feat: keep learning drafts out of generated site"
 ### Task 2: 创建第二章学习记录，不生成 HTML
 
 **Files:**
-- Create: `06-任务/RK3568-MIPI-DPHY-CSI2源码对照.md`
+- Create: `06-任务/Camera驱动第2章-MIPI-DPHY与CSI2.md`
 
 - [ ] **Step 1: 创建带禁用发布标记的章节**
 
@@ -251,7 +251,7 @@ Run:
 
 ```powershell
 node tools/build-dashboard.mjs .
-Test-Path "00-首页/学习驾驶舱/pages/notes/06-任务--RK3568-MIPI-DPHY-CSI2源码对照.html"
+Test-Path "00-首页/学习驾驶舱/pages/notes/06-任务--Camera驱动第2章-MIPI-DPHY与CSI2.html"
 ```
 
 Expected:
@@ -263,7 +263,7 @@ False
 - [ ] **Step 5: 提交章节骨架**
 
 ```powershell
-git add -- "06-任务/RK3568-MIPI-DPHY-CSI2源码对照.md"
+git add -- "06-任务/Camera驱动第2章-MIPI-DPHY与CSI2.md"
 git commit -m "docs: start MIPI D-PHY and CSI-2 learning chapter"
 ```
 
@@ -272,7 +272,7 @@ git commit -m "docs: start MIPI D-PHY and CSI-2 learning chapter"
 ### Task 3: 完成电气层与原理图学习
 
 **Files:**
-- Modify: `06-任务/RK3568-MIPI-DPHY-CSI2源码对照.md`
+- Modify: `06-任务/Camera驱动第2章-MIPI-DPHY与CSI2.md`
 
 - [ ] **Step 1: 学习并记录五个概念**
 
@@ -330,7 +330,7 @@ IMX415 CSI_CLK_P/N ↔ 主板 MIPI_CSI_RX_CLK0P/N
 ### Task 4: 完成 DTS endpoint 与运行时 Media Graph 学习
 
 **Files:**
-- Modify: `06-任务/RK3568-MIPI-DPHY-CSI2源码对照.md`
+- Modify: `06-任务/Camera驱动第2章-MIPI-DPHY与CSI2.md`
 
 - [ ] **Step 1: 记录板级 DTS 源码位置**
 
@@ -385,7 +385,7 @@ m00_b_imx415 4-001a-1
 ### Task 5: 完成 D-PHY 与 CSI 驱动源码追踪
 
 **Files:**
-- Modify: `06-任务/RK3568-MIPI-DPHY-CSI2源码对照.md`
+- Modify: `06-任务/Camera驱动第2章-MIPI-DPHY与CSI2.md`
 
 - [ ] **Step 1: 找到 D-PHY 驱动入口**
 
@@ -438,7 +438,7 @@ dphy0 matches m00_b_imx415 4-001a-1:bus type 4
 ### Task 6: 完成排障、面试表达与章节总验收
 
 **Files:**
-- Modify: `06-任务/RK3568-MIPI-DPHY-CSI2源码对照.md`
+- Modify: `06-任务/Camera驱动第2章-MIPI-DPHY与CSI2.md`
 
 - [ ] **Step 1: 建立故障表**
 
@@ -499,11 +499,11 @@ chapter: 2
 ### Task 7: 发布正式 HTML 并接入框架图
 
 **Files:**
-- Modify: `06-任务/RK3568-MIPI-DPHY-CSI2源码对照.md`
+- Modify: `06-任务/Camera驱动第2章-MIPI-DPHY与CSI2.md`
 - Modify: `06-任务/RK3568-Camera驱动学习总入口.md`
 - Modify: `04-项目/14-Phase0-驱动层全链路框架图.html`
 - Modify: `tools/tests/multipage-site.test.mjs`
-- Generate: `00-首页/学习驾驶舱/pages/notes/06-任务--RK3568-MIPI-DPHY-CSI2源码对照.html`
+- Generate: `00-首页/学习驾驶舱/pages/notes/06-任务--Camera驱动第2章-MIPI-DPHY与CSI2.html`
 
 - [ ] **Step 1: 写框架图入口失败测试**
 
@@ -515,7 +515,7 @@ test('driver framework links the completed D-PHY and CSI-2 chapter', () => {
   assert.match(framework, /进入学习：MIPI D-PHY 与 CSI-2/u);
   assert.match(
     framework,
-    /06-任务--RK3568-MIPI-DPHY-CSI2源码对照\.html/u,
+    /06-任务--Camera驱动第2章-MIPI-DPHY与CSI2\.html/u,
   );
 });
 ```
@@ -541,7 +541,7 @@ node tools/build-dashboard.mjs .
 确认生成：
 
 ```powershell
-Test-Path "00-首页/学习驾驶舱/pages/notes/06-任务--RK3568-MIPI-DPHY-CSI2源码对照.html"
+Test-Path "00-首页/学习驾驶舱/pages/notes/06-任务--Camera驱动第2章-MIPI-DPHY与CSI2.html"
 ```
 
 Expected:
@@ -561,7 +561,7 @@ True
 目标：
 
 ```text
-../00-首页/学习驾驶舱/pages/notes/06-任务--RK3568-MIPI-DPHY-CSI2源码对照.html
+../00-首页/学习驾驶舱/pages/notes/06-任务--Camera驱动第2章-MIPI-DPHY与CSI2.html
 ```
 
 按钮放在 Camera 驱动链路中 MIPI CSI-2/D-PHY 对应节点的学习入口区域，不加入全局顶栏。
@@ -610,10 +610,10 @@ Active-to-archive links: 0
 
 ```powershell
 git add -- `
-  "06-任务/RK3568-MIPI-DPHY-CSI2源码对照.md" `
+  "06-任务/Camera驱动第2章-MIPI-DPHY与CSI2.md" `
   "06-任务/RK3568-Camera驱动学习总入口.md" `
   "04-项目/14-Phase0-驱动层全链路框架图.html" `
-  "00-首页/学习驾驶舱/pages/notes/06-任务--RK3568-MIPI-DPHY-CSI2源码对照.html" `
+  "00-首页/学习驾驶舱/pages/notes/06-任务--Camera驱动第2章-MIPI-DPHY与CSI2.html" `
   tools/tests/multipage-site.test.mjs
 git commit -m "docs: publish MIPI D-PHY and CSI-2 chapter"
 ```

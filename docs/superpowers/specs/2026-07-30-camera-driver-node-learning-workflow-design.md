@@ -65,11 +65,11 @@ HTML 是章节完成后的发布产物，不是学习草稿。
 
 | 顺序 | 学习节点 | 章节 | 状态 |
 | --- | --- | --- | --- |
-| 1 | IMX415 Sensor 与驱动 | `RK3568-IMX415-SDK源码对照` | 已完成并已有 HTML |
-| 2 | MIPI D-PHY 与 CSI-2 | `RK3568-MIPI-DPHY-CSI2源码对照` | 下一章 |
-| 3 | RKISP | `RK3568-RKISP源码对照` | 未开始 |
-| 4 | Media Controller | `RK3568-Media-Controller源码对照` | 未开始 |
-| 5 | V4L2、VB2 与 mainpath | `RK3568-V4L2-VB2-dev-video0源码对照` | 未开始 |
+| 1 | IMX415 Sensor 与驱动 | `Camera驱动第1章-IMX415-Sensor与驱动` | 已完成并已有 HTML |
+| 2 | MIPI D-PHY 与 CSI-2 | `Camera驱动第2章-MIPI-DPHY与CSI2` | 下一章 |
+| 3 | RKISP | `Camera驱动第3章-RKISP` | 未开始 |
+| 4 | Media Controller | `Camera驱动第4章-Media-Controller` | 未开始 |
+| 5 | V4L2、VB2 与 mainpath | `Camera驱动第5章-V4L2-VB2与dev-video0` | 未开始 |
 
 章节按可独立学习和验收的模块划分，不机械对应框架图中的每一个视觉小方框。
 
