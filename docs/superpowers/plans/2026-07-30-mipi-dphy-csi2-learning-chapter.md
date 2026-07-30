@@ -4,7 +4,7 @@
 
 **Goal:** 基于当前 RK3568、IMX415 原理图、BSP 4.19 源码和板端输出，完成第二章“MIPI D-PHY 与 CSI-2”的学习、验收和最终 HTML 发布。
 
-**Architecture:** 学习过程只维护一个带 `web-publish: false` 的 Markdown 章节，网页生成器必须跳过该草稿。章节按“电气连接 → DTS endpoint → 运行时 Media Graph → 驱动源码 → 故障排查 → 面试表达”推进；全部验收通过后才开启发布、生成 HTML，并把入口加入 Phase0 驱动层全链路框架图。
+**Architecture:** 学习过程只维护一个带 `web-publish: false` 的 Markdown 章节，网页生成器必须跳过该草稿。章节按“电气连接 → DTS endpoint → 运行时 Media Graph → 驱动源码 → 故障排查 → 面试表达”推进；每轮使用“概念解释、项目证据、故障定位、60～90 秒表达”四类岗位反推问题验收。全部验收通过后才开启发布、生成 HTML，并把入口加入 Phase0 驱动层全链路框架图。
 
 **Tech Stack:** Obsidian Markdown、Node.js ESM 网页生成器、Node Test Runner、RK3568 Linux 4.19 BSP、Device Tree、Media Controller、MIPI CSI-2 D-PHY。
 
@@ -301,10 +301,10 @@ IMX415 CSI_CLK_P/N ↔ 主板 MIPI_CSI_RX_CLK0P/N
 - [ ] **Step 3: 用户回答第一轮验收题**
 
 ```text
-1. 为什么 D0P 和 D0N 合起来才叫一条 Lane？
-2. 四条 Data Lane 是四幅图、四种颜色，还是同一条图像数据流？
-3. Clock Lane 与 Data Lane 的职责有什么区别？
-4. 为什么增加 Lane 数量可以提高总带宽？
+1. 概念解释：IMX415 使用 4 Lane MIPI CSI-2 是什么意思？为什么有四条 Data Lane 仍属于串行传输？
+2. 项目证据：结合两份原理图，说明 RAW10 从 IMX415 引脚到 RK3568 D-PHY 的硬件路径，并区分控制信号和图像数据。
+3. 故障定位：已经读到 Sensor ID，但抓帧超时，能否证明 MIPI 链路正常？应怎样分层检查？
+4. 面试表达：在 60～90 秒内说明 D-PHY、CSI-2、Clock Lane 和 Data Lane 的关系，并带上当前板子的证据。
 ```
 
 - [ ] **Step 4: 保存原始回答和高亮正确答案**
@@ -474,6 +474,15 @@ D-PHY 与 CSI-2 Receiver 的区别
 四 Lane 为什么仍是串行
 endpoint 如何建立 Sensor 到 ISP 的数据关系
 Sensor ID 成功为什么不能证明 MIPI 图像正确
+```
+
+表达顺序固定为：
+
+```text
+先给结论
+→ 结合 RK3568 + IMX415 说明链路
+→ 给出原理图、DTS、日志或 Media Graph 证据
+→ 补充一个典型故障和排查入口
 ```
 
 - [ ] **Step 4: 执行九项章节验收**
