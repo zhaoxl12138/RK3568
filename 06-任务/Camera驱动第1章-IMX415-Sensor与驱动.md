@@ -1,7 +1,5 @@
 # Camera 驱动第 1 章：IMX415 Sensor 与驱动
 
-> 学习总入口：[[RK3568-Camera驱动学习总入口]]
-
 > 目标：用当前 RK3568 + IMX415 的真实原理图、DTS、内核源码和板端输出，解释 Sensor 如何从硬件连接变成 `/dev/video0`。
 
 ## 0. 一条主线
@@ -730,6 +728,31 @@ IMX415 输出 SGBRG10_1X10（RAW10）
 所以 `/dev/video0` 不是 Sensor 驱动单独创建的。Sensor 驱动注册的是 V4L2 subdev；RKISP 主路径注册视频采集节点。
 
 ## 8. 新板卡固定排查顺序
+
+### 8.1 动手前必须拿到的资料
+
+没有下面这些资料，不应该直接修改 DTS 或 Sensor 驱动：
+
+- Sensor 型号、数据手册、模组原理图或接口定义。
+- AVDD、DVDD、DOVDD 的电压和上电时序。
+- MCLK 频率以及 RESET、PWDN/POWER 的有效电平。
+- I2C 地址、寄存器地址宽度和芯片 ID 寄存器。
+- MIPI Lane 数量、Lane 极性、时钟模式和 link frequency。
+- 分辨率、帧率、RAW 位宽、Bayer 顺序和 HDR/线性模式。
+- 模组是否带 EEPROM、VCM、Flash 或独立 PMIC。
+
+还要确认板端接口确实匹配：
+
+```text
+接口电压
+→ MIPI Lane 数和接线
+→ I2C 总线
+→ MCLK 来源
+→ RESET/PWDN 是否可控
+→ 模组供电由谁提供
+```
+
+### 8.2 bring-up 固定顺序
 
 1. 原理图：确认电源、MCLK、RESET、PWDN、I2C 和 MIPI Lane。
 2. BoardConfig：确认 `RK_KERNEL_DTS`。

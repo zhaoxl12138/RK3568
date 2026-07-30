@@ -16,7 +16,7 @@
 - Modify: `06-任务/Camera驱动求职第1周执行计划.md`
 - Modify: `06-任务/Camera驱动第1章-IMX415-Sensor与驱动.md`
 
-- [ ] **Step 1: 把周计划改成唯一执行入口**
+- [x] **Step 1: 把周计划改成唯一执行入口**
 
 删除周计划顶部的 `RK3568-Camera驱动学习总入口` 链接，增加：
 
@@ -27,11 +27,11 @@
 
 同时记录每轮四类问题：概念解释、当前项目证据、故障定位、60～90 秒表达。
 
-- [ ] **Step 2: 清理周计划末尾的旧固定入口**
+- [x] **Step 2: 清理周计划末尾的旧固定入口**
 
 保留第一章和第二章链接，删除 `RK3568-Camera-Sensor从零点亮路线` 链接。
 
-- [ ] **Step 3: 将新 Sensor 前置检查表并入第一章**
+- [x] **Step 3: 将新 Sensor 前置检查表并入第一章**
 
 在第一章第 8 节加入：
 
@@ -42,7 +42,7 @@ I2C 地址、MIPI Lane/极性、分辨率/帧率/RAW 位宽、EEPROM/VCM/Flash
 
 并核对板端接口电压、Lane 数、I2C、MCLK、GPIO 和供电来源。
 
-- [ ] **Step 4: 删除第一章顶部的旧总入口链接**
+- [x] **Step 4: 删除第一章顶部的旧总入口链接**
 
 第一章直接从目标和主线开始，不再反向跳转到入口文件。
 
@@ -54,15 +54,15 @@ I2C 地址、MIPI Lane/极性、分辨率/帧率/RAW 位宽、EEPROM/VCM/Flash
 - Delete: `00-首页/学习驾驶舱/pages/notes/06-任务--RK3568-Camera-Sensor从零点亮路线.html`
 - Delete: `00-首页/学习驾驶舱/pages/notes/06-任务--RK3568-Camera驱动学习总入口.html`
 
-- [ ] **Step 1: 删除两个 Markdown**
+- [x] **Step 1: 删除两个 Markdown**
 
 使用受控文件补丁删除，不能递归删除目录。
 
-- [ ] **Step 2: 删除两个对应 HTML**
+- [x] **Step 2: 删除两个对应 HTML**
 
 只删除与两个 Markdown 同名的生成页，不删除 `pages/notes` 目录中的其他网页。
 
-- [ ] **Step 3: 检查活动源码引用**
+- [x] **Step 3: 检查活动源码引用**
 
 Run:
 
@@ -79,7 +79,7 @@ Expected: 无输出。
 - Modify: `00-首页/学习驾驶舱/generated/vault-data.js`
 - Modify: `00-首页/学习驾驶舱/pages/notes.html`
 
-- [ ] **Step 1: 从数据索引删除两个 note**
+- [x] **Step 1: 从数据索引删除两个 note**
 
 读取 `window.RK3568_VAULT_DATA` JSON，过滤以下 `filePath`：
 
@@ -90,7 +90,7 @@ Expected: 无输出。
 
 执行前后断言正好删除 2 条，并按两空格 JSON 格式写回。
 
-- [ ] **Step 2: 从网页目录删除两个 article**
+- [x] **Step 2: 从网页目录删除两个 article**
 
 按 `data-note-search-text` 精确删除两个 `<article>`，并断言删除数为 2。
 
@@ -101,7 +101,7 @@ Expected: 无输出。
 06-任务 · 5 → 06-任务 · 3
 ```
 
-- [ ] **Step 3: 确认网页索引无残留**
+- [x] **Step 3: 确认网页索引无残留**
 
 Run:
 
@@ -119,7 +119,7 @@ Expected: 无输出。
 - Verify: `06-任务`
 - Verify: `00-首页/学习驾驶舱`
 
-- [ ] **Step 1: 检查 Markdown 链接**
+- [x] **Step 1: 检查 Markdown 链接**
 
 Run:
 
@@ -135,7 +135,7 @@ Broken relative links: 0
 Active-to-archive links: 0
 ```
 
-- [ ] **Step 2: 运行网页测试**
+- [x] **Step 2: 运行网页测试**
 
 Run:
 
@@ -145,7 +145,7 @@ node --test tools/tests/*.mjs
 
 Expected: 失败数为 0。
 
-- [ ] **Step 3: 检查删除结果**
+- [x] **Step 3: 检查删除结果**
 
 Run:
 
@@ -158,7 +158,7 @@ Test-Path '00-首页/学习驾驶舱/pages/notes/06-任务--RK3568-Camera驱动�
 
 Expected: 四行均为 `False`。
 
-- [ ] **Step 4: 提交源文档结构调整**
+- [x] **Step 4: 提交源文档结构调整**
 
 只提交本次明确修改的源文档和计划，不把工作区中其他未提交网页重构一起纳入：
 
