@@ -322,7 +322,7 @@ MIPI CSI-2 → 高速数据：传输 IMX415 输出的 RAW10 图像
 
 图像数据不会经过 I2C；`port/endpoint` 放在 I2C 设备节点中，只是为了完整描述这颗 Sensor 的数据连接。
 
-## 4. 从 DTS 到 `imx415_probe()` 
+## 4. 从 DTS 到 `imx415_probe()`
 
 ### 4.1 函数调用流程图
 
