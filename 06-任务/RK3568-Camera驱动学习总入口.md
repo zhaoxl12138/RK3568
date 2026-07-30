@@ -31,7 +31,7 @@
 每次只学习一个节点。章节通过原理、DTS、源码、板端证据和面试表达验收后，才发布为 HTML。
 
 ```text
-第 1 章：IMX415 Sensor 与驱动                 ✅ 已完成
+第 1 章：IMX415 Sensor 与驱动                 ✅ 技术内容完成 / 📝 面试复盘待答
 第 2 章：MIPI D-PHY 与 CSI-2                 ⏳ 学习中
 第 3 章：RKISP                               ⬜ 未开始
 第 4 章：Media Controller                    ⬜ 未开始

@@ -15,11 +15,11 @@
 **Files:**
 - Modify: `06-任务/Camera驱动第1章-IMX415-Sensor与驱动.md`
 
-- [ ] **Step 1: 在第 8 节后增加复盘说明**
+- [x] **Step 1: 在第 8 节后增加复盘说明**
 
 增加 `## 9. 岗位化面试复盘`，明确复盘不阻塞第二章，用户先写原始答案，系统不提前给标准答案。
 
-- [ ] **Step 2: 增加四道核心原理题**
+- [x] **Step 2: 增加四道核心原理题**
 
 题目覆盖：
 
@@ -30,7 +30,7 @@ imx415_probe 的有效执行顺序与 Sensor ID 证据边界
 I2C 控制流与 endpoint 图像数据流
 ```
 
-- [ ] **Step 3: 增加四道场景与表达题**
+- [x] **Step 3: 增加四道场景与表达题**
 
 题目覆盖：
 
@@ -41,7 +41,7 @@ I2C 控制流与 endpoint 图像数据流
 90 秒项目讲解
 ```
 
-- [ ] **Step 4: 为每道题保留原始回答位置**
+- [x] **Step 4: 为每道题保留原始回答位置**
 
 每道题只加入：
 
@@ -57,7 +57,7 @@ I2C 控制流与 endpoint 图像数据流
 - Modify: `06-任务/RK3568-Camera驱动学习总入口.md`
 - Verify: `00-首页/学习驾驶舱/pages/notes/06-任务--Camera驱动第1章-IMX415-Sensor与驱动.html`
 
-- [ ] **Step 1: 更新第一章状态**
+- [x] **Step 1: 更新第一章状态**
 
 将第一章状态写为：
 
@@ -65,7 +65,7 @@ I2C 控制流与 endpoint 图像数据流
 第 1 章：IMX415 Sensor 与驱动        ✅ 技术内容完成 / 📝 面试复盘待答
 ```
 
-- [ ] **Step 2: 验证 Markdown 链接**
+- [x] **Step 2: 验证 Markdown 链接**
 
 Run:
 
@@ -81,7 +81,7 @@ Broken relative links: 0
 Active-to-archive links: 0
 ```
 
-- [ ] **Step 3: 验证已发布 HTML 未被重新生成**
+- [x] **Step 3: 验证已发布 HTML 未被重新生成**
 
 修改前后运行：
 
@@ -91,7 +91,7 @@ Get-FileHash "00-首页/学习驾驶舱/pages/notes/06-任务--Camera驱动第1�
 
 Expected: 两次 SHA256 相同。
 
-- [ ] **Step 4: 提交复盘题**
+- [x] **Step 4: 提交复盘题**
 
 ```powershell
 git add -- `
