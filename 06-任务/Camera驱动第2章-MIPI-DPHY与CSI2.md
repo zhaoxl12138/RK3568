@@ -9,6 +9,8 @@ chapter: 2
 > 当前学习节点：`IMX415 RAW10 → MIPI D-PHY → CSI-2 Receiver`。
 >
 > 发布规则：本章通过全部验收前，只在 Obsidian 中学习和记录，不生成 HTML，也不加入 Phase0 框架图。
+>
+> 源码陪读：[[Camera驱动第2章-DPHY从DTS到MediaGraph源码陪读]]
 
 ## 0. 当前学习位置
 
