@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RK3568 Phase0 可视化总入口</title>
-<link rel="stylesheet" href="../00-首页/学习驾驶舱/site.css">
-<script defer src="../00-首页/学习驾驶舱/generated/vault-data.js"></script>
-<script defer src="../00-首页/学习驾驶舱/site.js"></script>
+<link rel="stylesheet" href="../00-首页/学习驾驶舱/site.css?v=357a578eb6">
+<script defer src="../00-首页/学习驾驶舱/generated/vault-data.js?v=357a578eb6"></script>
+<script defer src="../00-首页/学习驾驶舱/site.js?v=357a578eb6"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap');
   :root {
@@ -43,7 +43,7 @@
   .footer { margin-top:34px; border-top:1px solid var(--border); padding-top:20px; text-align:center; color:var(--dim); font-size:0.88em; }
 </style>
 </head>
-<body>
+<body class="site-nav-offset">
   <a class="skip-link" href="#main-content">跳到主要内容</a>
   <main id="main-content">
   <div class="hero">
@@ -53,15 +53,7 @@
       推荐顺序固定为：先看静态总图建立整体地图，再看数据流动画页理解“数据怎么流”，
       再看 Camera 配置全流程理解“Linux Camera 是怎么一步步接起来的”，最后看驱动层全链路框架图做第二遍深挖。
     </div>
-    <nav class="hero-links" data-site-nav aria-label="Phase0 学习导航">
-      <a href="../00-首页/学习驾驶舱/index.html">驾驶舱首页</a>
-      <a href="./10-Phase0-可视化总入口.html" aria-current="page">Phase0 总入口</a>
-      <a href="../00-首页/学习驾驶舱/index.html">上一页：驾驶舱首页</a>
-      <a href="./12-Phase0-数据流动画.html">下一页：数据流动画</a>
-      <a href="../06-任务/01-下一步任务看板.md">任务看板</a>
-      <a href="../00-首页/00-RK3568学习主入口.md">返回 Obsidian 首页</a>
-      <a href="./00-项目可视化入口.md">返回 Markdown 可视化入口</a>
-    </nav>
+    <nav class="site-nav" data-site-nav aria-label="全站导航"><a class="site-nav__brand" href="../00-首页/学习驾驶舱/index.html"><span>RK3568</span><strong>Camera 学习站</strong></a><div class="site-nav__links"><a href="../00-首页/学习驾驶舱/index.html" data-nav-key="home">首页</a><a href="../00-首页/学习驾驶舱/pages/notes/06-任务--01-下一步任务看板.html" data-nav-key="task">当前任务</a><a href="../00-首页/学习驾驶舱/pages/learning-route.html" data-nav-key="route">学习路线</a><a href="../00-首页/学习驾驶舱/pages/system-map.html" data-nav-key="system">系统地图</a><a href="10-Phase0-可视化总入口.html" data-nav-key="phase0" aria-current="page">Phase0</a><a href="../00-首页/学习驾驶舱/pages/notes.html" data-nav-key="notes">专项笔记</a><a href="../00-首页/学习驾驶舱/pages/evidence.html" data-nav-key="evidence">实验依据</a></div><div class="site-nav__tools"><a class="site-nav__stage" href="../00-首页/学习驾驶舱/pages/learning-route.html#stage-2" title="当前学习阶段">阶段 2 MIPI D-PHY 与 CSI-2</a><details class="site-nav__more"><summary>更多</summary><div class="site-nav__more-panel"><a href="../00-首页/学习驾驶舱/pages/project.html" data-nav-key="project">项目总览</a><a href="../00-首页/学习驾驶舱/pages/environment.html" data-nav-key="environment">开发环境</a><a href="../00-首页/学习驾驶舱/pages/archive.html" data-nav-key="archive">归档</a><a href="obsidian://open?vault=RK3568&amp;file=00-%E9%A6%96%E9%A1%B5%2F00-RK3568%E5%AD%A6%E4%B9%A0%E4%B8%BB%E5%85%A5%E5%8F%A3">在 Obsidian 中打开</a></div></details></div></nav><div class="context-nav" aria-label="Phase0 页面顺序"><strong>Phase0 页面顺序</strong><span>从总入口开始</span><a href="./12-Phase0-数据流动画.html">下一页 →</a></div>
   </div>
   <div class="container">
     <div class="section-title">首页展示图</div>
@@ -99,13 +91,20 @@
         <ul><li>不作为新人第一入口</li><li>适合建立 SoC 视角</li><li>适合后面回头补芯片地图</li></ul>
         <a class="button" href="./15-Phase0-RK3568全系统框架图.html">打开芯片框架页</a>
       </div>
+      <div class="card">
+        <span class="badge b2">Camera 驱动专项</span>
+        <h3>IMX415 三层驱动调用流程</h3>
+        <p>把 Linux 通用驱动模型、I2C Core、IMX415 驱动拆成三层，看清 match 和两级 probe 的交接。</p>
+        <ul><li>解决“谁调用 imx415_probe”</li><li>区分 i2c_device_probe 与 imx415_probe</li><li>支持按阶段点击复习</li></ul>
+        <a class="button" href="./16-IMX415-三层驱动调用流程.html">打开三层调用图</a>
+      </div>
     </div>
     <div class="section-title" style="margin-top:30px;">怎么用这套页面</div>
     <div class="path-board">
       <div class="path-item"><div class="k">学习顺序</div><div class="v">可视化总入口 → 数据流动画 → Camera 配置全流程 → 驱动层全链路框架图。RK3568 全系统框架图放到最后当参考页。</div></div>
       <div class="path-item"><div class="k">讲项目顺序</div><div class="v">静态总图 → 数据流动画 → 驱动层全链路框架图</div></div>
       <div class="path-item"><div class="k">补 Linux Camera</div><div class="v">Camera 配置全流程 → 驱动层全链路框架图 → 对应专项笔记</div></div>
-      <div class="path-item"><div class="k">回到文字笔记</div><div class="v">任何时候看不懂，都回 00-RK3568学习主入口.md 和 02-从零到Python MVP学习路线.md。</div></div>
+      <div class="path-item"><div class="k">回到文字笔记</div><div class="v">任何时候看不懂，都回 Camera 驱动学习主入口、当前任务看板或正在学习的章节。</div></div>
     </div>
     <div class="footer">本页是 Phase0 可视化总入口，不替代 Markdown 主线笔记。</div>
   </div>

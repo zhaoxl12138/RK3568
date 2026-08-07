@@ -26,7 +26,8 @@ function isActiveDocument(filePath) {
 }
 
 function isValidatedDocument(filePath) {
-  return filePath.split('/')[0] !== 'docs';
+  const [topLevel] = filePath.split('/');
+  return topLevel !== 'docs' && topLevel !== ARCHIVE_DIR;
 }
 
 function isOrphanExempt(filePath) {

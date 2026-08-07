@@ -106,6 +106,14 @@ test('allows archive index links', async () => {
   assert.deepEqual(result.activeToArchiveLinks, []);
 });
 
+test('ignores stale links inside archive documents', async () => {
+  await writeFixture('99-归档/历史记录.md', '[[已经删除的旧入口]]\n');
+
+  const result = await scanVault(vaultDir);
+
+  assert.deepEqual(result.brokenWikiLinks, []);
+});
+
 test('does not resolve stale explicit wikilink paths by basename', async () => {
   await writeFixture('07-专项笔记/新目录/相机基础.md', '# 相机基础\n');
   await writeFixture('00-首页/导航.md', '[[07-专项笔记/旧目录/相机基础]]\n');

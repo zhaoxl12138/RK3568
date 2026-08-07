@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>OpenCV读取Camera记录 · RK3568</title><link rel="stylesheet" href="../../site.css"></head><body><div class="page-shell"><nav class="site-nav" data-site-nav aria-label="网站导航"><a class="site-nav__brand" href="../../index.html">RK3568 / 驾驶舱</a><div class="site-nav__links"><a href="../../index.html">驾驶舱首页</a><a href="../learning-route.html">学习路线</a><a href="../system-map.html">系统地图</a><a href="../notes.html" aria-current="page">专项笔记</a></div></nav><main id="main-content" class="note-page"><header class="hero"><p class="hero__eyebrow">GENERATED NOTE · 07-专项笔记/OpenCV</p><h1>OpenCV读取Camera记录</h1><p>此页面由 Markdown 知识源自动生成，适合网页阅读；编辑仍请回到 Obsidian。</p><div class="hero__actions"><a class="button" href="obsidian://open?vault=RK3568&amp;file=07-%E4%B8%93%E9%A1%B9%E7%AC%94%E8%AE%B0%2FOpenCV%2FOpenCV%E8%AF%BB%E5%8F%96Camera%E8%AE%B0%E5%BD%95">在 Obsidian 中打开</a><a class="button button--quiet" href="../../../../07-专项笔记/OpenCV/OpenCV读取Camera记录.md">查看原始 Markdown</a></div></header><article class="note-content"><h2>2026-05-30</h2>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>OpenCV读取Camera记录 · RK3568</title><link rel="stylesheet" href="../../site.css?v=357a578eb6"></head><body><div class="page-shell"><nav class="site-nav" data-site-nav aria-label="全站导航"><a class="site-nav__brand" href="../../index.html"><span>RK3568</span><strong>Camera 学习站</strong></a><div class="site-nav__links"><a href="../../index.html" data-nav-key="home">首页</a><a href="06-任务--01-下一步任务看板.html" data-nav-key="task">当前任务</a><a href="../learning-route.html" data-nav-key="route">学习路线</a><a href="../system-map.html" data-nav-key="system">系统地图</a><a href="../../../../04-项目/10-Phase0-可视化总入口.html" data-nav-key="phase0">Phase0</a><a href="../notes.html" data-nav-key="notes" aria-current="page">专项笔记</a><a href="../evidence.html" data-nav-key="evidence">实验依据</a></div><div class="site-nav__tools"><a class="site-nav__stage" href="../learning-route.html#stage-2" title="当前学习阶段">阶段 2 MIPI D-PHY 与 CSI-2</a><details class="site-nav__more"><summary>更多</summary><div class="site-nav__more-panel"><a href="../project.html" data-nav-key="project">项目总览</a><a href="../environment.html" data-nav-key="environment">开发环境</a><a href="../archive.html" data-nav-key="archive">归档</a><a href="obsidian://open?vault=RK3568&amp;file=00-%E9%A6%96%E9%A1%B5%2F00-RK3568%E5%AD%A6%E4%B9%A0%E4%B8%BB%E5%85%A5%E5%8F%A3">在 Obsidian 中打开</a></div></details></div></nav><main id="main-content" class="note-page"><header class="hero"><p class="hero__eyebrow">GENERATED NOTE · 07-专项笔记/OpenCV</p><h1>OpenCV读取Camera记录</h1><p>此页面由 Markdown 知识源自动生成，适合网页阅读；编辑仍请回到 Obsidian。</p><div class="hero__actions"><a class="button" href="obsidian://open?vault=RK3568&amp;file=07-%E4%B8%93%E9%A1%B9%E7%AC%94%E8%AE%B0%2FOpenCV%2FOpenCV%E8%AF%BB%E5%8F%96Camera%E8%AE%B0%E5%BD%95">在 Obsidian 中打开</a></div></header><article class="note-content"><h2>2026-05-30</h2>
 <h2>本次要解决什么</h2>
 <p>验证 Camera 图像能不能从底层 <code>V4L2</code> 采集，进入 OpenCV 处理层。</p>
 <p>当前链路：</p>
@@ -124,8 +124,7 @@ JPEG 1280x720</code></pre>
 <pre><code class="language-text">E:\RK3568\opencv_test\opencv_frame_gst.jpg</code></pre>
 <p>WSL 项目实验脚本：</p>
 <pre><code class="language-text">\\wsl$\Ubuntu-20.04\home\rk3568\work\rk3568_ai_camera\experiments\opencv_camera\opencv_capture_gst.py</code></pre>
-<p>完整产物索引见：</p>
-<ul><li>01-实验产物索引</li></ul>
+<p>旧 AI 应用截图和视频已经从当前 Camera 驱动主线清理；本节保留可复现命令与结论。</p>
 <h2>当前结论</h2>
 <p>已经跑通：</p>
 <pre><code class="language-text">/dev/video0 -&gt; GStreamer -&gt; OpenCV -&gt; BGR Mat -&gt; JPG</code></pre>
@@ -135,7 +134,7 @@ JPEG 1280x720</code></pre>
 <pre><code class="language-text">把这个 Python 验证脚本固化成项目实验代码。
 然后再进入官方 AI 例程文档，不直接跳 RKNN 部署。</code></pre>
 <h2>关联</h2>
-<ul><li>V4L2命令行抓帧记录</li><li>01-下一步任务看板</li><li>01-实验产物索引</li></ul>
+<ul><li>V4L2命令行抓帧记录</li><li>01-下一步任务看板</li><li>00-Camera证据索引</li></ul>
 <p>#OpenCV #Camera #GStreamer #V4L2 #RK3568</p>
 <h2>知识补充：为什么 pipeline 能救回 OpenCV</h2>
 <h3>状态：已验证 + 通用原理</h3>
@@ -145,4 +144,4 @@ JPEG 1280x720</code></pre>
 <p>1. <code>v4l2-ctl</code> 先证明设备能出帧。<br>2. <code>gst-launch-1.0</code> 证明 pipeline 和 caps 能协商。<br>3. Python/OpenCV 只验证 appsink 是否能取到 BGR 矩阵。</p>
 <p><code>caps</code> 是相邻元素对格式、宽高和帧率的契约；<code>appsink</code> 是从 GStreamer 回到应用的边界。若 caps 不匹配，问题通常是格式、分辨率、帧率或颜色转换，而不一定是 Camera 故障。</p>
 <h2>阶段验收</h2>
-<ul><li>能解释默认 backend 失败与底层 V4L2 失败不是同一件事。</li><li>能写出当前成功 pipeline，并说清每个元素的输入输出。</li><li>能用固定图片或单帧先验证 OpenCV，再接实时推理。</li></ul></article><footer class="footer"><a href="../notes.html">返回专项笔记导航</a> · <a href="../../index.html">返回驾驶舱首页</a></footer></main></div><script defer src="../../site.js"></script></body></html>
+<ul><li>能解释默认 backend 失败与底层 V4L2 失败不是同一件事。</li><li>能写出当前成功 pipeline，并说清每个元素的输入输出。</li><li>能用固定图片或单帧先验证 OpenCV，再接实时推理。</li></ul></article><footer class="footer"><a href="../notes.html">返回专项笔记导航</a> · <a href="../../index.html">返回驾驶舱首页</a></footer></main></div><script defer src="../../site.js?v=357a578eb6"></script></body></html>

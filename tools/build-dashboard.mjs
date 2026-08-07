@@ -1,66 +1,71 @@
-import { mkdir, readFile, readdir, stat, writeFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const PATHS = {
   taskBoard: '06-任务/01-下一步任务看板.md',
-  acceptance: '07-专项笔记/系统/AI Camera分阶段验收标准.md',
-  evidenceIndex: '05-实验与证据/实验产物/01-实验产物索引.md',
-  evidenceAssets: '05-实验与证据/实验产物/assets',
+  acceptance: '07-专项笔记/系统/Camera驱动分阶段验收标准.md',
+  evidenceIndex: '05-实验与证据/00-Camera证据索引.md',
+  evidenceAssets: '05-实验与证据/assets',
 };
 const DASHBOARD_DIRECTORY = '00-首页/学习驾驶舱';
 const DEFAULT_VAULT_NAME = 'RK3568';
 
 const DOMAIN_MAP = [
   ['Camera', '07-专项笔记/Camera-V4L2/IMX415驱动调试与最小demo路线.md'],
+  ['V4L2', '07-专项笔记/Camera-V4L2/V4L2命令行抓帧记录.md'],
   ['OpenCV', '07-专项笔记/OpenCV/OpenCV读取Camera记录.md'],
-  ['RKNN', '07-专项笔记/AI-RKNN/官方AI例程运行记录.md'],
-  ['Display', '07-专项笔记/Display-MIPI/MIPI屏显示链路.md'],
-  ['Streaming', '07-专项笔记/Streaming/RTMP-HLS推流记录.md'],
   ['System', '07-专项笔记/系统/AI Camera系统数据流与模块边界.md'],
 ];
 
 const QUICK_LINKS = [
   ['taskBoard', PATHS.taskBoard],
-  ['activeRoute', '01-主线/02-从零到Python MVP学习路线.md'],
-  ['dailyRecord', '05-实验与证据/02-每日进度记录.md'],
+  ['activeRoute', '06-任务/Camera驱动求职第1周执行计划.md'],
+  ['currentChapter', '06-任务/Camera驱动第1章-IMX415-Sensor与驱动.md'],
+  ['dailyRecord', '05-实验与证据/2026-07-28-Camera驱动Day1验收.md'],
   ['acceptance', PATHS.acceptance],
-  ['project', '04-项目/01-RK3568 YOLOv8n AI Camera项目.md'],
-  ['projectTalk', '04-项目/02-AI Camera项目讲解稿.md'],
-  ['demo', '04-项目/03-Python MVP演示手册.md'],
-  ['evidenceMoc', '05-实验与证据/00-实验与证据入口.md'],
+  ['evidenceMoc', '05-实验与证据/2026-07-28-直连板端读取IMX415配置.md'],
   ['outputMoc', '09-输出沉淀/00-输出沉淀入口.md'],
 ];
 
 const EXTRA_NOTE_PATHS = [
-  '01-主线/02-从零到Python MVP学习路线.md',
-  '03-环境/00-环境入口.md',
-  '03-环境/01-Ubuntu与SDK编译注意事项.md',
-  '03-环境/02-WSL2和VSCode使用说明.md',
-  '03-环境/03-WSL2开发环境现状.md',
-  '04-项目/01-RK3568 YOLOv8n AI Camera项目.md',
-  '04-项目/02-AI Camera项目讲解稿.md',
-  '04-项目/03-Python MVP演示手册.md',
-  '05-实验与证据/00-实验与证据入口.md',
-  '05-实验与证据/01-板子到手验机记录.md',
-  '05-实验与证据/02-每日进度记录.md',
-  '05-实验与证据/实验产物/01-实验产物索引.md',
+  '06-任务/Camera驱动求职第1周执行计划.md',
+  '06-任务/Camera驱动第1章-IMX415-Sensor与驱动.md',
+  '05-实验与证据/2026-07-28-Camera驱动Day1验收.md',
+  '05-实验与证据/2026-07-28-直连板端读取IMX415配置.md',
+  '05-实验与证据/00-Camera证据索引.md',
   '07-专项笔记/Camera-V4L2/V4L2命令行抓帧记录.md',
-  '07-专项笔记/AI-RKNN/YOLOv5 Python最小推理记录.md',
   '08-附录/00-附录入口.md',
-  '09-输出沉淀/06-AI-Camera项目五分钟讲解.md',
-  '99-归档/00-归档说明.md',
-  '99-归档/重构前/00-重构归档说明.md',
+  '09-输出沉淀/00-输出沉淀入口.md',
 ];
 
 const NOTE_PAGE_DIRECTORY = '00-首页/学习驾驶舱/pages/notes';
 const PRESERVED_MARKDOWN_PATHS = new Set([
-  '06-任务/01-下一步任务看板.md',
   '00-首页/00-RK3568学习主入口.md',
 ]);
+const ACTIVE_HTML_ROOTS = [
+  '00-首页/学习驾驶舱',
+  '04-项目',
+];
+const ACTIVE_NOTE_ROOTS = [
+  '04-项目',
+  '05-实验与证据',
+  '06-任务',
+  '07-专项笔记',
+  '08-附录',
+  '09-输出沉淀',
+];
 
 function normalizeVaultPath(filePath) {
   return filePath.replace(/\\/gu, '/').replace(/^\.\//u, '');
+}
+
+function webPublishEnabled(markdown) {
+  const normalized = String(markdown ?? '').replace(/\r\n?/gu, '\n');
+  const frontMatter = normalized.match(/^---\n([\s\S]*?)\n---(?:\n|$)/u);
+  if (!frontMatter) return true;
+  return !/^web-publish:\s*(?:false|no|0)\s*$/imu.test(frontMatter[1]);
 }
 
 function escapeHtml(value) {
@@ -85,32 +90,52 @@ function resolveNoteLink(target, linkMap) {
   return linkMap.get(normalized) ?? linkMap.get(path.posix.basename(normalized));
 }
 
-function renderInline(value, linkMap = new Map()) {
+function renderInline(
+  value,
+  linkMap = new Map(),
+  resolveMedia = (target) => target,
+  resolveLink = (target) => target,
+) {
   let text = String(value ?? '');
+  const fragments = [];
+  const hold = (html) => {
+    const token = `\uE000${fragments.length}\uE001`;
+    fragments.push(html);
+    return token;
+  };
+  text = text.replace(/!\[([^\]]*)\]\(([^)]+)\)/gu, (_, alt, target) => (
+    hold(`<img src="${escapeHtml(resolveMedia(target))}" alt="${escapeHtml(alt)}">`)
+  ));
   text = text.replace(/!\[\[([^\]]+)\]\]/gu, (_, target) => {
-    const safeTarget = escapeHtml(target.split('|', 1)[0]);
-    return `<span class="note-embed">${safeTarget}</span>`;
+    const source = target.split('|', 1)[0].trim();
+    if (/\.(?:avif|gif|jpe?g|png|svg|webp)$/iu.test(source)) {
+      return hold(`<img src="${escapeHtml(resolveMedia(source))}" alt="${escapeHtml(path.posix.basename(source))}">`);
+    }
+    return hold(`<span class="note-embed">${escapeHtml(source)}</span>`);
   });
   text = text.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/gu, (_, target, label) => {
     const href = resolveNoteLink(target.trim(), linkMap);
     return href
-      ? `<a href="${escapeHtml(href)}">${escapeHtml(label ?? target)}</a>`
-      : escapeHtml(label ?? target);
+      ? hold(`<a href="${escapeHtml(href)}">${escapeHtml(label ?? target)}</a>`)
+      : label ?? target;
   });
   text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/gu, (_, label, target) => (
-    `<a href="${escapeHtml(target)}">${escapeHtml(label)}</a>`
+    hold(`<a href="${escapeHtml(resolveLink(target))}">${escapeHtml(label)}</a>`)
   ));
   text = escapeHtml(text)
     .replace(/`([^`]+)`/gu, '<code>$1</code>')
     .replace(/\*\*([^*]+)\*\*/gu, '<strong>$1</strong>')
     .replace(/__([^_]+)__/gu, '<strong>$1</strong>')
     .replace(/\*([^*]+)\*/gu, '<em>$1</em>');
-  return text
-    .replace(/&lt;span class=&quot;note-embed&quot;&gt;([^<]+)&lt;\/span&gt;/gu, '<span class="note-embed">$1</span>')
-    .replace(/&lt;a href=&quot;([^&]+)&quot;&gt;([^<]+)&lt;\/a&gt;/gu, '<a href="$1">$2</a>');
+  return text.replace(/\uE000(\d+)\uE001/gu, (_, index) => fragments[Number(index)]);
 }
 
-export function renderMarkdown(markdown, { linkMap = new Map(), demoteH1 = false } = {}) {
+export function renderMarkdown(markdown, {
+  linkMap = new Map(),
+  demoteH1 = false,
+  resolveMedia = (target) => target,
+  resolveLink = (target) => target,
+} = {}) {
   const lines = String(markdown ?? '').replace(/\r\n?/gu, '\n').split('\n');
   const output = [];
   let index = 0;
@@ -132,14 +157,14 @@ export function renderMarkdown(markdown, { linkMap = new Map(), demoteH1 = false
     const heading = line.match(/^\s*(#{1,6})\s+(.+?)\s*#*\s*$/u);
     if (heading) {
       const level = demoteH1 && heading[1].length === 1 ? 2 : heading[1].length;
-      output.push(`<h${level}>${renderInline(heading[2], linkMap)}</h${level}>`);
+      output.push(`<h${level}>${renderInline(heading[2], linkMap, resolveMedia, resolveLink)}</h${level}>`);
       index += 1;
       continue;
     }
     if (/^\s*[-*+]\s+/u.test(line)) {
       const items = [];
       while (index < lines.length && /^\s*[-*+]\s+/u.test(lines[index])) {
-        items.push(`<li>${renderInline(lines[index].replace(/^\s*[-*+]\s+/u, ''), linkMap)}</li>`);
+        items.push(`<li>${renderInline(lines[index].replace(/^\s*[-*+]\s+/u, ''), linkMap, resolveMedia, resolveLink)}</li>`);
         index += 1;
       }
       output.push(`<ul>${items.join('')}</ul>`);
@@ -148,7 +173,7 @@ export function renderMarkdown(markdown, { linkMap = new Map(), demoteH1 = false
     if (/^\s*>\s?/u.test(line)) {
       const items = [];
       while (index < lines.length && /^\s*>\s?/u.test(lines[index])) {
-        items.push(renderInline(lines[index].replace(/^\s*>\s?/u, ''), linkMap));
+        items.push(renderInline(lines[index].replace(/^\s*>\s?/u, ''), linkMap, resolveMedia, resolveLink));
         index += 1;
       }
       output.push(`<blockquote>${items.join('<br>')}</blockquote>`);
@@ -163,7 +188,7 @@ export function renderMarkdown(markdown, { linkMap = new Map(), demoteH1 = false
         rows.push(cells(lines[index]));
         index += 1;
       }
-      output.push(`<table><thead><tr>${headers.map((cell) => `<th>${renderInline(cell, linkMap)}</th>`).join('')}</tr></thead><tbody>${rows.map((row) => `<tr>${headers.map((_, cellIndex) => `<td>${renderInline(row[cellIndex] ?? '', linkMap)}</td>`).join('')}</tr>`).join('')}</tbody></table>`);
+      output.push(`<table><thead><tr>${headers.map((cell) => `<th>${renderInline(cell, linkMap, resolveMedia, resolveLink)}</th>`).join('')}</tr></thead><tbody>${rows.map((row) => `<tr>${headers.map((_, cellIndex) => `<td>${renderInline(row[cellIndex] ?? '', linkMap, resolveMedia, resolveLink)}</td>`).join('')}</tr>`).join('')}</tbody></table>`);
       continue;
     }
     if (!line.trim()) {
@@ -176,13 +201,13 @@ export function renderMarkdown(markdown, { linkMap = new Map(), demoteH1 = false
       paragraph.push(lines[index]);
       index += 1;
     }
-    output.push(`<p>${paragraph.map((value) => renderInline(value, linkMap)).join('<br>')}</p>`);
+    output.push(`<p>${paragraph.map((value) => renderInline(value, linkMap, resolveMedia, resolveLink)).join('<br>')}</p>`);
   }
   return output.join('\n');
 }
 
 function notePageTemplate(note, body) {
-  return `<!doctype html>\n<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escapeHtml(note.title)} · RK3568</title><link rel="stylesheet" href="../../site.css"></head><body><div class="page-shell"><nav class="site-nav" data-site-nav aria-label="网站导航"><a class="site-nav__brand" href="../../index.html">RK3568 / 驾驶舱</a><div class="site-nav__links"><a href="../../index.html">驾驶舱首页</a><a href="../learning-route.html">学习路线</a><a href="../system-map.html">系统地图</a><a href="../notes.html" aria-current="page">专项笔记</a></div></nav><main id="main-content" class="note-page"><header class="hero"><p class="hero__eyebrow">GENERATED NOTE · ${escapeHtml(note.folder)}</p><h1>${escapeHtml(note.title)}</h1><p>此页面由 Markdown 知识源自动生成，适合网页阅读；编辑仍请回到 Obsidian。</p><div class="hero__actions"><a class="button" href="${escapeHtml(note.obsidianUrl)}">在 Obsidian 中打开</a><a class="button button--quiet" href="../../../../${escapeHtml(normalizeVaultPath(note.filePath))}">查看原始 Markdown</a></div></header><article class="note-content">${body}</article><footer class="footer"><a href="../notes.html">返回专项笔记导航</a> · <a href="../../index.html">返回驾驶舱首页</a></footer></main></div><script defer src="../../site.js"></script></body></html>`;
+  return `<!doctype html>\n<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escapeHtml(note.title)} · RK3568</title><link rel="stylesheet" href="../../site.css"></head><body><div class="page-shell"><nav class="site-nav" data-site-nav aria-label="网站导航"><a class="site-nav__brand" href="../../index.html">RK3568 / 驾驶舱</a><div class="site-nav__links"><a href="../../index.html">驾驶舱首页</a><a href="../learning-route.html">学习路线</a><a href="../system-map.html">系统地图</a><a href="../notes.html" aria-current="page">专项笔记</a></div></nav><main id="main-content" class="note-page"><header class="hero"><p class="hero__eyebrow">GENERATED NOTE · ${escapeHtml(note.folder)}</p><h1>${escapeHtml(note.title)}</h1><p>此页面由 Markdown 知识源自动生成，适合网页阅读；编辑仍请回到 Obsidian。</p><div class="hero__actions"><a class="button" href="${escapeHtml(note.obsidianUrl)}">在 Obsidian 中打开</a></div></header><article class="note-content">${body}</article><footer class="footer"><a href="../notes.html">返回专项笔记导航</a> · <a href="../../index.html">返回驾驶舱首页</a></footer></main></div><script defer src="../../site.js"></script></body></html>`;
 }
 
 function section(markdown, heading) {
@@ -310,19 +335,264 @@ export function buildObsidianUrl(vault, filePath) {
   return `obsidian://open?vault=${encodeURIComponent(vault)}&file=${encodeURIComponent(normalizedPath)}`;
 }
 
-async function linkedMarkdownPaths(rootDir) {
-  const siteRoot = path.join(rootDir, ...'00-首页/学习驾驶舱'.split('/'));
-  const pageRoot = path.join(siteRoot, 'pages');
-  let pageEntries;
+async function collectHtmlFiles(directory) {
+  let entries;
   try {
-    pageEntries = await readdir(pageRoot, { withFileTypes: true });
+    entries = await readdir(directory, { withFileTypes: true });
   } catch (error) {
     if (error.code === 'ENOENT') return [];
     throw error;
   }
-  const htmlFiles = [path.join(siteRoot, 'index.html'), ...pageEntries
-    .filter((entry) => entry.isFile() && entry.name.endsWith('.html'))
-    .map((entry) => path.join(pageRoot, entry.name))];
+  const files = [];
+  for (const entry of entries) {
+    const filePath = path.join(directory, entry.name);
+    if (entry.isDirectory()) files.push(...await collectHtmlFiles(filePath));
+    else if (entry.isFile() && entry.name.endsWith('.html')) files.push(filePath);
+  }
+  return files;
+}
+
+async function collectMarkdownFiles(rootDir, directory) {
+  let entries;
+  try {
+    entries = await readdir(directory, { withFileTypes: true });
+  } catch (error) {
+    if (error.code === 'ENOENT') return [];
+    throw error;
+  }
+  const files = [];
+  for (const entry of entries) {
+    const filePath = path.join(directory, entry.name);
+    if (entry.isDirectory()) files.push(...await collectMarkdownFiles(rootDir, filePath));
+    else if (entry.isFile() && entry.name.endsWith('.md')) {
+      files.push(normalizeVaultPath(path.relative(rootDir, filePath)));
+    }
+  }
+  return files;
+}
+
+async function collectMediaFiles(rootDir, directory = rootDir) {
+  let entries;
+  try {
+    entries = await readdir(directory, { withFileTypes: true });
+  } catch (error) {
+    if (error.code === 'ENOENT') return [];
+    throw error;
+  }
+  const files = [];
+  for (const entry of entries) {
+    if (entry.name === '.git' || entry.name === 'node_modules') continue;
+    const filePath = path.join(directory, entry.name);
+    if (entry.isDirectory()) files.push(...await collectMediaFiles(rootDir, filePath));
+    else if (entry.isFile() && /\.(?:avif|gif|jpe?g|png|svg|webp)$/iu.test(entry.name)) {
+      files.push(normalizeVaultPath(path.relative(rootDir, filePath)));
+    }
+  }
+  return files;
+}
+
+async function buildMediaLookup(rootDir) {
+  const files = await collectMediaFiles(rootDir);
+  const byPath = new Set(files);
+  const byBasename = new Map();
+  for (const filePath of files) {
+    const basename = path.posix.basename(filePath).normalize('NFC');
+    if (!byBasename.has(basename)) byBasename.set(basename, filePath);
+    else if (byBasename.get(basename) !== filePath) byBasename.set(basename, null);
+  }
+  return { byPath, byBasename };
+}
+
+async function activeHtmlFiles(rootDir) {
+  const groups = await Promise.all(ACTIVE_HTML_ROOTS.map((relativePath) => (
+    collectHtmlFiles(path.join(rootDir, ...relativePath.split('/')))
+  )));
+  return groups.flat();
+}
+
+function relativeSiteHref(rootDir, htmlFile, vaultPath) {
+  return normalizeVaultPath(path.relative(
+    path.dirname(htmlFile),
+    path.join(rootDir, ...normalizeVaultPath(vaultPath).split('/')),
+  ));
+}
+
+function activeNavigationKeyForFile(rootDir, htmlFile) {
+  const filePath = normalizeVaultPath(path.relative(rootDir, htmlFile));
+  if (filePath.startsWith('04-项目/')) return 'phase0';
+  if (/\/pages\/notes\/06-任务--01-下一步任务看板\.html$/u.test(`/${filePath}`)) return 'task';
+  if (filePath.endsWith('/pages/learning-route.html')) return 'route';
+  if (filePath.endsWith('/pages/system-map.html')) return 'system';
+  if (filePath.endsWith('/pages/phase0.html')) return 'phase0';
+  if (filePath.includes('/pages/notes/')) return 'notes';
+  if (filePath.endsWith('/pages/notes.html')) return 'notes';
+  if (filePath.endsWith('/pages/evidence.html')) return 'evidence';
+  if (filePath.endsWith('/pages/project.html')) return 'project';
+  if (filePath.endsWith('/pages/environment.html')) return 'environment';
+  if (filePath.endsWith('/pages/archive.html')) return 'archive';
+  return 'home';
+}
+
+function staticNavigationMarkup(rootDir, htmlFile, currentStage) {
+  const activeKey = activeNavigationKeyForFile(rootDir, htmlFile);
+  const stage = normalizeStageLabel(currentStage ?? '');
+  const links = [
+    ['home', '首页', `${DASHBOARD_DIRECTORY}/index.html`],
+    ['task', '当前任务', `${DASHBOARD_DIRECTORY}/${notePagePath(PATHS.taskBoard)}`],
+    ['route', '学习路线', `${DASHBOARD_DIRECTORY}/pages/learning-route.html`],
+    ['system', '系统地图', `${DASHBOARD_DIRECTORY}/pages/system-map.html`],
+    ['phase0', 'Phase0', '04-项目/10-Phase0-可视化总入口.html'],
+    ['notes', '专项笔记', `${DASHBOARD_DIRECTORY}/pages/notes.html`],
+    ['evidence', '实验依据', `${DASHBOARD_DIRECTORY}/pages/evidence.html`],
+  ];
+  const auxiliary = [
+    ['project', '项目总览', `${DASHBOARD_DIRECTORY}/pages/project.html`],
+    ['environment', '开发环境', `${DASHBOARD_DIRECTORY}/pages/environment.html`],
+    ['archive', '归档', `${DASHBOARD_DIRECTORY}/pages/archive.html`],
+  ];
+  const renderLink = ([key, label, vaultPath]) => {
+    const current = key === activeKey ? ' aria-current="page"' : '';
+    return `<a href="${escapeHtml(relativeSiteHref(rootDir, htmlFile, vaultPath))}" data-nav-key="${key}"${current}>${label}</a>`;
+  };
+  const stageHref = relativeSiteHref(
+    rootDir,
+    htmlFile,
+    `${DASHBOARD_DIRECTORY}/pages/learning-route.html`,
+  );
+  return `<nav class="site-nav" data-site-nav aria-label="全站导航"><a class="site-nav__brand" href="${escapeHtml(relativeSiteHref(rootDir, htmlFile, `${DASHBOARD_DIRECTORY}/index.html`))}"><span>RK3568</span><strong>Camera 学习站</strong></a><div class="site-nav__links">${links.map(renderLink).join('')}</div><div class="site-nav__tools"><a class="site-nav__stage" href="${escapeHtml(`${stageHref}${stage.id ? `#stage-${stage.id}` : ''}`)}" title="当前学习阶段">${escapeHtml(stage.normalizedLabel || currentStage || '查看学习阶段')}</a><details class="site-nav__more"><summary>更多</summary><div class="site-nav__more-panel">${auxiliary.map(renderLink).join('')}<a href="obsidian://open?vault=RK3568&amp;file=00-%E9%A6%96%E9%A1%B5%2F00-RK3568%E5%AD%A6%E4%B9%A0%E4%B8%BB%E5%85%A5%E5%8F%A3">在 Obsidian 中打开</a></div></details></div></nav>`;
+}
+
+function contextualNavigationMarkup(rootDir, htmlFile) {
+  const filePath = normalizeVaultPath(path.relative(rootDir, htmlFile));
+  const fileName = path.posix.basename(filePath);
+  const phase0Sequence = [
+    '10-Phase0-可视化总入口.html',
+    '12-Phase0-数据流动画.html',
+    '13-Phase0-Camera配置全流程.html',
+    '14-Phase0-驱动层全链路框架图.html',
+    '15-Phase0-RK3568全系统框架图.html',
+  ];
+  const index = phase0Sequence.indexOf(fileName);
+  if (index >= 0) {
+    const previous = index > 0
+      ? `<a href="./${escapeHtml(phase0Sequence[index - 1])}">← 上一页</a>`
+      : '<span>从总入口开始</span>';
+    const next = index < phase0Sequence.length - 1
+      ? `<a href="./${escapeHtml(phase0Sequence[index + 1])}">下一页 →</a>`
+      : '<span>Phase0 主序列完成</span>';
+    return `<div class="context-nav" aria-label="Phase0 页面顺序"><strong>Phase0 页面顺序</strong>${previous}${next}</div>`;
+  }
+  if (fileName === '16-IMX415-三层驱动调用流程.html') {
+    const noteHref = relativeSiteHref(
+      rootDir,
+      htmlFile,
+      `${DASHBOARD_DIRECTORY}/${notePagePath('06-任务/Camera驱动第1章-IMX415-Sensor与驱动.md')}`,
+    );
+    return `<div class="context-nav" aria-label="IMX415 学习上下文"><strong>IMX415 专项</strong><a href="./10-Phase0-可视化总入口.html">← Phase0 总入口</a><a href="${escapeHtml(noteHref)}">源码对照笔记 →</a></div>`;
+  }
+  return '';
+}
+
+async function rewriteStaticNavigation(rootDir, currentStage) {
+  const htmlFiles = await activeHtmlFiles(rootDir);
+  for (const htmlFile of htmlFiles) {
+    const original = await readFile(htmlFile, 'utf8');
+    const withoutGeneratedContext = original.replace(
+      /<div class="context-nav"[^>]*>[\s\S]*?<\/div>/giu,
+      '',
+    );
+    let updated = withoutGeneratedContext.replace(
+      /<nav\b[^>]*data-site-nav[^>]*>[\s\S]*?<\/nav>/iu,
+      `${staticNavigationMarkup(rootDir, htmlFile, currentStage)}${contextualNavigationMarkup(rootDir, htmlFile)}`,
+    );
+    if (!updated.includes('class="page-shell"') && !/<body\b[^>]*\bsite-nav-offset\b/iu.test(updated)) {
+      updated = updated.replace(/<body\b([^>]*)>/iu, (full, attributes) => {
+        const classMatch = attributes.match(/\bclass=(["'])(.*?)\1/iu);
+        if (classMatch) {
+          return full.replace(classMatch[0], `class=${classMatch[1]}${classMatch[2]} site-nav-offset${classMatch[1]}`);
+        }
+        return `<body${attributes} class="site-nav-offset">`;
+      });
+    }
+    if (updated !== original) await writeFile(htmlFile, updated, 'utf8');
+  }
+}
+
+async function writeStaticNoteDirectory(rootDir, notes) {
+  const notesPage = path.join(rootDir, ...`${DASHBOARD_DIRECTORY}/pages/notes.html`.split('/'));
+  let html;
+  try {
+    html = await readFile(notesPage, 'utf8');
+  } catch (error) {
+    if (error.code === 'ENOENT') return;
+    throw error;
+  }
+  const visibleNotes = notes.filter(({ filePath }) => (
+    !filePath.startsWith('99-归档/')
+    && !filePath.startsWith('08-附录/图源/')
+    && !filePath.startsWith('08-附录/Skills/')
+  ));
+  const groups = new Map();
+  for (const note of visibleNotes) {
+    const folder = note.folder.split('/', 1)[0] || '其他';
+    if (!groups.has(folder)) groups.set(folder, []);
+    groups.get(folder).push(note);
+  }
+  const directory = [...groups].map(([folder, items]) => (
+    `<section class="note-directory__group" data-note-group><h3>${escapeHtml(folder)} · ${items.length}</h3><div class="note-directory__list">${items.map((note) => {
+      const webTarget = path.posix.join(DASHBOARD_DIRECTORY, note.webPath);
+      const href = relativeSiteHref(rootDir, notesPage, webTarget);
+      const searchText = `${note.title} ${note.filePath}`.toLowerCase();
+      return `<article class="note-directory__item" data-note-item data-note-search-text="${escapeHtml(searchText)}"><a class="note-directory__main-link" href="${escapeHtml(href)}">${escapeHtml(note.title)}</a><span>${escapeHtml(note.filePath)}</span><a class="note-directory__edit-link" href="${escapeHtml(note.obsidianUrl)}">编辑</a></article>`;
+    }).join('')}</div></section>`
+  )).join('');
+  html = html.replace(
+    /<h2 id="all-notes-title">[\s\S]*?<\/div><label class="note-search">/u,
+    '<h2 id="all-notes-title">当前学习内容</h2><p>只展示 Camera 驱动主线；历史归档和制图源文件不在这里干扰学习。</p></div><label class="note-search">',
+  );
+  html = html.replace(
+    /<!-- NOTE_DIRECTORY_START -->[\s\S]*?<!-- NOTE_DIRECTORY_END -->/u,
+    `<!-- NOTE_DIRECTORY_START --><div class="note-directory" data-note-directory>${directory}</div><!-- NOTE_DIRECTORY_END -->`,
+  );
+  html = html.replace(
+    /<p class="note-directory__count" data-note-count aria-live="polite">[\s\S]*?<\/p>/u,
+    `<p class="note-directory__count" data-note-count aria-live="polite">${visibleNotes.length} / ${visibleNotes.length} 篇当前内容</p>`,
+  );
+  await writeFile(notesPage, html, 'utf8');
+}
+
+async function sharedAssetVersion(rootDir, outputFile) {
+  const assetPaths = [
+    path.join(rootDir, ...`${DASHBOARD_DIRECTORY}/site.css`.split('/')),
+    path.join(rootDir, ...`${DASHBOARD_DIRECTORY}/site.js`.split('/')),
+    path.join(rootDir, ...`${DASHBOARD_DIRECTORY}/app.js`.split('/')),
+    outputFile,
+  ];
+  const contents = await Promise.all(assetPaths.map(async (filePath) => {
+    try {
+      return await readFile(filePath, 'utf8');
+    } catch (error) {
+      if (error.code === 'ENOENT') return '';
+      throw error;
+    }
+  }));
+  return createHash('sha1').update(contents.join('\n')).digest('hex').slice(0, 10);
+}
+
+async function rewriteSharedAssetVersions(rootDir, version) {
+  const htmlFiles = await activeHtmlFiles(rootDir);
+  for (const htmlFile of htmlFiles) {
+    const original = await readFile(htmlFile, 'utf8');
+    const updated = original.replace(
+      /((?:href|src)=["'][^"']*?(?:site\.css|site\.js|vault-data\.js|app\.js))(?:\?v=[^"'#]*)?(["'])/giu,
+      `$1?v=${version}$2`,
+    );
+    if (updated !== original) await writeFile(htmlFile, updated, 'utf8');
+  }
+}
+
+async function linkedMarkdownPaths(rootDir) {
+  const htmlFiles = await activeHtmlFiles(rootDir);
   const sources = [];
   for (const htmlFile of htmlFiles) {
     const html = await readFile(htmlFile, 'utf8');
@@ -338,12 +608,16 @@ async function linkedMarkdownPaths(rootDir) {
 }
 
 async function noteSources(rootDir) {
+  const activeNotes = (await Promise.all(ACTIVE_NOTE_ROOTS.map((relativePath) => (
+    collectMarkdownFiles(rootDir, path.join(rootDir, ...relativePath.split('/')))
+  )))).flat().sort(compareCodePoints);
   return [...new Set([
     ...DOMAIN_MAP.map(([, filePath]) => filePath),
     ...QUICK_LINKS.map(([, filePath]) => filePath),
     ...EXTRA_NOTE_PATHS,
+    ...activeNotes,
     ...(await linkedMarkdownPaths(rootDir)).filter((filePath) => !PRESERVED_MARKDOWN_PATHS.has(filePath)),
-  ])];
+  ])].filter((filePath) => !PRESERVED_MARKDOWN_PATHS.has(filePath));
 }
 
 async function buildNoteCatalog(rootDir, vaultName = DEFAULT_VAULT_NAME) {
@@ -364,7 +638,12 @@ async function buildNoteCatalog(rootDir, vaultName = DEFAULT_VAULT_NAME) {
       contents: '',
     };
     try {
-      note.contents = await readFile(path.join(rootDir, ...normalizedPath.split('/')), 'utf8');
+      const contents = await readFile(
+        path.join(rootDir, ...normalizedPath.split('/')),
+        'utf8',
+      );
+      if (!webPublishEnabled(contents)) continue;
+      note.contents = contents;
       notes.push(note);
       byPath.set(normalizedPath, webPath);
       byBasename.set(path.posix.basename(normalizedPath), webPath);
@@ -380,33 +659,75 @@ async function buildNoteCatalog(rootDir, vaultName = DEFAULT_VAULT_NAME) {
 async function writeNotePages(rootDir, notes, linkMap) {
   const outputDirectory = path.join(rootDir, ...NOTE_PAGE_DIRECTORY.split('/'));
   await mkdir(outputDirectory, { recursive: true });
+  const expectedPageNames = new Set(notes.map(({ filePath }) => notePageName(filePath)));
+  const existingPages = await readdir(outputDirectory, { withFileTypes: true });
+  await Promise.all(existingPages
+    .filter((entry) => (
+      entry.isFile()
+      && entry.name.endsWith('.html')
+      && !expectedPageNames.has(entry.name)
+    ))
+    .map((entry) => rm(path.join(outputDirectory, entry.name))));
+  const mediaLookup = await buildMediaLookup(rootDir);
+  const pageLinkMap = new Map([...linkMap].map(([key, webPath]) => [
+    key,
+    path.posix.relative(
+      NOTE_PAGE_DIRECTORY,
+      path.posix.join(DASHBOARD_DIRECTORY, webPath),
+    ),
+  ]));
   for (const note of notes) {
     const pageFile = path.join(outputDirectory, notePageName(note.filePath));
     const contents = note.contents.replace(/^\s*#\s+.+?\s*(?:\r?\n){1,2}/u, '');
-    const body = renderMarkdown(contents, { linkMap, demoteH1: true });
+    const sourceDirectory = path.posix.dirname(note.filePath);
+    const parseTarget = (target) => {
+      const normalized = target.trim().replace(/^<|>$/gu, '').replace(/\\/gu, '/');
+      const match = normalized.match(/^([^?#]+)([?#].*)?$/u);
+      if (!match) return null;
+      return {
+        path: match[1],
+        suffix: match[2] ?? '',
+        vaultPath: path.posix.normalize(path.posix.join(sourceDirectory, match[1])),
+      };
+    };
+    const resolveMedia = (target) => {
+      const cleanTarget = target.trim().replace(/^<|>$/gu, '');
+      if (/^(?:[a-z][a-z\d+.-]*:|\/\/|#)/iu.test(cleanTarget)) return cleanTarget;
+      const parsed = parseTarget(cleanTarget);
+      if (!parsed) return target;
+      const basename = path.posix.basename(parsed.vaultPath).normalize('NFC');
+      const vaultPath = mediaLookup.byPath.has(parsed.vaultPath)
+        ? parsed.vaultPath
+        : mediaLookup.byBasename.get(basename) ?? parsed.vaultPath;
+      const relativePath = path.posix.relative(NOTE_PAGE_DIRECTORY, vaultPath);
+      return `${relativePath}${parsed.suffix}`;
+    };
+    const resolveLink = (target) => {
+      const cleanTarget = target.trim().replace(/^<|>$/gu, '');
+      if (/^(?:[a-z][a-z\d+.-]*:|\/\/|#)/iu.test(cleanTarget)) return cleanTarget;
+      const parsed = parseTarget(cleanTarget);
+      if (!parsed) return target;
+      if (/\.md$/iu.test(parsed.path)) {
+        const generated = pageLinkMap.get(parsed.vaultPath)
+          ?? pageLinkMap.get(path.posix.basename(parsed.vaultPath));
+        if (generated) return `${generated}${parsed.suffix}`;
+      }
+      const relativePath = path.posix.relative(NOTE_PAGE_DIRECTORY, parsed.vaultPath);
+      return `${relativePath}${parsed.suffix}`;
+    };
+    const body = renderMarkdown(contents, {
+      linkMap: pageLinkMap,
+      demoteH1: true,
+      resolveMedia,
+      resolveLink,
+    });
     await writeFile(pageFile, notePageTemplate(note, body), 'utf8');
   }
 }
 
 async function rewriteSiteMarkdownLinks(rootDir, noteCatalog) {
   const siteRoot = path.join(rootDir, ...'00-首页/学习驾驶舱'.split('/'));
-  const pageRoot = path.join(siteRoot, 'pages');
-  try {
-    await readFile(path.join(siteRoot, 'index.html'), 'utf8');
-  } catch (error) {
-    if (error.code === 'ENOENT') return;
-    throw error;
-  }
-  let pageEntries;
-  try {
-    pageEntries = await readdir(pageRoot, { withFileTypes: true });
-  } catch (error) {
-    if (error.code === 'ENOENT') return;
-    throw error;
-  }
-  const htmlFiles = [path.join(siteRoot, 'index.html'), ...pageEntries
-    .filter((entry) => entry.isFile() && entry.name.endsWith('.html'))
-    .map((entry) => path.join(pageRoot, entry.name))];
+  const htmlFiles = await activeHtmlFiles(rootDir);
   for (const htmlFile of htmlFiles) {
     const original = await readFile(htmlFile, 'utf8');
     const updated = original.replace(/(href=["'])([^"']+\.md(?:#[^"']*)?)(["'])/giu, (full, prefix, href, suffix) => {
@@ -414,7 +735,12 @@ async function rewriteSiteMarkdownLinks(rootDir, noteCatalog) {
       if (/^(?:[a-z][a-z\d+.-]*:|\/\/|#)/iu.test(target)) return full;
       const absolute = path.resolve(path.dirname(htmlFile), target);
       const sourcePath = normalizeVaultPath(path.relative(rootDir, absolute));
-      if (PRESERVED_MARKDOWN_PATHS.has(sourcePath)) return full;
+      if (sourcePath === '00-首页/00-RK3568学习主入口.md') {
+        const generated = path.join(siteRoot, 'index.html');
+        const relative = normalizeVaultPath(path.relative(path.dirname(htmlFile), generated));
+        const hash = href.slice(target.length);
+        return `${prefix}${relative}${hash}${suffix}`;
+      }
       const webPath = noteCatalog.byPath.get(sourcePath);
       if (!webPath) return full;
       const generated = path.join(rootDir, ...NOTE_PAGE_DIRECTORY.split('/'), notePageName(sourcePath));
@@ -574,7 +900,9 @@ async function indexEvidence(rootDir, markdown) {
   }
 
   const assets = new Map();
-  for (const entry of entries.filter((value) => value.isFile()).sort((left, right) => compareCodePoints(left.name, right.name))) {
+  for (const entry of entries
+    .filter((value) => value.isFile() && !value.name.startsWith('.'))
+    .sort((left, right) => compareCodePoints(left.name, right.name))) {
     const normalizedName = entry.name.normalize('NFC');
     if (!assets.has(normalizedName)) assets.set(normalizedName, normalizedName);
   }
@@ -657,6 +985,15 @@ export async function buildDashboardData(rootDir, vaultName = DEFAULT_VAULT_NAME
     domains: DOMAIN_MAP.map(link),
     evidence: evidenceResult.evidence,
     quickLinks: QUICK_LINKS.map(link),
+    notes: noteCatalog.notes
+      .map(({ filePath, folder, obsidianUrl, title, webPath }) => ({
+        title,
+        folder,
+        filePath,
+        webPath,
+        url: obsidianUrl,
+      }))
+      .sort((left, right) => compareCodePoints(left.filePath, right.filePath)),
     warnings: [...new Set(warnings)],
   };
 }
@@ -666,8 +1003,11 @@ export async function writeDashboardData(rootDir, outputFile) {
   const noteCatalog = await buildNoteCatalog(rootDir);
   await writeNotePages(rootDir, noteCatalog.notes, noteCatalog.linkMap);
   await rewriteSiteMarkdownLinks(rootDir, noteCatalog);
+  await writeStaticNoteDirectory(rootDir, noteCatalog.notes);
+  await rewriteStaticNavigation(rootDir, data.currentStage);
   await mkdir(path.dirname(outputFile), { recursive: true });
   await writeFile(outputFile, `window.RK3568_VAULT_DATA = ${JSON.stringify(data, null, 2)};\n`, 'utf8');
+  await rewriteSharedAssetVersions(rootDir, await sharedAssetVersion(rootDir, outputFile));
   return data;
 }
 

@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>02-正点原子资料版本更新记录解读 · RK3568</title><link rel="stylesheet" href="../../site.css?v=357a578eb6"></head><body><div class="page-shell"><nav class="site-nav" data-site-nav aria-label="全站导航"><a class="site-nav__brand" href="../../index.html"><span>RK3568</span><strong>Camera 学习站</strong></a><div class="site-nav__links"><a href="../../index.html" data-nav-key="home">首页</a><a href="06-任务--01-下一步任务看板.html" data-nav-key="task">当前任务</a><a href="../learning-route.html" data-nav-key="route">学习路线</a><a href="../system-map.html" data-nav-key="system">系统地图</a><a href="../../../../04-项目/10-Phase0-可视化总入口.html" data-nav-key="phase0">Phase0</a><a href="../notes.html" data-nav-key="notes" aria-current="page">专项笔记</a><a href="../evidence.html" data-nav-key="evidence">实验依据</a></div><div class="site-nav__tools"><a class="site-nav__stage" href="../learning-route.html#stage-2" title="当前学习阶段">阶段 2 MIPI D-PHY 与 CSI-2</a><details class="site-nav__more"><summary>更多</summary><div class="site-nav__more-panel"><a href="../project.html" data-nav-key="project">项目总览</a><a href="../environment.html" data-nav-key="environment">开发环境</a><a href="../archive.html" data-nav-key="archive">归档</a><a href="obsidian://open?vault=RK3568&amp;file=00-%E9%A6%96%E9%A1%B5%2F00-RK3568%E5%AD%A6%E4%B9%A0%E4%B8%BB%E5%85%A5%E5%8F%A3">在 Obsidian 中打开</a></div></details></div></nav><main id="main-content" class="note-page"><header class="hero"><p class="hero__eyebrow">GENERATED NOTE · 08-附录/资料包</p><h1>02-正点原子资料版本更新记录解读</h1><p>此页面由 Markdown 知识源自动生成，适合网页阅读；编辑仍请回到 Obsidian。</p><div class="hero__actions"><a class="button" href="obsidian://open?vault=RK3568&amp;file=08-%E9%99%84%E5%BD%95%2F%E8%B5%84%E6%96%99%E5%8C%85%2F02-%E6%AD%A3%E7%82%B9%E5%8E%9F%E5%AD%90%E8%B5%84%E6%96%99%E7%89%88%E6%9C%AC%E6%9B%B4%E6%96%B0%E8%AE%B0%E5%BD%95%E8%A7%A3%E8%AF%BB">在 Obsidian 中打开</a></div></header><article class="note-content"><p>本文件是附录，不作为当前学习顺序入口。</p>
+<p>当前学习顺序请看 01-下一步任务看板。</p>
+<h2>当前资料版本判断</h2>
+<p>从更新记录看，当前资料大概率是 <code>V7.2</code> 之后的整理版。</p>
+<p>重要变化：</p>
+<ul><li><code>10、用户手册/02、开发文档</code> 在后续版本中发生过移动或整理。</li><li>OpenHarmony 和 Ubuntu 系统镜像在 <code>V7.2</code> 中已经移除。</li><li><code>09、系统镜像</code> 改成分别压缩，减少单个镜像包过大的问题。</li><li>Camera 开发例程、Linux5.10 AI 例程、交叉编译工具是后续版本新增的重点。</li></ul>
+<h2>对我最有价值的版本节点</h2>
+<h3>V4.0：AI视觉路线开始变重要</h3>
+<p>这一版新增了很多当前项目会用的资料：</p>
+<ul><li><code>Linux5.10_SDK编译说明</code></li><li><code>Linux5.10_AI例程测试手册</code></li><li><code>基于Buildroot系统Camera应用开发手册</code></li><li><code>基于Buildroot系统_交叉编译器安装与使用参考手册</code></li><li><code>基于Buildroot系统创建自启动程序参考手册</code></li><li><code>Linux5.10_buildroot系统镜像</code></li><li><code>Linux5_10Ai例程源码</code></li><li><code>Camera开发例程</code></li></ul>
+<p>这说明资料包从普通开发板教程，升级到了更适合做 Camera 驱动、图像链路和 AI 视觉实验的状态。</p>
+<h3>V5.0：Camera 例程继续更新</h3>
+<p>重点：</p>
+<ul><li><code>Camera应用开发手册</code> 更新到 <code>V1.1</code></li><li><code>Camera开发例程</code> 增加 Qt/QML Camera 示例</li><li>Linux 驱动例程 Makefile 更新</li><li>静态 IP 文档新增</li></ul>
+<p>对我最有用的是 Camera 手册更新和静态 IP 文档。</p>
+<h3>V7.1：Camera C++ 工程更值得看</h3>
+<p>重点：</p>
+<ul><li><code>01、程序源码/08、Camera开发例程/c++/CMakeLists.txt</code> 更新</li><li>Linux 驱动例程更新</li><li>底板原理图更新到 <code>V1.7</code></li><li>核心板引脚复用表更新</li></ul>
+<p>对我来说，<code>Camera开发例程/c++/CMakeLists.txt</code> 很关键，可以参考它做自己的 C++17/CMake 工程。</p>
+<h3>V7.2：移除不相关系统，资料更聚焦</h3>
+<p>删除：</p>
+<ul><li>Ubuntu-base 根文件系统</li><li>OpenHarmony5.0 系统镜像</li><li>Ubuntu 系统镜像</li><li>Ubuntu 移植参考手册</li></ul>
+<p>这对当前路线反而是好事：我不需要分心做 Ubuntu/OpenHarmony 系统移植，主线回到 Buildroot、Camera、AI、推流。</p>
+<h2>当前资料中优先使用的文件</h2>
+<h3>第一优先级</h3>
+<ul><li><code>10、用户手册/01、测试文档/01【正点原子】ATK-DLRK3568_Buildroot系统快速体验手册V1.3.pdf</code></li><li><code>10、用户手册/01、测试文档/03【正点原子】ATK-DLRK3568_AI例程测试手册V1.0.pdf</code></li><li><code>10、用户手册/01、测试文档/05【正点原子】ATK-DLRK3568_Linux5.10_AI例程测试手册v1.1.pdf</code></li><li><code>10、用户手册/03、辅助文档/19【正点原子】ATK-DLRK3568_OpenCV4使用手册V1.0.pdf</code></li><li><code>10、用户手册/03、辅助文档/30【正点原子】基于Buildroot系统Camera应用开发手册V1.1.pdf</code></li><li><code>01、程序源码/01、AI例程</code></li><li><code>01、程序源码/08、Camera开发例程</code></li></ul>
+<h3>第二优先级</h3>
+<ul><li><code>10、用户手册/03、辅助文档/18【正点原子】ATK-DLRK3568_RTMP推流V1.1.pdf</code></li><li><code>10、用户手册/03、辅助文档/27【正点原子】基于Buildroot系统创建自启动程序参考手册V1.0.pdf</code></li><li><code>10、用户手册/03、辅助文档/33【正点原子】基于Buildroot系统_交叉编译器安装与使用参考手册V1.0.pdf</code></li><li><code>10、用户手册/03、辅助文档/36【正点原子】基于Buildroot系统设置静态IP参考手册V1.1.pdf</code></li><li><code>05、开发工具/03、交叉编译工具</code></li><li><code>09、系统镜像/01、Linux_buildroot系统镜像.zip</code></li><li><code>09、系统镜像/07、Linux5.10_buildroot系统镜像.zip</code></li></ul>
+<h2>容易误判的地方</h2>
+<ul><li>PDF 或更新记录里提到的 <code>02、开发文档</code>，当前实际目录里可能不存在或已移动。</li><li><code>OpenHarmony</code> 和 <code>Ubuntu系统镜像</code> 被移除，不是资料缺失，而是版本更新后的结果。</li><li><code>RTMP推流</code> 有资料，但我的项目目标仍然可以写成 RTSP/RTMP 扩展。</li><li>AI 视频有 RV1126 内容，只能参考流程，不能照搬命令。</li><li>Linux 4.19 和 Linux 5.10 的 AI 例程、SDK、镜像不要混用。</li></ul>
+<h2>对当前路线的结论</h2>
+<p>当前资料包已经足够支撑：</p>
+<p>Camera -&gt; OpenCV -&gt; YOLO/RKNN -&gt; RTMP/RTSP -&gt; Buildroot 部署</p>
+<p>下一步不需要继续找资料，应该进入 01-下一步任务看板 的执行阶段。</p>
+<p>#资料 #版本记录 #Camera #RKNN #Buildroot</p></article><footer class="footer"><a href="../notes.html">返回专项笔记导航</a> · <a href="../../index.html">返回驾驶舱首页</a></footer></main></div><script defer src="../../site.js?v=357a578eb6"></script></body></html>

@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Camera驱动第1章-IMX415-Sensor与驱动 · RK3568</title><link rel="stylesheet" href="../../site.css?v=357a578eb6"></head><body><div class="page-shell"><nav class="site-nav" data-site-nav aria-label="全站导航"><a class="site-nav__brand" href="../../index.html"><span>RK3568</span><strong>Camera 学习站</strong></a><div class="site-nav__links"><a href="../../index.html" data-nav-key="home">首页</a><a href="06-任务--01-下一步任务看板.html" data-nav-key="task">当前任务</a><a href="../learning-route.html" data-nav-key="route">学习路线</a><a href="../system-map.html" data-nav-key="system">系统地图</a><a href="../../../../04-项目/10-Phase0-可视化总入口.html" data-nav-key="phase0">Phase0</a><a href="../notes.html" data-nav-key="notes" aria-current="page">专项笔记</a><a href="../evidence.html" data-nav-key="evidence">实验依据</a></div><div class="site-nav__tools"><a class="site-nav__stage" href="../learning-route.html#stage-2" title="当前学习阶段">阶段 2 MIPI D-PHY 与 CSI-2</a><details class="site-nav__more"><summary>更多</summary><div class="site-nav__more-panel"><a href="../project.html" data-nav-key="project">项目总览</a><a href="../environment.html" data-nav-key="environment">开发环境</a><a href="../archive.html" data-nav-key="archive">归档</a><a href="obsidian://open?vault=RK3568&amp;file=00-%E9%A6%96%E9%A1%B5%2F00-RK3568%E5%AD%A6%E4%B9%A0%E4%B8%BB%E5%85%A5%E5%8F%A3">在 Obsidian 中打开</a></div></details></div></nav><main id="main-content" class="note-page"><header class="hero"><p class="hero__eyebrow">GENERATED NOTE · 06-任务</p><h1>Camera驱动第1章-IMX415-Sensor与驱动</h1><p>此页面由 Markdown 知识源自动生成，适合网页阅读；编辑仍请回到 Obsidian。</p><div class="hero__actions"><a class="button" href="obsidian://open?vault=RK3568&amp;file=06-%E4%BB%BB%E5%8A%A1%2FCamera%E9%A9%B1%E5%8A%A8%E7%AC%AC1%E7%AB%A0-IMX415-Sensor%E4%B8%8E%E9%A9%B1%E5%8A%A8">在 Obsidian 中打开</a></div></header><article class="note-content"><blockquote>目标：用当前 RK3568 + IMX415 的真实原理图、DTS、内核源码和板端输出，解释 Sensor 如何从硬件连接变成 <code>/dev/video0</code>。</blockquote>
+<h2>0. 一条主线</h2>
+<pre><code class="language-text">原理图
+→ BoardConfig / DTS
+→ I2C client：4-001a-1
+→ compatible 匹配
+→ imx415_probe()
+→ V4L2 subdev
+→ CSI-2 D-PHY / RKISP
+→ /dev/video0</code></pre>
+<p>本文按这条顺序阅读。每个结论至少对应一种证据：原理图位置、源码行号或板端输出。</p>
+<h2>1. 当前板型的源码入口</h2>
+<p>SDK：</p>
+<pre><code class="language-text">/home/rk3568/work/rk3568_linux_sdk</code></pre>
+<p>板级配置：</p>
+<pre><code class="language-text">device/rockchip/rk356x/BoardConfig-rk3568-atk-evb1-ddr4-v10.mk</code></pre>
+<p>其中指定：</p>
+<pre><code class="language-makefile">RK_KERNEL_DTS=rk3568-atk-evb1-ddr4-v10-linux</code></pre>
+<p>因此最终 DTS 是：</p>
+<pre><code class="language-text">kernel/arch/arm64/boot/dts/rockchip/rk3568-atk-evb1-ddr4-v10-linux.dts</code></pre>
+<p>它继续包含：</p>
+<pre><code class="language-dts">#include &quot;rk3568-atk-evb1-ddr4-v10.dtsi&quot;</code></pre>
+<p>IMX415 的实际板级配置位于：</p>
+<pre><code class="language-text">kernel/arch/arm64/boot/dts/rockchip/rk3568-atk-evb1-ddr4-v10.dtsi</code></pre>
+<p>注意：源码中没有 <code>rk3568-atk-evb1-ddr4-v10.dts</code>，不要找错文件名。</p>
+<h2>2. 原理图到 DTS：硬件为什么这样配置</h2>
+<h3>2.1 两份原理图的位置</h3>
+<table><thead><tr><th>对象</th><th>文件</th><th>重点位置</th></tr></thead><tbody><tr><td>RK3568 底板</td><td>E:\【正点原子】RK3568开发板资料（A盘）-基础资料\02、开发板原理图\01、底板原理图\ATK-DLRK3568 V1.5(底板原理图).pdf</td><td>第 4 页，右上角 <code>MIPI CSI</code>，连接器 J2</td></tr><tr><td>IMX415 模组</td><td>E:\【正点原子】RK3568开发板资料（A盘）-基础资料\02、开发板原理图\03、其它模块原理图\ATK-MCIMX415 V1.4 原理图.pdf</td><td>第 2 页，中间 J3 和右侧 IMX415</td></tr></tbody></table>
+<p>主板 MIPI CSI 接口：</p>
+<p><img src="../../../../06-任务/assets/主板-MIPI-CSI接口.png" alt="主板 MIPI CSI 接口"></p>
+<p>IMX415 Sensor 引脚：</p>
+<p><img src="../../../../06-任务/assets/IMX415-Sensor引脚.png" alt="IMX415 Sensor 引脚"></p>
+<h3>2.2 唯一硬件映射表</h3>
+<table><thead><tr><th>IMX415 模组信号</th><th>主板网络</th><th>DTS 表达</th><th>驱动中的资源/用途</th></tr></thead><tbody><tr><td><code>I2C_SCL/SDA</code></td><td><code>I2C4_SCL_M0/SDA_M0</code></td><td>Sensor 节点放在 <code>&amp;i2c4</code> 下</td><td>I2C 寄存器读写</td></tr><tr><td>I2C 地址</td><td>硬件地址 <code>0x1a</code></td><td><code>reg = &lt;0x1a&gt;</code></td><td><code>client-&gt;addr = 0x1a</code></td></tr><tr><td><code>CSI_RST</code></td><td><code>MIPICAM0_RST_L</code></td><td><code>reset-gpios = &lt;&amp;gpio3 RK_PB6 GPIO_ACTIVE_LOW&gt;</code></td><td><code>reset_gpio</code></td></tr><tr><td><code>CSI_PDN</code></td><td><code>CAMERA0_PDN_L</code></td><td><code>power-gpios = &lt;&amp;gpio4 RK_PB4 GPIO_ACTIVE_HIGH&gt;</code></td><td><code>power_gpio</code></td></tr><tr><td>Sensor 输入时钟</td><td><code>CIF_CLKOUT</code></td><td><code>clocks = &lt;&amp;cru CLK_CIF_OUT&gt;</code>、<code>clock-names = &quot;xvclk&quot;</code></td><td><code>xvclk</code></td></tr><tr><td><code>CSI_D0~D3</code></td><td><code>MIPI CSI RX D0~D3</code></td><td><code>data-lanes = &lt;1 2 3 4&gt;</code></td><td>4 Lane MIPI 图像数据</td></tr><tr><td><code>CSI_CLK</code></td><td>MIPI Clock Lane</td><td>endpoint 连接</td><td>MIPI 高速链路时钟</td></tr><tr><td></td><td></td><td></td><td></td></tr></tbody></table>
+<p>GPIO 的确认顺序是：</p>
+<pre><code class="language-text">模组信号
+→ 主板连接器网络名
+→ RK3568 管脚
+→ DTS GPIO 属性
+→ imx415.c 获取资源</code></pre>
+<p>它们不是在 DTS 中随意选择的。</p>
+<h3>2.3 电源与时钟的特殊点</h3>
+<p>IMX415 模组使用 VCC3.3，通过板载 LDO 生成：</p>
+<pre><code class="language-text">VCC3.3
+├── XC6206P282MR → AVDD  ≈ 2.8V
+├── XC6206P182MR → DOVDD ≈ 1.8V
+└── XC6206P122MR → DVDD  ≈ 1.2V</code></pre>
+<p>因此当前 DTS 没有提供 <code>avdd-supply</code>、<code>dovdd-supply</code>、<code>dvdd-supply</code>。驱动退回 dummy regulator，但模组仍由板载 LDO 供电，所以这不是当前故障。</p>
+<p>模组上的 <code>24MHZ/NC</code> 标记为不装，实际外部时钟由 RK3568 的 <code>CIF_CLKOUT</code> 提供。</p>
+<h3>2.4 Sony 芯片上电时序与 ATK 模组控制</h3>
+<blockquote>[!important] 先记结论<br><code>power-gpios</code> 只对应一根 <code>CSI_PDN</code> 控制线，不能分别控制 <code>DVDD</code>、<code>OVDD/DOVDD</code>、<code>AVDD</code> 三路电源，也不能把它直接等同于 Sony 上电时序图中的三条电源曲线。</blockquote>
+<p>Sony IMX415 Datasheet 第 84 页给出的是<strong>裸 Sensor 从完全断电到允许寄存器通信的电气时序</strong>，不是 RK3568 GPIO 调用时序，也不是 MIPI 图像传输时序。</p>
+<p>原始资料：</p>
+<pre><code class="language-text">E:\【正点原子】RK3568开发板资料（A盘）-基础资料
+\07、硬件资料\06、模块资料
+\【正点原子】ATK-MCIMX415摄像头模块
+\2，IMX415参考资料
+\IMX415-AAQR-C_Datasheet_E19504(产品信息).pdf</code></pre>
+<p><img src="../../../../06-任务/assets/IMX415-Sony上电时序-第84页.png" alt="Sony IMX415上电时序（Datasheet第84页）"></p>
+<h4>2.4.1 Sony 图中各信号代表什么</h4>
+<table><thead><tr><th>Sony 图中的信号</th><th>含义</th><th>当前硬件/驱动中的对应对象</th></tr></thead><tbody><tr><td><code>DVDD 1.1V</code></td><td>Sensor 数字内核电源</td><td>模组 <code>DVDD≈1.2V</code>，由 XC6206P122MR 产生</td></tr><tr><td><code>OVDD 1.8V</code></td><td>Sensor I/O 电源</td><td>模组 <code>DOVDD≈1.8V</code>，由 XC6206P182MR 产生</td></tr><tr><td><code>AVDD 2.9V</code></td><td>Sensor 模拟电源</td><td>模组 <code>AVDD≈2.8V</code>，由 XC6206P282MR 产生</td></tr><tr><td><code>XCLR</code></td><td>低电平复位，高电平解除复位</td><td><code>CSI_RST</code> → <code>reset-gpios</code> → <code>reset_gpio</code></td></tr><tr><td><code>INCK</code></td><td>Sensor 外部主时钟</td><td><code>CIF_CLKOUT</code> → <code>xvclk</code></td></tr><tr><td><code>SDA/SCL</code></td><td>寄存器通信</td><td><code>I2C4_SDA/SCL</code></td></tr><tr><td><code>CSI_PDN</code></td><td>Sony 图中没有这根同名信号</td><td>ATK 模组级使能/掉电控制 → <code>power-gpios</code></td></tr></tbody></table>
+<p>Sony 图没有单独的 <code>POWER</code> 引脚。图顶部三条从 0V 上升到目标电压的曲线，本身就是电源状态变化。Sony 的 RESET 也不叫 <code>RESET</code>，而叫 <code>XCLR</code>：</p>
+<pre><code class="language-text">XCLR = Low  → 保持复位
+XCLR = High → Clear OFF，解除复位</code></pre>
+<h4>2.4.2 Sony 规定的最低时间</h4>
+<pre><code class="language-text">DVDD 上升
+→ OVDD 上升
+→ AVDD 上升
+→ XCLR 从 Low 变为 High
+→ 输入 INCK
+→ 开始 I2C 通信
+→ 写初始化寄存器</code></pre>
+<table><thead><tr><th>参数</th><th>含义</th><th>要求</th></tr></thead><tbody><tr><td><code>T0</code></td><td>DVDD 上升到 OVDD 上升</td><td>≥ 0ns，DVDD 不能晚于 OVDD</td></tr><tr><td><code>T1</code></td><td>OVDD 上升到 AVDD 上升</td><td>≥ 0ns，OVDD 不能晚于 AVDD</td></tr><tr><td><code>T2</code></td><td>三路电源全部上升完成</td><td>≤ 200ms</td></tr><tr><td><code>TLOW</code></td><td>AVDD 上升完成到 XCLR 解除</td><td>≥ 500ns</td></tr><tr><td><code>T3</code></td><td>XCLR 解除到 INCK 输入</td><td>≥ 1μs</td></tr><tr><td><code>T4</code></td><td>XCLR 解除到开始 I2C 通信</td><td>≥ 20μs</td></tr></tbody></table>
+<h4>2.4.3 当前模组为什么只有一个 <code>power-gpios</code></h4>
+<p>当前 DTS：</p>
+<pre><code class="language-dts">reset-gpios = &lt;&amp;gpio3 RK_PB6 GPIO_ACTIVE_LOW&gt;;
+power-gpios = &lt;&amp;gpio4 RK_PB4 GPIO_ACTIVE_HIGH&gt;;</code></pre>
+<p>只描述两根 GPIO：</p>
+<pre><code class="language-text">GPIO3_B6 → CSI_RST/XCLR → Sensor 复位
+GPIO4_B4 → CSI_PDN      → 模组级使能/掉电控制</code></pre>
+<p>三路真实供电来自模组上的 VCC3.3 和三颗 LDO：</p>
+<pre><code class="language-text">VCC3.3
+├── XC6206P282MR → AVDD
+├── XC6206P182MR → DOVDD
+└── XC6206P122MR → DVDD</code></pre>
+<p>三颗 LDO 没有独立的 EN 控制脚，因此 RK3568 不能通过一个 <code>power_gpio</code> 分别安排三路电源的先后顺序。ATK 规格书把 <code>CSI_PDN</code> 描述为“控制信号，使能模组电源”，但不能据此把它理解成 Sony 三路电源的独立时序控制器。</p>
+<p>如果三路电源由 SoC 可控 regulator 提供，DTS 才会分别出现：</p>
+<pre><code class="language-dts">avdd-supply = &lt;&amp;vcc_camera_2v8&gt;;
+dovdd-supply = &lt;&amp;vcc_camera_1v8&gt;;
+dvdd-supply = &lt;&amp;vcc_camera_1v2&gt;;</code></pre>
+<p>当前 DTS 没有这三个属性，所以 <code>regulator_bulk_enable()</code> 操作的是 dummy regulator，不会改变真实电压。Sony 要求的三路电源上升过程由 VCC3.3、模组 LDO 及硬件特性负责，不是由 <code>power_gpio</code> 完成。</p>
+<h4>2.4.4 驱动代码实际执行的控制时序</h4>
+<p><code>__imx415_power_on()</code> 执行的是 RK3568 能控制的模组级动作：</p>
+<pre><code class="language-text">regulator_bulk_enable()
+→ 当前为 dummy，对真实硬件无动作
+
+power_gpio = 1
+→ GPIO4_B4 物理高电平
+→ CSI_PDN 进入模组使能状态
+
+等待 10～20ms
+
+reset_gpio = 0
+→ 因为 GPIO_ACTIVE_LOW，逻辑 0 对应物理高电平
+→ XCLR 从 Low 变 High，解除复位
+
+等待 10～20ms
+→ 设置并打开 xvclk/INCK
+
+等待 20～30ms
+→ 允许 I2C 读取 Sensor ID</code></pre>
+<p><code>__imx415_power_off()</code> 则反向处理：</p>
+<pre><code class="language-text">reset_gpio = 1
+→ 物理低电平，XCLR 复位有效
+→ 关闭 xvclk
+→ power_gpio = 0
+→ 关闭模组级使能</code></pre>
+<blockquote>[!warning] 不要错误表述<br>不能说“<code>power_gpio = 1</code> 按顺序打开了 DVDD、DOVDD、AVDD”。准确说法是：“模组三路真实电源由 VCC3.3 和板载 LDO 提供；驱动通过 <code>CSI_PDN</code>、<code>CSI_RST/XCLR</code> 和 <code>xvclk</code> 完成它能够控制的使能、复位与时钟时序。”</blockquote>
+<p>这也解释了为什么 <code>Detected imx415 id 0000e0</code> 能够出现：三路真实供电已经存在，驱动完成了模组使能、解除复位和时钟输入，随后 I2C 成功读取芯片 ID。但它仍不能证明 MIPI 已经输出图像。</p>
+<h2>3. IMX415 设备树节点</h2>
+<p>位置：</p>
+<pre><code class="language-text">rk3568-atk-evb1-ddr4-v10.dtsi
+&amp;i2c4：约第 574 行
+imx415：约第 650 行</code></pre>
+<pre><code class="language-dts">&amp;i2c4 {
+    status = &quot;okay&quot;;
+
+    imx415: imx415@1a {
+        status = &quot;okay&quot;;
+        compatible = &quot;sony,imx415&quot;;
+        reg = &lt;0x1a&gt;;
+        clocks = &lt;&amp;cru CLK_CIF_OUT&gt;;
+        clock-names = &quot;xvclk&quot;;
+        power-domains = &lt;&amp;power RK3568_PD_VI&gt;;
+        pinctrl-names = &quot;rockchip,camera_default&quot;;
+        pinctrl-0 = &lt;&amp;cif_clk&gt;;
+        reset-gpios = &lt;&amp;gpio3 RK_PB6 GPIO_ACTIVE_LOW&gt;;
+        power-gpios = &lt;&amp;gpio4 RK_PB4 GPIO_ACTIVE_HIGH&gt;;
+        rockchip,camera-module-index = &lt;0&gt;;
+        rockchip,camera-module-facing = &quot;back&quot;;
+        rockchip,camera-module-name = &quot;CMK-OT1522-FG3&quot;;
+        rockchip,camera-module-lens-name = &quot;CS-P1150-IRC-8M-FAU&quot;;
+
+        port {
+            imx415_out: endpoint {
+                remote-endpoint = &lt;&amp;mipi_in_ucam1&gt;;
+                data-lanes = &lt;1 2 3 4&gt;;
+            };
+        };
+    };
+};</code></pre>
+<h3>每组属性负责什么</h3>
+<table><thead><tr><th>属性组</th><th>作用</th><th>直接影响</th></tr></thead><tbody><tr><td><code>status</code></td><td>是否启用控制器和 Sensor 节点</td><td>是否创建设备</td></tr><tr><td><code>compatible</code></td><td>与驱动 <code>of_match_table</code> 匹配</td><td>是否绑定 <code>imx415</code> 驱动</td></tr><tr><td><code>reg</code></td><td>I2C 从地址</td><td>创建地址为 <code>0x1a</code> 的 client</td></tr><tr><td><code>clocks</code>、<code>pinctrl</code></td><td>指定并复用 Sensor 外部时钟引脚</td><td>MCLK</td></tr><tr><td><code>power-domains</code></td><td>使用 RK3568 VI 电源域</td><td>SoC Camera/ISP 相关硬件域</td></tr><tr><td><code>reset-gpios</code>、<code>power-gpios</code></td><td>描述板级控制线</td><td>RESET、PDN/使能</td></tr><tr><td><code>camera-module-*</code></td><td>Rockchip 模组元数据</td><td>subdev 名称、朝向、镜头信息</td></tr><tr><td><code>port/endpoint</code></td><td>描述图像数据连向谁</td><td>Sensor → CSI-2 D-PHY</td></tr><tr><td><code>data-lanes</code></td><td>指定 MIPI 数据 Lane</td><td>4 Lane 接收配置</td></tr></tbody></table>
+<p>为什么整个节点写在 <code>&amp;i2c4</code> 下面：</p>
+<pre><code class="language-text">父节点描述“如何控制和配置 Sensor”——I2C4
+port/endpoint 描述“图像数据发向哪里”——MIPI CSI-2</code></pre>
+<p>这就是一颗 Sensor 同时使用两条通道：</p>
+<pre><code class="language-text">I2C4       → 低速控制：读写寄存器、设置曝光/增益/模式、读取 Sensor ID
+MIPI CSI-2 → 高速数据：传输 IMX415 输出的 RAW10 图像</code></pre>
+<p>图像数据不会经过 I2C；<code>port/endpoint</code> 放在 I2C 设备节点中，只是为了完整描述这颗 Sensor 的数据连接。</p>
+<h2>4. 从 DTS 到 <code>imx415_probe()</code></h2>
+<h3>4.1 函数调用流程图</h3>
+<blockquote>网页大图： <a href="../../../../04-项目/16-IMX415-三层驱动调用流程.html">打开 IMX415 三层驱动调用流程</a></blockquote>
+<h3>4.2 四个角色分别干什么</h3>
+<table><thead><tr><th>模块</th><th>大白话角色</th><th>它知道什么</th><th>它不负责什么</th></tr></thead><tbody><tr><td>Linux 通用驱动模型</td><td>管理员、调度中心</td><td>系统中有哪些 <code>device</code>、有哪些 <code>driver</code>、它们属于哪种总线</td><td>不懂 I2C 的 <code>compatible</code> 怎么比较，也不会操作 IMX415 寄存器</td></tr><tr><td>I2C Core</td><td>I2C 专业中介、翻译员</td><td>I2C 设备怎样创建、I2C 驱动怎样匹配、怎样把通用 <code>device</code> 转成 <code>i2c_client</code></td><td>不知道 IMX415 的具体上电时序和寄存器</td></tr><tr><td><code>i2c_client</code></td><td>IMX415 的设备档案</td><td>I2C4、地址 <code>0x1a</code>，以及指向 DTS 节点的 <code>dev.of_node</code></td><td>它只是数据对象，不会主动匹配驱动或初始化硬件</td></tr><tr><td>IMX415 驱动</td><td>真正干活的 Sensor 工程师</td><td>IMX415 需要什么时钟、GPIO、寄存器和 ID</td><td>不负责管理全系统的设备与驱动</td></tr></tbody></table>
+<p><code>I2C Core</code> 是内核框架；<code>i2c_client</code> 是它根据 DTS 创建的设备对象，二者不是同一个东西。</p>
+<h3>4.3 注册、创建设备与匹配</h3>
+<p>先分清本轮最关键的疑问：</p>
+<pre><code class="language-text">驱动是否注册 → 由内核配置和模块是否加载决定
+匹配哪个驱动 → 由 i2c_client 关联的 DTS 信息和驱动匹配表决定</code></pre>
+<p>不是 DTS 发现 IMX415 后，系统才选择注册 IMX415 驱动。所有已经编入内核或已经加载的 Sensor 驱动都会各自注册并等待设备；这里的“所有”只包括内核配置启用的驱动，不是源码目录中的全部驱动。</p>
+<p>驱动注册和设备创建是两条独立路径，先后顺序不固定：</p>
+<pre><code class="language-text">驱动路径                              设备路径
+CONFIG_VIDEO_IMX415=y                DTS：&amp;i2c4 / imx415@1a
+→ sensor_mod_init()                  → 创建 i2c_client
+→ 注册 imx415_i2c_driver             → 保存 I2C4、0x1a、dev.of_node
+              \                      /
+               \                    /
+                → compatible 匹配 ←
+                  &quot;sony,imx415&quot;
+                         ↓
+                  imx415_probe()</code></pre>
+<p>第一步，IMX415 驱动先填写一张工作登记表：</p>
+<pre><code class="language-c">static struct i2c_driver imx415_i2c_driver = {
+    .driver.of_match_table = imx415_of_match,
+    .probe = imx415_probe,
+    .remove = imx415_remove,
+};</code></pre>
+<p>它表达的是：</p>
+<pre><code class="language-text">我能处理 compatible = &quot;sony,imx415&quot; 的设备；
+设备交给我时，请调用 imx415_probe()；
+设备解绑时，请调用 imx415_remove()。</code></pre>
+<p>第二步，<code>sensor_mod_init()</code> 把登记表交给 I2C Core：</p>
+<pre><code class="language-text">sensor_mod_init()
+→ i2c_add_driver()
+→ i2c_register_driver()</code></pre>
+<p>I2C Core 给它盖章：</p>
+<pre><code class="language-c">driver-&gt;driver.bus = &amp;i2c_bus_type;</code></pre>
+<p>意思是：“这是一个 I2C 驱动，以后使用 I2C 的匹配和 probe 规则。”</p>
+<p>第三步，另一条路径根据 DTS 创建真实设备的软件代表：</p>
+<pre><code class="language-text">imx415@1a
+→ i2c_new_device()
+→ struct i2c_client
+→ 4-001a-1</code></pre>
+<p>这个 client 同样标记为属于 <code>i2c_bus_type</code>。</p>
+<p>第四步，Linux 通用驱动模型看到同一条 I2C 总线中已经同时存在：</p>
+<pre><code class="language-text">设备：4-001a-1
+驱动：imx415_i2c_driver</code></pre>
+<p>但通用驱动模型不会比较 I2C 的 <code>compatible</code>，于是它问 I2C Core：</p>
+<pre><code class="language-text">driver_match_device()
+→ i2c_bus_type.match
+→ i2c_device_match()</code></pre>
+<p>第五步，I2C Core 比较：</p>
+<pre><code class="language-text">DTS：    sony,imx415
+驱动表： sony,imx415</code></pre>
+<p>匹配成功后，结果交回通用驱动模型。</p>
+<p>第六步，通用驱动模型决定执行 probe，但它只认识通用的 <code>struct device</code>：</p>
+<pre><code class="language-text">driver_probe_device()
+→ really_probe()
+→ i2c_bus_type.probe
+→ i2c_device_probe(struct device *dev)</code></pre>
+<p>第七步，I2C Core 充当翻译员：</p>
+<pre><code class="language-text">通用 struct device
+→ 转成 struct i2c_client
+→ 找到 imx415_i2c_driver.probe</code></pre>
+<p>然后执行：</p>
+<pre><code class="language-c">driver-&gt;probe(client, i2c_match_id(driver-&gt;id_table, client));</code></pre>
+<p>由于 <code>driver-&gt;probe</code> 保存的就是 <code>imx415_probe</code>，所以最终等价于：</p>
+<pre><code class="language-c">imx415_probe(client, id);</code></pre>
+<p>这时才轮到 IMX415 驱动真正操作硬件：获取时钟和 GPIO、上电、读取 <code>0000e0</code>、注册 V4L2 subdev。</p>
+<h3>4.4 为什么有两个 <code>probe</code></h3>
+<pre><code class="language-text">i2c_bus_type.probe = i2c_device_probe</code></pre>
+<p>这是 I2C Core 的通用入口，负责“翻译对象并转交任务”。</p>
+<pre><code class="language-text">imx415_i2c_driver.probe = imx415_probe</code></pre>
+<p>这是具体 Sensor 驱动入口，负责“真正初始化 IMX415”。</p>
+<p>因此调用关系必须读成：</p>
+<pre><code class="language-text">Linux 通用驱动模型
+→ I2C Core 的 i2c_device_probe()
+→ IMX415 驱动的 imx415_probe()</code></pre>
+<h3>4.5 <code>compatible</code> 如何匹配</h3>
+<p>DTS：</p>
+<pre><code class="language-dts">compatible = &quot;sony,imx415&quot;;</code></pre>
+<p>驱动：</p>
+<pre><code class="language-c">static const struct of_device_id imx415_of_match[] = {
+    { .compatible = &quot;sony,imx415&quot; },
+    {},
+};</code></pre>
+<p>两者相同，<code>i2c_device_match()</code> 才允许继续绑定。但这只是软件匹配，不证明真实硬件存在。</p>
+<h3>4.6 <code>struct i2c_client</code> 与信息来源</h3>
+<p>它代表内核中的一个 I2C 从设备实例：</p>
+<pre><code class="language-text">client-&gt;adapter      → I2C4
+client-&gt;addr         → 0x1a
+client-&gt;dev.of_node  → /i2c@fe5d0000/imx415@1a</code></pre>
+<p>运行时目录：</p>
+<pre><code class="language-text">/sys/bus/i2c/devices/4-001a-1</code></pre>
+<p>其中 <code>4</code> 是 I2C adapter 编号，<code>001a</code> 是地址 <code>0x1a</code>。末尾 <code>-1</code> 属于当前 Rockchip 厂商驱动的实例命名部分，本阶段不依靠它判断总线或地址。</p>
+<p>匹配和 <code>probe()</code> 使用的是同一个 DTS 节点，不是重新生成一份配置。I2C Core 把这个节点关联到 client，匹配成功后再把 client 传给驱动：</p>
+<pre><code class="language-c">struct device *dev = &amp;client-&gt;dev;
+struct device_node *node = dev-&gt;of_node;</code></pre>
+<table><thead><tr><th>角色</th><th>信息从哪里来</th><th>最终得到什么</th></tr></thead><tbody><tr><td>I2C Core</td><td>解析 I2C4 下的 DTS 子节点</td><td>创建 <code>i2c_client</code>，组织匹配并转交 probe</td></tr><tr><td><code>i2c_client</code></td><td>由 I2C Core 根据 DTS 填充</td><td><code>adapter=I2C4</code>、<code>addr=0x1a</code>、<code>dev.of_node→imx415@1a</code></td></tr><tr><td>IMX415 驱动</td><td>固定知识来自 <code>imx415.c</code>；板级信息通过 client 获取；真实 ID 通过 I2C 读取</td><td>寄存器表、模式、GPIO、时钟、电源以及实际 Sensor ID</td></tr></tbody></table>
+<p>IMX415 驱动获得信息的入口：</p>
+<pre><code class="language-text">client-&gt;adapter     → 选择 I2C4
+client-&gt;addr        → 访问 0x1a
+client-&gt;dev.of_node → 读取 GPIO、时钟、模组信息和 endpoint
+imx415.c            → 提供寄存器地址、模式表、预期 Sensor ID
+真实 IMX415         → 通过 I2C 返回实际 Sensor ID</code></pre>
+<h2>5. endpoint：图像数据接到哪里</h2>
+<p>Sensor 输出端：</p>
+<pre><code class="language-dts">imx415_out: endpoint {
+    remote-endpoint = &lt;&amp;mipi_in_ucam1&gt;;
+    data-lanes = &lt;1 2 3 4&gt;;
+};</code></pre>
+<p>CSI-2 D-PHY 两端位于同一个 <code>.dtsi</code> 约第 231～269 行：</p>
+<pre><code class="language-dts">&amp;csi2_dphy0 {
+    ports {
+        port@0 {
+            mipi_in_ucam1: endpoint@2 {
+                remote-endpoint = &lt;&amp;imx415_out&gt;;
+                data-lanes = &lt;1 2 3 4&gt;;
+            };
+        };
+
+        port@1 {
+            csidphy_out: endpoint@0 {
+                remote-endpoint = &lt;&amp;isp0_in&gt;;
+            };
+        };
+    };
+};</code></pre>
+<table><thead><tr><th>概念</th><th>含义</th></tr></thead><tbody><tr><td><code>port</code></td><td>设备的一个数据接口</td></tr><tr><td><code>endpoint</code></td><td>该接口上的具体连接端点</td></tr><tr><td><code>remote-endpoint</code></td><td>对方 endpoint 的 phandle</td></tr><tr><td><code>data-lanes</code></td><td>使用哪些 MIPI 数据 Lane</td></tr></tbody></table>
+<p>完整数据连接：</p>
+<pre><code class="language-text">imx415_out
+↔ mipi_in_ucam1
+→ rockchip-csi2-dphy0
+→ csidphy_out
+↔ isp0_in
+→ RKISP</code></pre>
+<p>检查 endpoint 只看三点：</p>
+<p>1. Sensor 与 D-PHY 输入端是否互相引用。<br>2. 两端 <code>data-lanes</code> 是否一致。<br>3. D-PHY 输出端是否连接 <code>isp0_in</code>。</p>
+<p>endpoint 写错不会阻止 I2C 读取 Sensor ID，但会导致 Media Graph 无法形成完整图像链路。</p>
+<h2>6. <code>imx415_probe()</code>：真实硬件初始化</h2>
+<p>驱动文件：</p>
+<pre><code class="language-text">kernel/drivers/media/i2c/imx415.c</code></pre>
+<p>关键入口：</p>
+<table><thead><tr><th>位置</th><th>内容</th></tr></thead><tbody><tr><td><code>2429</code></td><td><code>imx415_probe()</code></td></tr><tr><td><code>2478</code></td><td>获取 <code>xvclk</code></td></tr><tr><td><code>2484</code></td><td>获取 reset GPIO</td></tr><tr><td><code>2487</code></td><td>获取 power GPIO</td></tr><tr><td><code>2507</code></td><td>获取 dvdd/dovdd/avdd</td></tr><tr><td><code>2521</code></td><td><code>__imx415_power_on()</code></td></tr><tr><td><code>2525</code></td><td><code>imx415_check_sensor_id()</code></td></tr><tr><td><code>2551</code></td><td>注册异步 V4L2 subdev</td></tr><tr><td><code>2598</code></td><td><code>imx415_of_match[]</code></td></tr><tr><td><code>2610</code></td><td><code>imx415_i2c_driver</code></td></tr><tr><td><code>2621</code></td><td><code>sensor_mod_init()</code></td></tr></tbody></table>
+<h3>6.1 probe 的有效阅读顺序</h3>
+<table><thead><tr><th>顺序</th><th>动作</th><th>对应 DTS/硬件</th></tr></thead><tbody><tr><td>1</td><td>读取模组编号、朝向、名称、镜头</td><td><code>rockchip,camera-module-*</code></td></tr><tr><td>2</td><td>选择 HDR/默认模式</td><td><code>hdr-mode</code>，缺省为非 HDR</td></tr><tr><td>3</td><td>获取时钟、GPIO、pinctrl、regulator</td><td>MCLK、RESET、PDN、电源</td></tr><tr><td>4</td><td>初始化 V4L2 subdev 和 controls</td><td>曝光、增益、VBlank 等</td></tr><tr><td>5</td><td><code>__imx415_power_on()</code></td><td>执行 GPIO、供电、MCLK 时序</td></tr><tr><td>6</td><td><code>imx415_check_sensor_id()</code></td><td>通过 I2C 读取芯片 ID</td></tr><tr><td>7</td><td>初始化 Media Pad</td><td>Sensor 是 Source entity</td></tr><tr><td>8</td><td>异步注册 V4L2 subdev</td><td>等待 CSI/ISP 完成绑定</td></tr><tr><td>9</td><td>启用 Runtime PM，返回 0</td><td>probe 完成</td></tr></tbody></table>
+<p>第一次阅读可以暂时跳过 <code>devm_kzalloc</code>、mutex、<code>memset</code>、<code>snprintf</code> 和错误清理标签；先吃透第 3～8 步。</p>
+<h3>6.2 日志和 sysfs 分别证明什么</h3>
+<table><thead><tr><th>板端证据</th><th>能证明什么</th><th>不能证明什么</th></tr></thead><tbody><tr><td>运行时节点存在</td><td>DTB 中启用了 <code>imx415@1a</code></td><td>硬件是否存在</td></tr><tr><td><code>/sys/bus/i2c/devices/4-001a-1</code></td><td>I2C client 已创建</td><td>Sensor 是否响应</td></tr><tr><td><code>DRIVER=imx415</code></td><td>compatible 匹配并完成驱动绑定</td><td>芯片型号是否正确</td></tr><tr><td><code>Detected imx415 id 0000e0</code></td><td>已上电并通过真实 I2C 读到正确 ID</td><td>MIPI 是否已有图像</td></tr><tr><td><code>dphy0 matches m00_b_imx415</code></td><td>D-PHY 找到 Sensor endpoint</td><td>RKISP 主路径是否可采集</td></tr><tr><td><code>Async subdev notifier completed</code></td><td>Sensor、CSI、ISP 异步绑定完成</td><td>实际帧内容是否正确</td></tr><tr><td><code>/dev/video0</code> 可查询并抓帧</td><td>V4L2 主路径可以提供数据</td><td>图像质量是否合格</td></tr></tbody></table>
+<p>板端真实证据：</p>
+<pre><code class="language-text">OF_FULLNAME=/i2c@fe5d0000/imx415@1a
+OF_COMPATIBLE_0=sony,imx415
+DRIVER=imx415
+imx415 4-001a-1: Detected imx415 id 0000e0
+rkisp-vir0: Async subdev notifier completed</code></pre>
+<p>必须区分：</p>
+<pre><code class="language-text">compatible 匹配成功 ≠ 真实 Sensor 已响应
+读到 Sensor ID      ≠ MIPI 已经出图
+Media Graph 完整    ≠ 图像内容一定正确</code></pre>
+<h2>7. 内核配置与 <code>/dev/video0</code></h2>
+<p>IMX415 驱动的编译关系：</p>
+<pre><code class="language-text">kernel/arch/arm64/configs/rockchip_linux_defconfig:347
+    CONFIG_VIDEO_IMX415=y
+
+kernel/drivers/media/i2c/Kconfig:849
+    config VIDEO_IMX415
+
+kernel/drivers/media/i2c/Makefile:166
+    obj-$(CONFIG_VIDEO_IMX415) += imx415.o</code></pre>
+<p>三种配置状态：</p>
+<pre><code class="language-text">CONFIG_VIDEO_IMX415=y
+→ 编进内核
+→ 开机执行初始化函数并注册驱动
+
+CONFIG_VIDEO_IMX415=m
+→ 编译为 imx415.ko
+→ 模块加载后才注册驱动
+
+# CONFIG_VIDEO_IMX415 is not set
+→ 不参与编译
+→ 系统中没有这个驱动</code></pre>
+<p>当前 SDK 是 <code>=y</code>：IMX415 驱动在启动阶段独立注册，DTS 负责创建 <code>i2c_client</code>；两者之后再通过 <code>compatible</code> 匹配。</p>
+<p>运行时 Media Graph：</p>
+<pre><code class="language-text">m00_b_imx415
+→ rockchip-csi2-dphy0
+→ rkisp-csi-subdev
+→ rkisp-isp-subdev
+→ rkisp_mainpath
+→ /dev/video0</code></pre>
+<p>格式变化：</p>
+<pre><code class="language-text">IMX415 输出 SGBRG10_1X10（RAW10）
+→ RKISP 处理
+→ /dev/video0 输出 NV12</code></pre>
+<p>所以 <code>/dev/video0</code> 不是 Sensor 驱动单独创建的。Sensor 驱动注册的是 V4L2 subdev；RKISP 主路径注册视频采集节点。</p>
+<h2>8. 新板卡固定排查顺序</h2>
+<h3>8.1 动手前必须拿到的资料</h3>
+<p>没有下面这些资料，不应该直接修改 DTS 或 Sensor 驱动：</p>
+<ul><li>Sensor 型号、数据手册、模组原理图或接口定义。</li><li>AVDD、DVDD、DOVDD 的电压和上电时序。</li><li>MCLK 频率以及 RESET、PWDN/POWER 的有效电平。</li><li>I2C 地址、寄存器地址宽度和芯片 ID 寄存器。</li><li>MIPI Lane 数量、Lane 极性、时钟模式和 link frequency。</li><li>分辨率、帧率、RAW 位宽、Bayer 顺序和 HDR/线性模式。</li><li>模组是否带 EEPROM、VCM、Flash 或独立 PMIC。</li></ul>
+<p>还要确认板端接口确实匹配：</p>
+<pre><code class="language-text">接口电压
+→ MIPI Lane 数和接线
+→ I2C 总线
+→ MCLK 来源
+→ RESET/PWDN 是否可控
+→ 模组供电由谁提供</code></pre>
+<h3>8.2 bring-up 固定顺序</h3>
+<p>1. 原理图：确认电源、MCLK、RESET、PWDN、I2C 和 MIPI Lane。<br>2. BoardConfig：确认 <code>RK_KERNEL_DTS</code>。<br>3. DTS/DTSI：确认 I2C 节点、<code>compatible</code>、<code>reg</code> 和硬件资源。<br>4. I2C client：确认 <code>/sys/bus/i2c/devices/&lt;bus&gt;-&lt;addr&gt;</code>。<br>5. 驱动匹配：确认 <code>DRIVER</code>、<code>of_match_table</code> 和 <code>probe</code> 日志。<br>6. Sensor ID：确认真实 I2C 通信。<br>7. endpoint：确认 Sensor、D-PHY、ISP 双向连接。<br>8. Media Graph：确认 Sensor → CSI → ISP → mainpath。<br>9. V4L2：确认 <code>/dev/videoX</code> 的格式、分辨率、帧率和抓帧结果。</p>
+<p>最终必须能按这个顺序回答：</p>
+<pre><code class="language-text">硬件怎么接
+→ DTS 为什么这样写
+→ 哪个内核对象被创建
+→ compatible 如何找到驱动
+→ probe 如何验证真实 Sensor
+→ endpoint 如何建立数据链路
+→ 谁注册 /dev/video0</code></pre>
+<h2>9. 岗位化面试复盘</h2>
+<blockquote>本节用于把已经学过的内容转成面试表达，不阻塞第二章学习，也不提前提供标准答案。<br><br>请先保留自己的真实理解。不会的地方可以写“不懂”，回答后再补充高亮正确答案、当前板子证据和面试官追问。</blockquote>
+<h3>第一轮：核心原理</h3>
+<h4>问题 1｜两条初始化路径</h4>
+<p>开机过程中，DTS 中的 <code>imx415@1a</code> 和 <code>CONFIG_VIDEO_IMX415=y</code> 分别触发什么？</p>
+<p>它们是不是严格按照下面的顺序串行执行？</p>
+<pre><code class="language-text">先创建设备
+→ 再注册驱动
+→ 再匹配</code></pre>
+<p>请用 <code>i2c_client</code>、<code>i2c_driver</code>、I2C 总线匹配和 <code>probe</code> 说明真实关系。</p>
+<p><strong>我的回答：</strong></p>
+<h4>问题 2｜IMX415 驱动的信息从哪里来</h4>
+<p><code>imx415_probe(struct i2c_client *client, ...)</code> 开始执行后，下面这些信息分别来自哪里？</p>
+<pre><code class="language-text">I2C 总线号和地址
+GPIO、时钟、模组名称和 endpoint
+IMX415 寄存器地址、模式表和预期芯片 ID
+真实 Sensor 返回的芯片 ID</code></pre>
+<p>请说明 <code>client-&gt;dev.of_node</code> 在其中的作用，但不能只回答“都来自 DTS”。</p>
+<p><strong>我的回答：</strong></p>
+<h4>问题 3｜probe 与真实硬件验证</h4>
+<p>请按有效阅读顺序介绍 <code>imx415_probe()</code>：</p>
+<pre><code class="language-text">获取资源
+→ 初始化 subdev/controls
+→ 上电
+→ 读取 Sensor ID
+→ 注册 Media Entity 和 V4L2 subdev
+→ Runtime PM</code></pre>
+<p>还要回答：</p>
+<ul><li>为什么 <code>compatible</code> 匹配成功不能证明真实 IMX415 存在？</li><li>为什么当前板子出现 dummy regulator 仍然能读到芯片 ID？</li><li><code>Detected imx415 id 0000e0</code> 能证明什么，不能证明什么？</li></ul>
+<p><strong>我的回答：</strong></p>
+<h4>问题 4｜控制流与图像数据流</h4>
+<p>为什么 IMX415 节点写在 <code>&amp;i2c4</code> 下面，但图像数据并不经过 I2C？</p>
+<p>请分别说明：</p>
+<pre><code class="language-text">I2C4 / 0x1a
+port / endpoint
+MIPI CSI-2
+V4L2 subdev</code></pre>
+<p>在整个 Camera 链路中的职责。</p>
+<p><strong>我的回答：</strong></p>
+<h3>第二轮：故障场景与项目表达</h3>
+<h4>问题 5｜没有 I2C client</h4>
+<p>运行下面的命令，没有找到 <code>4-001a-1</code>：</p>
+<pre><code class="language-bash">ls -l /sys/bus/i2c/devices/</code></pre>
+<p>这时为什么还不应该直接修改 <code>imx415_probe()</code>？请给出从 BoardConfig、运行时设备树到 I2C 控制器的检查顺序，以及每一步想证明什么。</p>
+<p><strong>我的回答：</strong></p>
+<h4>问题 6｜已经绑定驱动，但读不到 Sensor ID</h4>
+<p>运行时已经能看到：</p>
+<pre><code class="language-text">OF_COMPATIBLE_0=sony,imx415
+DRIVER=imx415</code></pre>
+<p>但是没有出现：</p>
+<pre><code class="language-text">Detected imx415 id 0000e0</code></pre>
+<p>这说明软件链路已经走到哪里？下一步应怎样检查 MCLK、RESET、PWDN/POWER、供电、I2C 地址和 I2C 波形？</p>
+<p>请同时说明逻辑分析仪和示波器分别更适合检查哪些信号。</p>
+<p><strong>我的回答：</strong></p>
+<h4>问题 7｜拿到新板子和新 Sensor</h4>
+<p>假设给你一块新 RK3568 板卡和一个新的 MIPI Sensor，要求独立完成 bring-up。请按实际工作顺序说明：</p>
+<pre><code class="language-text">先从原理图确认什么
+→ 内核已有 Sensor 驱动时修改什么
+→ 内核没有驱动时还要增加什么
+→ 怎样判断失败在设备创建、驱动匹配、真实 I2C 通信还是下游图像链路</code></pre>
+<p>回答必须包含 BoardConfig、DTS/DTSI、Kconfig、Makefile、<code>of_match_table</code>、<code>probe</code> 和板端最小证据。</p>
+<p><strong>我的回答：</strong></p>
+<h4>问题 8｜90 秒项目讲解</h4>
+<p>请用 60～90 秒向面试官介绍：</p>
+<blockquote>当前 RK3568 板卡是怎样从原理图和 DTS 描述 IMX415，怎样创建 <code>i2c_client</code>、匹配 <code>imx415_i2c_driver</code>、执行 <code>imx415_probe()</code>，最后把 Sensor 注册成 V4L2 subdev 的？</blockquote>
+<p>表达顺序建议使用：</p>
+<pre><code class="language-text">结论
+→ 当前板子的硬件和 DTS
+→ 设备创建与驱动注册两条起点
+→ compatible 匹配与 probe
+→ Chip ID 和 subdev 证据
+→ 仍然不能证明的下游事项</code></pre>
+<p><strong>我的回答：</strong></p></article><footer class="footer"><a href="../notes.html">返回专项笔记导航</a> · <a href="../../index.html">返回驾驶舱首页</a></footer></main></div><script defer src="../../site.js?v=357a578eb6"></script></body></html>

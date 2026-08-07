@@ -73,4 +73,4 @@ v4l2-ctl -d /dev/video0 --stream-mmap --stream-count=1 --stream-to=frame.nv12
 - 状态：已验证 / 通用原理 / 待验证
 ```
 
-关联：[[V4L2命令行抓帧记录]]、[[OpenCV读取Camera记录]]、[[YOLOv5 Python最小推理记录]]、[[RTMP-HLS推流记录]]。
+关联：[[V4L2命令行抓帧记录]]、[[OpenCV读取Camera记录]]。YOLO/RKNN 与推流排障已经移入历史归档。

@@ -17,7 +17,7 @@ chapter: 2
 第 2 章：MIPI D-PHY 与 CSI-2                 ⏳ 学习中
 第 3 章：RKISP                               ⬜ 未开始
 第 4 章：Media Controller                    ⬜ 未开始
-第 5 章：V4L2、VB2 与 /dev/video0           ⬜ 未开始
+第 5 章：V4L2、VB2 与 /dev/video0             ⬜ 未开始
 ```
 
 本章只回答一件事：
@@ -173,7 +173,7 @@ IMX415 CSI_Dx_P/N
 
 ## 4. DTS：`data-lanes` 与双向 endpoint
 
-本节将在完成第一轮 Lane 与原理图验收后继续。
+本节已完成第一轮 Lane、原理图与 endpoint 验收。`endpoint` 不是新硬件，而是 DTS 对两个媒体端口连接关系的声明；驱动和 Media Controller 框架会据此建立运行时的 entity、pad 与 link。
 
 目标：
 
@@ -185,9 +185,23 @@ imx415_out
 ↔ isp0_in
 ```
 
+### 4.1 本轮验收：IMX415 endpoint 与 D-PHY 出口
+
+我的回答：
+
+```text
+1. 因为 DTS 里面写的是 imx415_out 到 mipi_in_ucam1：
+   imx415_out.endpoint.remote-endpoint = <&mipi_in_ucam1>。
+2. csidphy_out 的另一端是 isp0_in。
+```
+
+> [!success] 正确答案与补充
+> 1. 正确。`imx415_out` 和 `mipi_in_ucam1` 通过双方的 `remote-endpoint` 互相指向；`data-lanes = <1 2 3 4>` 说明该连接使用四条 Data Lane。因此当前 IMX415 对应的 D-PHY 输入端点是 `mipi_in_ucam1`。
+> 2. 正确。`csidphy_out ↔ isp0_in` 表示 D-PHY 的数据出口接入 `rkisp_vir0` 的 ISP 输入。运行时该方向表现为 `rockchip-csi2-dphy0 → rkisp-csi-subdev → rkisp-isp-subdev`，而不是直接跳到 `/dev/video0`。
+
 ## 5. 运行时：Media Graph 中的 D-PHY 与 CSI
 
-本节将在 DTS endpoint 学习后继续。
+本节已用当前板端 `media-ctl -p` 验证。以下内容只记录已观察到的拓扑事实，并把“拓扑存在”与“真实帧已跑通”分开。
 
 目标：
 
@@ -198,7 +212,74 @@ m00_b_imx415 4-001a-1
 → rkisp-isp-subdev
 ```
 
+### 5.1 当前板端的已验证链路
+
+```text
+m00_b_imx415 4-001a-1
+→ rockchip-csi2-dphy0
+→ rkisp-csi-subdev
+→ rkisp-isp-subdev
+→ rkisp_mainpath
+→ /dev/video0
+```
+
+这是 `media-ctl -p` 的真实结果，不是示意图。读取时只看三个概念：
+
+| 名词 | 大白话 | 当前板端例子 |
+| --- | --- | --- |
+| entity | 一个被驱动注册到 Media Controller 的功能模块 | `rockchip-csi2-dphy0`、`rkisp-isp-subdev` |
+| pad | 模块收或发图像数据的端口 | Sensor 的 `pad0: Source`；D-PHY 的 `pad0: Sink`、`pad1: Source` |
+| link | 两个 pad 之间已建立的数据通路 | `Sensor:pad0 → D-PHY:pad0 [ENABLED]` |
+
+`Source` 是图像数据从该 pad 发出，`Sink` 是图像数据从该 pad 收入；这不是 I2C 的读写方向。
+
+### 5.2 逐节点对照
+
+| 运行时节点 | 它在做什么 | 从输出得到的证据 |
+| --- | --- | --- |
+| `m00_b_imx415 4-001a-1` | IMX415 驱动注册出的 V4L2 subdev；`4-001a` 表示 I2C4、地址 0x1a | 唯一 Source pad，格式 `SGBRG10_1X10/3864x2192` |
+| `rockchip-csi2-dphy0` | RK3568 的 MIPI D-PHY 接收子设备 | pad0 Sink 与 Sensor 相连；pad1 Source 与 `rkisp-csi-subdev` 相连；前后仍为 RAW10 |
+| `rkisp-csi-subdev` | RKISP 内部的 CSI 输入子设备，承接 D-PHY 输出的 RAW 数据 | pad0 Sink 收 RAW10，pad1 Source 送 `rkisp-isp-subdev` |
+| `rkisp-isp-subdev` | ISP 图像处理子设备 | pad0 收 `SGBRG10`；pad2 输出 `YUYV8/3840x2160` |
+| `rkisp_mainpath` | ISP 主输出视频节点 | 对应 `/dev/video0` |
+
+### 5.3 格式为何改变，以及当前证据的边界
+
+```text
+Sensor / D-PHY / rkisp-csi-subdev：仍是 SGBRG10 RAW
+rkisp-isp-subdev：接收 RAW，裁剪 (12,16)/3840x2160 并进行 ISP 处理
+rkisp_mainpath (/dev/video0)：得到 YUYV8/3840x2160
+```
+
+`/dev/video0` 不是 DTS 或 Sensor 直接创建，而是 RKISP 驱动注册的主输出 Video Node。
+
+`[ENABLED]`、pad 和 format 证明拓扑已建立、格式已协商；**它们本身不等于实时帧一定正常**。真正证明出图还要有成功 `STREAMON`/抓帧及无 MIPI/CSI 错误等证据。
+
 ## 6. 源码：D-PHY 与 CSI 驱动如何初始化
+
+从现在起不再一次看整条链路，而是一个节点一个闭环：
+
+```text
+原理图：它接哪几根线？
+→ DTS：哪个节点 / endpoint 声明它？
+→ probe：哪个驱动创建它？
+→ Media Graph：对应哪个 entity、哪些 pad/link？
+→ 流媒体：启动时它调用谁、出错时看什么日志？
+```
+
+第一个节点是 `rockchip-csi2-dphy0`。当前 SDK 已定位到：
+
+```text
+drivers/phy/rockchip/phy-rockchip-csi2-dphy.c
+  rockchip_csi2_dphy_probe()          创建名为 rockchip-csi2-dphy0 的 V4L2 subdev
+  rockchip_csi2dphy_media_init()      创建 1 个 Sink + 1 个 Source pad，解析 DTS endpoint
+  v4l2_async_subdev_notifier_register() 等待并绑定远端 Sensor
+
+drivers/media/platform/rockchip/isp/csi.c
+  rkisp_register_csi_subdev()         创建 rkisp-csi-subdev，并注册其 Sink/Source pad
+```
+
+本轮源码学习只回答两个问题：**为什么 `rockchip-csi2-dphy0` 会出现在 `media-ctl -p` 中？它又如何从 DTS 找到并绑定 IMX415？**
 
 后续将追踪：
 

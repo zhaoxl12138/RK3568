@@ -1,0 +1,1251 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IMX415 三层驱动调用流程</title>
+<link rel="stylesheet" href="../00-首页/学习驾驶舱/site.css?v=357a578eb6">
+<script defer src="../00-首页/学习驾驶舱/generated/vault-data.js?v=357a578eb6"></script>
+<script defer src="../00-首页/学习驾驶舱/site.js?v=357a578eb6"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg:#080c14;
+    --surface:rgba(255,255,255,0.025);
+    --surface-strong:rgba(255,255,255,0.05);
+    --border:rgba(255,255,255,0.08);
+    --text:#c8ccd4;
+    --dim:#8291a1;
+    --bright:#eef2f7;
+    --blue:#42a5f5;
+    --purple:#8b6cff;
+    --green:#66bb6a;
+    --orange:#ffa726;
+    --cyan:#26c6da;
+    --red:#ef5350;
+  }
+
+  * { box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body {
+    margin:0;
+    font-family:'Inter','Noto Sans SC',sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    line-height:1.7;
+  }
+
+  code {
+    font-family:'JetBrains Mono',monospace;
+    color:#d8e7ff;
+  }
+
+  .hero {
+    padding:56px 24px 34px;
+    text-align:center;
+    background:
+      radial-gradient(circle at 50% -20%, rgba(66,165,245,0.22), transparent 42%),
+      linear-gradient(180deg, rgba(18,28,54,0.94), rgba(8,12,20,1));
+    border-bottom:1px solid var(--border);
+  }
+
+  .hero h1 {
+    margin:0;
+    color:var(--bright);
+    font-size:clamp(1.8rem,4vw,2.5rem);
+    letter-spacing:-0.03em;
+  }
+
+  .hero h1 span {
+    background:linear-gradient(135deg,var(--blue),var(--purple));
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    background-clip:text;
+  }
+
+  .hero .sub {
+    max-width:900px;
+    margin:12px auto 0;
+    color:#a9b8c7;
+  }
+
+  .hero-links {
+    display:flex;
+    justify-content:center;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-top:20px;
+  }
+
+  .hero-links a {
+    color:#d6e6ff;
+    text-decoration:none;
+    border:1px solid rgba(124,77,255,0.28);
+    background:rgba(124,77,255,0.09);
+    border-radius:999px;
+    padding:8px 13px;
+    font-size:0.85rem;
+  }
+
+  .container {
+    width:min(1680px,100%);
+    margin:0 auto;
+    padding:32px 24px 64px;
+  }
+
+  .memory-line {
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:14px;
+    margin-bottom:30px;
+  }
+
+  .memory-card {
+    padding:18px;
+    border:1px solid var(--border);
+    border-radius:18px;
+    background:var(--surface);
+  }
+
+  .memory-card .role {
+    font-size:0.76rem;
+    font-weight:700;
+    letter-spacing:0.06em;
+    margin-bottom:8px;
+  }
+
+  .memory-card h2 {
+    margin:0 0 8px;
+    color:var(--bright);
+    font-size:1.06rem;
+  }
+
+  .memory-card p {
+    margin:0;
+    color:#aebdca;
+    font-size:0.91rem;
+  }
+
+  .term-grid {
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:12px;
+  }
+
+  .term-card {
+    padding:16px;
+    border:1px solid var(--border);
+    border-radius:16px;
+    background:var(--surface);
+  }
+
+  .term-card h3 { margin:0 0 7px; color:var(--bright); font-size:0.96rem; }
+  .term-card p { margin:0; color:#aebdca; font-size:0.86rem; }
+
+  .role-core { color:#90caf9; }
+  .role-i2c { color:#80cbc4; }
+  .role-sensor { color:#ffcc80; }
+
+  .section-title {
+    margin:36px 0 16px;
+    padding-left:14px;
+    border-left:3px solid var(--purple);
+    color:var(--bright);
+    font-size:1.22rem;
+    font-weight:700;
+  }
+
+  .overview-shell {
+    border:1px solid var(--border);
+    border-radius:24px;
+    background:var(--surface);
+    overflow:hidden;
+  }
+
+  .overview-toolbar {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+    padding:15px 18px;
+    border-bottom:1px solid var(--border);
+    background:rgba(255,255,255,0.018);
+  }
+
+  .overview-toolbar .overview-hint {
+    color:#a5b5c4;
+    font-size:0.88rem;
+  }
+
+  .diagram-tools {
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+
+  .diagram-tool {
+    border:1px solid var(--border);
+    background:rgba(255,255,255,0.03);
+    color:#d0dbe5;
+    border-radius:10px;
+    padding:7px 11px;
+    font:inherit;
+    font-size:0.8rem;
+    cursor:pointer;
+  }
+
+  .diagram-tool:hover {
+    border-color:rgba(66,165,245,0.45);
+    background:rgba(66,165,245,0.1);
+  }
+
+  .diagram-viewport {
+    overflow:visible;
+    padding:18px;
+    background:
+      linear-gradient(rgba(255,255,255,0.018) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(255,255,255,0.018) 1px,transparent 1px);
+    background-size:28px 28px;
+  }
+
+  .architecture-svg {
+    display:block;
+    width:100%;
+    height:auto;
+    margin:0 auto;
+  }
+
+  .architecture-svg .lane-bg {
+    fill:rgba(255,255,255,0.018);
+    stroke:rgba(255,255,255,0.08);
+    stroke-width:1.5;
+  }
+
+  .architecture-svg .lane-core-bg { fill:rgba(66,165,245,0.035); }
+  .architecture-svg .lane-i2c-bg { fill:rgba(38,198,218,0.035); }
+  .architecture-svg .lane-sensor-bg { fill:rgba(255,167,38,0.035); }
+
+  .architecture-svg .lane-title {
+    fill:#eff4f8;
+    font-size:21px;
+    font-weight:700;
+    text-anchor:middle;
+  }
+
+  .architecture-svg .lane-subtitle {
+    fill:#8293a3;
+    font-size:13px;
+    text-anchor:middle;
+  }
+
+  .architecture-svg .node-box {
+    fill:#101722;
+    stroke:rgba(255,255,255,0.16);
+    stroke-width:1.4;
+    rx:12;
+  }
+
+  .architecture-svg .node-core-box { fill:#101d2b; stroke:rgba(66,165,245,0.48); }
+  .architecture-svg .node-i2c-box { fill:#0d2227; stroke:rgba(38,198,218,0.48); }
+  .architecture-svg .node-sensor-box { fill:#251c12; stroke:rgba(255,167,38,0.5); }
+  .architecture-svg .node-bus-box { fill:#17162b; stroke:rgba(139,108,255,0.58); stroke-width:2; }
+
+  .architecture-svg .node-title {
+    fill:#edf2f7;
+    font-family:'JetBrains Mono',monospace;
+    font-size:16px;
+    font-weight:500;
+    text-anchor:middle;
+  }
+
+  .architecture-svg .node-sub {
+    fill:#9eafbf;
+    font-size:13px;
+    text-anchor:middle;
+  }
+
+  .architecture-svg .edge {
+    fill:none;
+    stroke:#71869a;
+    stroke-width:2;
+    marker-end:url(#arrow);
+  }
+
+  .architecture-svg .edge-dashed {
+    fill:none;
+    stroke:#726b98;
+    stroke-width:1.8;
+    stroke-dasharray:7 6;
+    marker-end:url(#arrow-purple);
+  }
+
+  .architecture-svg .edge-label {
+    fill:#aebccb;
+    font-size:12px;
+    text-anchor:middle;
+  }
+
+  .architecture-svg .decision {
+    fill:#181828;
+    stroke:rgba(139,108,255,0.65);
+    stroke-width:2;
+  }
+
+  .architecture-svg .decision-text {
+    fill:#eef2f7;
+    font-size:15px;
+    font-weight:600;
+    text-anchor:middle;
+  }
+
+  .overview-legend {
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:12px;
+    padding:16px 18px 18px;
+    border-top:1px solid var(--border);
+  }
+
+  .overview-legend div {
+    color:#9eafbf;
+    font-size:0.84rem;
+  }
+
+  .overview-legend strong {
+    display:block;
+    margin-bottom:3px;
+    color:var(--bright);
+  }
+
+  .flow-shell {
+    border:1px solid var(--border);
+    border-radius:24px;
+    background:var(--surface);
+    overflow:hidden;
+  }
+
+  .flow-toolbar {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:12px;
+    padding:16px 18px;
+    border-bottom:1px solid var(--border);
+    background:rgba(255,255,255,0.018);
+  }
+
+  .flow-toolbar .hint {
+    color:#9caebe;
+    font-size:0.88rem;
+  }
+
+  .step-controls {
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+
+  .step-control {
+    border:1px solid var(--border);
+    background:rgba(255,255,255,0.025);
+    color:#bdc9d5;
+    border-radius:999px;
+    padding:7px 12px;
+    cursor:pointer;
+    font:inherit;
+    font-size:0.82rem;
+  }
+
+  .step-control:hover,
+  .step-control.active {
+    border-color:rgba(66,165,245,0.5);
+    color:#edf6ff;
+    background:rgba(66,165,245,0.13);
+  }
+
+  .flow-scroll {
+    overflow-x:auto;
+    padding:22px;
+  }
+
+  .flow-board {
+    min-width:1080px;
+  }
+
+  .lane-heads,
+  .flow-step {
+    display:grid;
+    grid-template-columns:72px repeat(3,minmax(0,1fr));
+    gap:12px;
+  }
+
+  .lane-heads {
+    margin-bottom:12px;
+  }
+
+  .lane-head {
+    padding:13px 14px;
+    border-radius:14px;
+    border:1px solid var(--border);
+    text-align:center;
+  }
+
+  .lane-head strong {
+    display:block;
+    color:var(--bright);
+    font-size:0.98rem;
+  }
+
+  .lane-head span {
+    color:#94a6b6;
+    font-size:0.76rem;
+  }
+
+  .lane-core { background:rgba(66,165,245,0.08); }
+  .lane-i2c { background:rgba(38,198,218,0.08); }
+  .lane-sensor { background:rgba(255,167,38,0.08); }
+
+  .flow-step {
+    position:relative;
+    align-items:stretch;
+    padding:12px 0;
+    border-top:1px solid rgba(255,255,255,0.045);
+    transition:opacity 0.2s, background 0.2s;
+  }
+
+  .flow-step:first-of-type { border-top:0; }
+  .flow-step.muted { opacity:0.28; }
+  .flow-step.focused {
+    background:linear-gradient(90deg,transparent,rgba(124,77,255,0.055),transparent);
+  }
+
+  .step-index {
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    color:#718293;
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.72rem;
+  }
+
+  .step-index strong {
+    display:grid;
+    place-items:center;
+    width:34px;
+    height:34px;
+    border-radius:50%;
+    margin-bottom:6px;
+    color:#d8e7ff;
+    border:1px solid rgba(124,77,255,0.35);
+    background:rgba(124,77,255,0.12);
+    font-size:0.86rem;
+  }
+
+  .flow-cell {
+    position:relative;
+    min-height:112px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .node {
+    width:100%;
+    min-height:94px;
+    border:1px solid var(--border);
+    border-radius:15px;
+    background:rgba(255,255,255,0.025);
+    color:var(--text);
+    padding:14px 16px;
+    text-align:left;
+    cursor:pointer;
+    transition:transform 0.18s,border-color 0.18s,background 0.18s;
+    font:inherit;
+  }
+
+  .node:hover,
+  .node.active {
+    transform:translateY(-2px);
+    border-color:rgba(255,255,255,0.22);
+    background:rgba(255,255,255,0.055);
+  }
+
+  .node.active {
+    box-shadow:0 0 0 2px rgba(66,165,245,0.15);
+  }
+
+  .node .owner {
+    display:block;
+    margin-bottom:5px;
+    font-size:0.7rem;
+    font-weight:700;
+    letter-spacing:0.05em;
+  }
+
+  .node .fn {
+    display:block;
+    color:#f0f4f8;
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.85rem;
+    line-height:1.45;
+  }
+
+  .node .plain {
+    display:block;
+    margin-top:6px;
+    color:#9fb0bf;
+    font-size:0.8rem;
+  }
+
+  .node-core { border-color:rgba(66,165,245,0.24); }
+  .node-core .owner { color:#90caf9; }
+  .node-i2c { border-color:rgba(38,198,218,0.25); }
+  .node-i2c .owner { color:#80deea; }
+  .node-sensor { border-color:rgba(255,167,38,0.25); }
+  .node-sensor .owner { color:#ffcc80; }
+
+  .empty {
+    width:100%;
+    min-height:94px;
+    border:1px dashed rgba(255,255,255,0.045);
+    border-radius:15px;
+    display:grid;
+    place-items:center;
+    color:#465463;
+    font-size:0.76rem;
+  }
+
+  .direction {
+    position:absolute;
+    inset:auto -18px auto auto;
+    z-index:2;
+    color:#7f91a3;
+    font-family:'JetBrains Mono',monospace;
+    font-size:1.1rem;
+    pointer-events:none;
+  }
+
+  .direction.left {
+    inset:auto auto auto -18px;
+  }
+
+  .result-strip {
+    margin-top:14px;
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:12px;
+  }
+
+  .result {
+    padding:14px 16px;
+    border-radius:14px;
+    border:1px solid var(--border);
+    background:rgba(255,255,255,0.02);
+    font-size:0.86rem;
+  }
+
+  .result strong {
+    display:block;
+    margin-bottom:5px;
+    color:var(--bright);
+  }
+
+  .detail-panel {
+    margin-top:16px;
+    padding:20px;
+    border-radius:18px;
+    border:1px solid rgba(66,165,245,0.2);
+    background:linear-gradient(135deg,rgba(66,165,245,0.08),rgba(124,77,255,0.06));
+  }
+
+  .detail-panel .detail-kicker {
+    color:#90caf9;
+    font-size:0.74rem;
+    font-weight:700;
+    letter-spacing:0.07em;
+  }
+
+  .detail-panel h3 {
+    margin:5px 0 8px;
+    color:var(--bright);
+    font-family:'JetBrains Mono',monospace;
+    font-size:1rem;
+  }
+
+  .detail-panel p {
+    margin:0;
+    color:#bdcbd8;
+    font-size:0.91rem;
+  }
+
+  .detail-chain {
+    margin-top:10px;
+    color:#91a5b7;
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.8rem;
+  }
+
+  .probe-grid {
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:16px;
+  }
+
+  .probe-card {
+    padding:20px;
+    border:1px solid var(--border);
+    border-radius:18px;
+    background:var(--surface);
+  }
+
+  .probe-card .tag {
+    display:inline-block;
+    padding:4px 9px;
+    border-radius:999px;
+    font-size:0.72rem;
+    font-weight:700;
+    margin-bottom:10px;
+  }
+
+  .tag-i2c { color:#80deea; background:rgba(38,198,218,0.1); }
+  .tag-sensor { color:#ffcc80; background:rgba(255,167,38,0.1); }
+
+  .probe-card h3 {
+    margin:0 0 10px;
+    color:var(--bright);
+    font-family:'JetBrains Mono',monospace;
+    font-size:1rem;
+  }
+
+  .probe-card ul {
+    margin:0;
+    padding-left:20px;
+    color:#aebdca;
+    font-size:0.9rem;
+  }
+
+  .probe-card li + li { margin-top:7px; }
+
+  .plain-story {
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:12px;
+  }
+
+  .story-step {
+    padding:17px;
+    border:1px solid var(--border);
+    border-radius:16px;
+    background:var(--surface);
+  }
+
+  .story-step .n {
+    color:var(--purple);
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.74rem;
+    font-weight:700;
+  }
+
+  .story-step strong {
+    display:block;
+    margin:7px 0 5px;
+    color:var(--bright);
+  }
+
+  .story-step p {
+    margin:0;
+    color:#9fb0bf;
+    font-size:0.86rem;
+  }
+
+  .final-memory {
+    margin-top:26px;
+    padding:20px;
+    text-align:center;
+    border:1px solid rgba(102,187,106,0.22);
+    border-radius:18px;
+    background:rgba(102,187,106,0.07);
+    color:#cce4d0;
+  }
+
+  .footer {
+    margin-top:34px;
+    padding-top:20px;
+    border-top:1px solid var(--border);
+    text-align:center;
+    color:#718293;
+    font-size:0.84rem;
+  }
+
+  @media (max-width:900px) {
+    .memory-line,
+    .plain-story,
+    .term-grid { grid-template-columns:1fr 1fr; }
+    .probe-grid { grid-template-columns:1fr; }
+  }
+
+  @media (max-width:620px) {
+    .hero { padding:42px 18px 28px; }
+    .container { padding:24px 14px 50px; }
+    .memory-line,
+    .plain-story,
+    .term-grid,
+    .result-strip,
+    .overview-legend { grid-template-columns:1fr; }
+    .flow-scroll { padding:14px; }
+  }
+</style>
+</head>
+<body class="site-nav-offset">
+  <a class="skip-link" href="#main-content">跳到主要内容</a>
+  <main id="main-content">
+    <header class="hero">
+      <h1>IMX415 <span>三层驱动调用流程</span></h1>
+      <p class="sub">看懂驱动怎样先注册、DTS 怎样创建 i2c_client，以及 Linux 通用驱动模型、I2C Core 和 IMX415 驱动怎样交接到 imx415_probe()。</p>
+      <nav class="site-nav" data-site-nav aria-label="全站导航"><a class="site-nav__brand" href="../00-首页/学习驾驶舱/index.html"><span>RK3568</span><strong>Camera 学习站</strong></a><div class="site-nav__links"><a href="../00-首页/学习驾驶舱/index.html" data-nav-key="home">首页</a><a href="../00-首页/学习驾驶舱/pages/notes/06-任务--01-下一步任务看板.html" data-nav-key="task">当前任务</a><a href="../00-首页/学习驾驶舱/pages/learning-route.html" data-nav-key="route">学习路线</a><a href="../00-首页/学习驾驶舱/pages/system-map.html" data-nav-key="system">系统地图</a><a href="10-Phase0-可视化总入口.html" data-nav-key="phase0" aria-current="page">Phase0</a><a href="../00-首页/学习驾驶舱/pages/notes.html" data-nav-key="notes">专项笔记</a><a href="../00-首页/学习驾驶舱/pages/evidence.html" data-nav-key="evidence">实验依据</a></div><div class="site-nav__tools"><a class="site-nav__stage" href="../00-首页/学习驾驶舱/pages/learning-route.html#stage-2" title="当前学习阶段">阶段 2 MIPI D-PHY 与 CSI-2</a><details class="site-nav__more"><summary>更多</summary><div class="site-nav__more-panel"><a href="../00-首页/学习驾驶舱/pages/project.html" data-nav-key="project">项目总览</a><a href="../00-首页/学习驾驶舱/pages/environment.html" data-nav-key="environment">开发环境</a><a href="../00-首页/学习驾驶舱/pages/archive.html" data-nav-key="archive">归档</a><a href="obsidian://open?vault=RK3568&amp;file=00-%E9%A6%96%E9%A1%B5%2F00-RK3568%E5%AD%A6%E4%B9%A0%E4%B8%BB%E5%85%A5%E5%8F%A3">在 Obsidian 中打开</a></div></details></div></nav><div class="context-nav" aria-label="IMX415 学习上下文"><strong>IMX415 专项</strong><a href="./10-Phase0-可视化总入口.html">← Phase0 总入口</a><a href="19-IMX415-v4l2-subdev注册与开流.html">继续：V4L2 subdev →</a><a href="../00-首页/学习驾驶舱/pages/notes/06-任务--Camera驱动第1章-IMX415-Sensor与驱动.html">源码对照笔记 →</a></div>
+    </header>
+
+    <div class="container">
+      <section class="memory-line" aria-label="三个模块角色">
+        <article class="memory-card">
+          <div class="role role-core">模块 1 · 管理员</div>
+          <h2>Linux 通用驱动模型</h2>
+          <p>保管所有 device 和 driver，发现双方都在时安排匹配和绑定；它不懂具体 I2C 规则。</p>
+        </article>
+        <article class="memory-card">
+          <div class="role role-i2c">模块 2 · 中介 / 翻译员</div>
+          <h2>I2C Core</h2>
+          <p>I2C adapter 注册时，由 OF 辅助代码解析 DTS 子节点并创建 i2c_client；I2C Core 提供 match、probe、remove 规则。client 只是设备对象，不是驱动。</p>
+        </article>
+        <article class="memory-card">
+          <div class="role role-sensor">模块 3 · 真正干活的人</div>
+          <h2>IMX415 驱动</h2>
+          <p>获取时钟和 GPIO、执行上电时序、读取芯片 ID，并注册 V4L2 subdev。</p>
+        </article>
+      </section>
+
+      <h2 class="section-title">本页名词定位：只讲 IMX415 与 I2C 驱动匹配</h2>
+      <section class="term-grid" aria-label="IMX415 与 I2C 名词解释">
+        <article class="term-card"><h3>IMX415</h3><p>外部硬件 Sensor。上电并经过 I2C 配置后，将光转换为 RAW10；本页的 <code>imx415_probe()</code> 负责让它先被识别并注册为 V4L2 subdev。</p></article>
+        <article class="term-card"><h3>I2C Core</h3><p>Linux 内核的 I2C 子系统，不是 Sensor 驱动。它解析 I2C4 下的 DTS、创建 <code>i2c_client</code>，并提供 match / probe / remove 规则。</p></article>
+        <article class="term-card"><h3><code>i2c_client</code></h3><p>内核中的 I2C 设备对象。本板的 <code>4-001a-1</code> 表示 I2C4、地址 <code>0x1a</code>；它是“设备档案”，不是驱动。</p></article>
+        <article class="term-card"><h3><code>compatible</code></h3><p>DTS 中的硬件型号标记，例如 <code>sony,imx415</code>。I2C Core 用它与驱动的 <code>imx415_of_match[]</code> 比较，决定是否绑定。</p></article>
+        <article class="term-card"><h3>Linux 通用驱动模型</h3><p>内核通用的 device / driver 管理框架。它不懂 IMX415，也不懂 I2C 细节；它只负责在设备和驱动就绪后发起匹配和 probe。</p></article>
+        <article class="term-card"><h3>V4L2 subdev</h3><p>内核中的媒体功能模块对象。Sensor 注册成 subdev 后，才能被后续 D-PHY、CSI、RKISP 的 Media Graph 发现和绑定；它还不是 <code>/dev/video0</code>。</p></article>
+      </section>
+
+      <h2 class="section-title">匹配开始前：谁决定驱动是否注册</h2>
+      <section class="probe-grid" aria-label="驱动注册与设备创建的两个独立起点">
+        <article class="probe-card">
+          <div class="tag tag-sensor">起点 A · 驱动路径</div>
+          <h3>内核配置 / 模块加载</h3>
+          <ul>
+            <li><code>CONFIG_VIDEO_IMX415=y</code>：编进内核，开机注册驱动。</li>
+            <li><code>=m</code>：生成 <code>imx415.ko</code>，模块加载后注册。</li>
+            <li>未启用：驱动不参与编译，不可能进入匹配。</li>
+          </ul>
+        </article>
+        <article class="probe-card">
+          <div class="tag tag-i2c">起点 B · 设备路径</div>
+          <h3>DTS / i2c_client</h3>
+          <ul>
+            <li><code>&amp;i2c4</code> 和 <code>reg=&lt;0x1a&gt;</code> 创建 I2C 设备档案。</li>
+            <li><code>client-&gt;dev.of_node</code> 指向同一个 <code>imx415@1a</code> 节点。</li>
+            <li>匹配时才拿 DTS 的 compatible 与驱动支持表比较。</li>
+          </ul>
+        </article>
+      </section>
+      <div class="final-memory">
+        先记住：<strong>DTS 不负责挑选并注册内建驱动；配置决定哪些驱动存在，compatible 决定当前 client 与哪个驱动绑定。</strong>
+      </div>
+
+      <h2 class="section-title">完整三模块总图</h2>
+      <section class="overview-shell" aria-label="完整三模块函数调用总图">
+        <div class="overview-toolbar">
+          <div class="overview-hint">总图按页面宽度完整显示；需要更大时，直接使用浏览器的页面缩放。</div>
+          <div class="diagram-tools" role="group" aria-label="总图工具">
+            <button class="diagram-tool" type="button" id="copyChain">复制核心调用链</button>
+          </div>
+        </div>
+        <div class="diagram-viewport" id="diagramViewport">
+          <svg class="architecture-svg" id="architectureSvg" viewBox="0 0 1500 1210" role="img" aria-labelledby="diagramTitle diagramDesc">
+            <title id="diagramTitle">Linux 通用驱动模型、I2C Core 与 IMX415 驱动完整调用关系</title>
+            <desc id="diagramDesc">驱动注册与 I2C 设备创建是两条独立、先后不固定的路径；双方到齐后进入串行 match 和 probe，最终调用 imx415_probe。</desc>
+            <defs>
+              <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#71869a"></path>
+              </marker>
+              <marker id="arrow-purple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#726b98"></path>
+              </marker>
+            </defs>
+
+            <rect class="lane-bg lane-core-bg" x="20" y="18" width="480" height="1178" rx="22"></rect>
+            <rect class="lane-bg lane-i2c-bg" x="520" y="18" width="480" height="1178" rx="22"></rect>
+            <rect class="lane-bg lane-sensor-bg" x="1020" y="18" width="460" height="1178" rx="22"></rect>
+
+            <text class="lane-title" x="260" y="52">模块 1：Linux 通用驱动模型</text>
+            <text class="lane-subtitle" x="260" y="76">保管 device / driver，安排匹配与绑定</text>
+            <text class="lane-title" x="760" y="52">模块 2：I2C Core</text>
+            <text class="lane-subtitle" x="760" y="76">I2C 设备创建、match、probe、remove 规则</text>
+            <text class="lane-title" x="1250" y="52">模块 3：IMX415 驱动</text>
+            <text class="lane-subtitle" x="1250" y="76">声明能力并真正操作 Sensor</text>
+
+            <!-- 时序阅读说明 -->
+            <rect class="node-box node-bus-box" x="80" y="110" width="360" height="155"></rect>
+            <text class="node-title" x="260" y="142">先看时序：两段流程</text>
+            <text class="node-sub" x="260" y="174">① 汇合前：A / B 两条独立路径</text>
+            <text class="node-sub" x="260" y="199">不是要求两个线程同时执行</text>
+            <text class="node-sub" x="260" y="224">谁先到谁等待，谁后到谁触发匹配</text>
+            <text class="node-sub" x="260" y="249">② 汇合后：match → probe 串行执行</text>
+
+            <!-- IMX415 驱动注册路径 -->
+            <text class="edge-label" x="1250" y="100">起点 A：CONFIG=y / 模块加载</text>
+            <rect class="node-box node-sensor-box" x="1110" y="110" width="280" height="82"></rect>
+            <text class="node-title" x="1250" y="140">imx415_i2c_driver</text>
+            <text class="node-sub" x="1250" y="166">静态登记表：match / probe / remove</text>
+
+            <rect class="node-box node-sensor-box" x="1120" y="225" width="260" height="76"></rect>
+            <text class="node-title" x="1250" y="254">sensor_mod_init()</text>
+            <text class="node-sub" x="1250" y="278">使用 &amp;imx415_i2c_driver</text>
+            <path class="edge-dashed" d="M1250 192 L1250 225"></path>
+            <text class="edge-label" x="1320" y="212">数据依赖</text>
+
+            <text class="edge-label" x="645" y="215">驱动注册分支</text>
+            <rect class="node-box node-i2c-box" x="540" y="225" width="210" height="76"></rect>
+            <text class="node-title" x="645" y="254">i2c_add_driver()</text>
+            <text class="node-sub" x="645" y="278">i2c_register_driver()</text>
+            <path class="edge" d="M1120 263 C970 263 890 263 750 263"></path>
+
+            <rect class="node-box node-i2c-box" x="540" y="340" width="210" height="76"></rect>
+            <text class="node-title" x="645" y="369">driver.bus =</text>
+            <text class="node-sub" x="645" y="393">&amp;i2c_bus_type</text>
+            <path class="edge" d="M645 301 L645 340"></path>
+
+            <rect class="node-box node-core-box" x="40" y="470" width="210" height="76"></rect>
+            <text class="node-title" x="145" y="499">driver_register()</text>
+            <text class="node-sub" x="145" y="523">登记 device_driver</text>
+            <text class="edge-label" x="145" y="458">驱动对象登记</text>
+            <path class="edge" d="M540 378 C430 378 360 430 145 430 L145 470"></path>
+
+            <!-- I2C 设备创建路径 -->
+            <text class="edge-label" x="875" y="95">起点 B：I2C4 adapter 注册</text>
+            <rect class="node-box node-i2c-box" x="770" y="105" width="210" height="82"></rect>
+            <text class="node-title" x="875" y="135">OF 辅助代码解析 DTS</text>
+            <text class="node-sub" x="875" y="161">of_i2c_register_devices()</text>
+
+            <text class="edge-label" x="875" y="215">设备创建分支</text>
+            <rect class="node-box node-i2c-box" x="770" y="340" width="210" height="76"></rect>
+            <text class="node-title" x="875" y="369">i2c_new_device()</text>
+            <text class="node-sub" x="875" y="393">创建 client：4-001a-1</text>
+            <path class="edge" d="M875 187 L875 340"></path>
+
+            <rect class="node-box node-core-box" x="270" y="470" width="210" height="76"></rect>
+            <text class="node-title" x="375" y="499">device_register()</text>
+            <text class="node-sub" x="375" y="523">登记 struct device</text>
+            <text class="edge-label" x="375" y="458">设备对象登记</text>
+            <path class="edge" d="M770 378 C650 378 560 430 375 430 L375 470"></path>
+
+            <!-- i2c_bus_type 规则表，不是主调用步骤 -->
+            <rect class="node-box node-bus-box" x="610" y="550" width="300" height="116"></rect>
+            <text class="node-title" x="760" y="579">i2c_bus_type（规则表）</text>
+            <text class="node-sub" x="760" y="605">match = i2c_device_match</text>
+            <text class="node-sub" x="760" y="628">probe = i2c_device_probe</text>
+            <text class="node-sub" x="760" y="651">remove = i2c_device_remove</text>
+            <path class="edge-dashed" d="M645 416 C645 475 675 510 690 550"></path>
+            <path class="edge-dashed" d="M875 416 C875 475 845 510 830 550"></path>
+            <text class="edge-label" x="760" y="480">两边都指向同一个规则表（不是函数调用）</text>
+            <text class="edge-label" x="650" y="530">driver.bus</text>
+            <text class="edge-label" x="870" y="530">client.dev.bus</text>
+
+            <!-- 通用模型汇合与匹配 -->
+            <rect class="node-box node-core-box" x="120" y="665" width="300" height="76"></rect>
+            <text class="node-title" x="270" y="694">总线中同时有设备和驱动</text>
+            <text class="node-sub" x="270" y="718">汇合点：谁后到，谁触发匹配</text>
+            <path class="edge" d="M145 546 C145 600 215 625 230 665"></path>
+            <path class="edge" d="M375 546 C375 600 325 625 310 665"></path>
+
+            <text class="edge-label" x="500" y="770">从这里开始：串行 match → probe</text>
+            <rect class="node-box node-core-box" x="120" y="785" width="300" height="76"></rect>
+            <text class="node-title" x="270" y="814">driver_match_device()</text>
+            <text class="node-sub" x="270" y="838">调用所属总线的 match</text>
+            <path class="edge" d="M270 741 L270 785"></path>
+
+            <rect class="node-box node-i2c-box" x="610" y="785" width="300" height="76"></rect>
+            <text class="node-title" x="760" y="814">i2c_device_match()</text>
+            <text class="node-sub" x="760" y="838">比较 compatible / I2C ID</text>
+            <path class="edge" d="M420 823 L610 823"></path>
+            <path class="edge-dashed" d="M760 666 L760 785"></path>
+            <text class="edge-label" x="850" y="738">提供 match 规则</text>
+
+            <polygon class="decision" points="270,900 350,958 270,1016 190,958"></polygon>
+            <text class="decision-text" x="270" y="963">匹配成功？</text>
+            <path class="edge" d="M610 823 C500 823 400 880 330 915"></path>
+
+            <rect class="node-box node-core-box" x="45" y="1050" width="250" height="70"></rect>
+            <text class="node-title" x="170" y="1079">driver_probe_device()</text>
+            <text class="node-sub" x="170" y="1103">是：准备绑定</text>
+            <path class="edge" d="M225 1000 C190 1018 170 1030 170 1050"></path>
+            <text class="edge-label" x="178" y="1014">是</text>
+
+            <rect class="node-box node-core-box" x="320" y="1050" width="150" height="70"></rect>
+            <text class="node-title" x="395" y="1079">不绑定</text>
+            <text class="node-sub" x="395" y="1103">继续等待</text>
+            <path class="edge" d="M315 1000 C350 1022 395 1030 395 1050"></path>
+            <text class="edge-label" x="355" y="1014">否</text>
+
+            <rect class="node-box node-core-box" x="45" y="1140" width="250" height="54"></rect>
+            <text class="node-title" x="170" y="1174">really_probe()</text>
+            <path class="edge" d="M170 1120 L170 1140"></path>
+
+            <rect class="node-box node-i2c-box" x="620" y="1038" width="280" height="76"></rect>
+            <text class="node-title" x="760" y="1067">i2c_device_probe(dev)</text>
+            <text class="node-sub" x="760" y="1091">device 转成 i2c_client</text>
+            <path class="edge-dashed" d="M910 608 C980 700 980 970 900 1076"></path>
+            <text class="edge-label" x="975" y="900">i2c_bus_type.probe</text>
+            <path class="edge" d="M295 1167 C460 1167 500 1076 620 1076"></path>
+
+            <rect class="node-box node-i2c-box" x="650" y="1140" width="220" height="54"></rect>
+            <text class="node-title" x="760" y="1174">driver-&gt;probe(client, id)</text>
+            <path class="edge" d="M760 1114 L760 1140"></path>
+
+            <rect class="node-box node-sensor-box" x="1110" y="1125" width="280" height="69"></rect>
+            <text class="node-title" x="1250" y="1153">imx415_probe(client, id)</text>
+            <text class="node-sub" x="1250" y="1177">上电、读 0000e0、注册 subdev</text>
+            <path class="edge" d="M870 1167 L1110 1160"></path>
+          </svg>
+        </div>
+        <div class="overview-legend">
+          <div><strong>汇合前：逻辑独立</strong>驱动注册和设备创建先后不固定，但不表示必须由两个线程同时执行。</div>
+          <div><strong>规则提供者</strong><code>i2c_bus_type</code> 是 match、probe、remove 规则表，不是主调用链的一步。</div>
+          <div><strong>汇合后：串行调用</strong><code>match → really_probe → i2c_device_probe → imx415_probe</code>。</div>
+        </div>
+      </section>
+
+      <h2 class="section-title">四个阶段的调用流程</h2>
+      <section class="flow-shell" aria-label="三层函数调用流程">
+        <div class="flow-toolbar">
+          <div class="hint">点击阶段筛选，点击函数节点查看它收到什么、交给谁；窄屏可左右滑动查看三层。</div>
+          <div class="step-controls" role="group" aria-label="阶段筛选">
+            <button class="step-control active" type="button" data-filter="all">全部</button>
+            <button class="step-control" type="button" data-filter="1">1 注册驱动</button>
+            <button class="step-control" type="button" data-filter="2">2 创建设备</button>
+            <button class="step-control" type="button" data-filter="3">3 compatible 匹配</button>
+            <button class="step-control" type="button" data-filter="4">4 两级 probe</button>
+          </div>
+        </div>
+
+        <div class="flow-scroll">
+          <div class="flow-board">
+            <div class="lane-heads" aria-hidden="true">
+              <div></div>
+              <div class="lane-head lane-core"><strong>Linux 通用驱动模型</strong><span>管理 device / driver</span></div>
+              <div class="lane-head lane-i2c"><strong>I2C Core</strong><span>匹配规则与对象转换</span></div>
+              <div class="lane-head lane-sensor"><strong>IMX415 驱动</strong><span>操作真实 Sensor</span></div>
+            </div>
+
+            <div class="flow-step" data-step="1">
+              <div class="step-index"><strong>1</strong>注册驱动</div>
+              <div class="flow-cell">
+                <button class="node node-core" type="button" data-node="driver-register">
+                  <span class="owner">通用驱动模型</span>
+                  <span class="fn">driver_register()</span>
+                  <span class="plain">把驱动放进系统的 I2C 驱动集合</span>
+                </button>
+              </div>
+              <div class="flow-cell">
+                <span class="direction left" aria-hidden="true">←</span>
+                <button class="node node-i2c" type="button" data-node="i2c-register">
+                  <span class="owner">I2C Core</span>
+                  <span class="fn">i2c_add_driver()<br>i2c_register_driver()</span>
+                  <span class="plain">盖章：这是 I2C 驱动</span>
+                </button>
+              </div>
+              <div class="flow-cell">
+                <span class="direction left" aria-hidden="true">←</span>
+                <button class="node node-sensor active" type="button" data-node="sensor-init">
+                  <span class="owner">IMX415 驱动</span>
+                  <span class="fn">sensor_mod_init()</span>
+                  <span class="plain">提交 imx415_i2c_driver 登记表</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="flow-step" data-step="2">
+              <div class="step-index"><strong>2</strong>创建设备</div>
+              <div class="flow-cell">
+                <button class="node node-core" type="button" data-node="device-register">
+                  <span class="owner">通用驱动模型</span>
+                  <span class="fn">device_register()</span>
+                  <span class="plain">登记设备 4-001a-1</span>
+                </button>
+              </div>
+              <div class="flow-cell">
+                <span class="direction left" aria-hidden="true">←</span>
+                <button class="node node-i2c" type="button" data-node="new-device">
+                  <span class="owner">I2C Core</span>
+                  <span class="fn">of_i2c_register_devices()<br>i2c_new_device()</span>
+                  <span class="plain">解析 DTS 后创建 i2c_client</span>
+                </button>
+              </div>
+              <div class="flow-cell"><div class="empty">这一阶段不执行 Sensor 驱动代码</div></div>
+            </div>
+
+            <div class="flow-step" data-step="3">
+              <div class="step-index"><strong>3</strong>开始匹配</div>
+              <div class="flow-cell">
+                <button class="node node-core" type="button" data-node="driver-match">
+                  <span class="owner">通用驱动模型</span>
+                  <span class="fn">driver_match_device()</span>
+                  <span class="plain">询问 I2C Core：这两个对象配不配？</span>
+                </button>
+              </div>
+              <div class="flow-cell">
+                <span class="direction left" aria-hidden="true">←</span>
+                <button class="node node-i2c" type="button" data-node="i2c-match">
+                  <span class="owner">I2C Core</span>
+                  <span class="fn">i2c_bus_type.match<br>i2c_device_match()</span>
+                  <span class="plain">比较两个 sony,imx415</span>
+                </button>
+              </div>
+              <div class="flow-cell">
+                <button class="node node-sensor" type="button" data-node="match-table">
+                  <span class="owner">IMX415 驱动提供数据</span>
+                  <span class="fn">imx415_of_match[]</span>
+                  <span class="plain">声明支持 sony,imx415</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="flow-step" data-step="4">
+              <div class="step-index"><strong>4</strong>执行 probe</div>
+              <div class="flow-cell">
+                <button class="node node-core" type="button" data-node="really-probe">
+                  <span class="owner">通用驱动模型</span>
+                  <span class="fn">driver_probe_device()<br>really_probe()</span>
+                  <span class="plain">匹配成功，要求 I2C 总线开始 probe</span>
+                </button>
+              </div>
+              <div class="flow-cell">
+                <span class="direction" aria-hidden="true">→</span>
+                <button class="node node-i2c" type="button" data-node="i2c-probe">
+                  <span class="owner">I2C Core</span>
+                  <span class="fn">i2c_bus_type.probe<br>i2c_device_probe()</span>
+                  <span class="plain">device → i2c_client，再调用 driver-&gt;probe</span>
+                </button>
+              </div>
+              <div class="flow-cell">
+                <span class="direction left" aria-hidden="true">←</span>
+                <button class="node node-sensor" type="button" data-node="imx-probe">
+                  <span class="owner">IMX415 驱动</span>
+                  <span class="fn">imx415_probe(client, id)</span>
+                  <span class="plain">真正上电、读 ID、注册 subdev</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="result-strip">
+              <div class="result"><strong>通用模型得到</strong>device 与 driver 完成绑定</div>
+              <div class="result"><strong>I2C Core 完成</strong>匹配规则和对象类型转换</div>
+              <div class="result"><strong>IMX415 驱动证明</strong><code>Detected imx415 id 0000e0</code></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="detail-panel" aria-live="polite">
+        <div class="detail-kicker" id="detailOwner">IMX415 驱动 · 第 1 阶段</div>
+        <h3 id="detailTitle">sensor_mod_init()</h3>
+        <p id="detailText">它不直接操作 Sensor，只把 imx415_i2c_driver 交给 I2C Core。登记表中已经保存了 compatible、imx415_probe 和 imx415_remove。</p>
+        <div class="detail-chain" id="detailChain">交给：i2c_add_driver() → i2c_register_driver()</div>
+      </aside>
+
+      <h2 class="section-title">为什么有两个 probe</h2>
+      <section class="probe-grid">
+        <article class="probe-card">
+          <span class="tag tag-i2c">I2C Core 的 probe</span>
+          <h3>i2c_device_probe(dev)</h3>
+          <ul>
+            <li>接收通用的 <code>struct device *</code></li>
+            <li>转换成 <code>struct i2c_client *</code></li>
+            <li>找到具体 <code>struct i2c_driver</code></li>
+            <li>通过 <code>driver-&gt;probe(client, id)</code> 转交任务</li>
+          </ul>
+        </article>
+        <article class="probe-card">
+          <span class="tag tag-sensor">IMX415 的 probe</span>
+          <h3>imx415_probe(client, id)</h3>
+          <ul>
+            <li>读取 IMX415 的 DTS 属性</li>
+            <li>获取 MCLK、RESET、PDN 和电源</li>
+            <li>执行上电并通过 I2C 读取芯片 ID</li>
+            <li>注册 V4L2 subdev，等待 CSI/ISP 绑定</li>
+          </ul>
+        </article>
+      </section>
+
+      <h2 class="section-title">大白话走一遍</h2>
+      <section class="plain-story">
+        <article class="story-step">
+          <div class="n">01 · 登记员工</div>
+          <strong>IMX415 提交能力表</strong>
+          <p>配置为 y 或模块已加载后：“我会处理 sony,imx415，匹配后请调用 imx415_probe。”</p>
+        </article>
+        <article class="story-step">
+          <div class="n">02 · 登记机器</div>
+          <strong>DTS 产生 4-001a-1</strong>
+          <p>“I2C4 上有一台地址 0x1a、型号标记为 sony,imx415 的设备。”</p>
+        </article>
+        <article class="story-step">
+          <div class="n">03 · 中介核对</div>
+          <strong>I2C Core 比较 compatible</strong>
+          <p>设备和驱动都写着 sony,imx415，所以确认可以配对。</p>
+        </article>
+        <article class="story-step">
+          <div class="n">04 · 正式派工</div>
+          <strong>两级 probe 完成交接</strong>
+          <p>I2C Core 把通用 device 翻译成 client，再让 IMX415 驱动真正上电读 ID。</p>
+        </article>
+      </section>
+
+      <div class="final-memory">
+        最短记忆：<strong>配置决定驱动是否存在，DTS 创建 client，compatible 决定绑定谁；通用驱动模型调度，I2C Core 匹配和翻译，IMX415 驱动操作硬件。</strong>
+      </div>
+
+      <div class="footer">本页用于理解驱动模型职责；完整 DTS、原理图和板端证据请回到《RK3568 IMX415：B盘 SDK 源码对照》。</div>
+    </div>
+  </main>
+
+<script>
+  const copyChainButton = document.getElementById("copyChain");
+
+  copyChainButton.addEventListener("click", async () => {
+    const chain = [
+      "驱动路径：sensor_mod_init() → i2c_add_driver() → i2c_register_driver() → driver_register()",
+      "设备路径：of_i2c_register_devices() → i2c_new_device() → device_register()",
+      "匹配路径：driver_match_device() → i2c_device_match()",
+      "probe 路径：driver_probe_device() → really_probe() → i2c_device_probe() → imx415_probe()"
+    ].join("\n");
+    try {
+      await navigator.clipboard.writeText(chain);
+      copyChainButton.textContent = "已复制";
+      window.setTimeout(() => { copyChainButton.textContent = "复制核心调用链"; }, 1400);
+    } catch {
+      copyChainButton.textContent = "复制失败";
+      window.setTimeout(() => { copyChainButton.textContent = "复制核心调用链"; }, 1400);
+    }
+  });
+
+  const details = {
+    "sensor-init": {
+      owner:"IMX415 驱动 · 第 1 阶段",
+      title:"sensor_mod_init()",
+      text:"CONFIG_VIDEO_IMX415=y 时它随内核启动执行；=m 时要先加载模块。它不直接操作 Sensor，只把 imx415_i2c_driver 交给 I2C Core。",
+      chain:"交给：i2c_add_driver() → i2c_register_driver()"
+    },
+    "i2c-register": {
+      owner:"I2C Core · 第 1 阶段",
+      title:"i2c_register_driver()",
+      text:"给驱动标记 driver.bus = &i2c_bus_type，说明以后采用 I2C 的 match、probe、remove 规则。",
+      chain:"交给：driver_register(&driver->driver)"
+    },
+    "driver-register": {
+      owner:"Linux 通用驱动模型 · 第 1 阶段",
+      title:"driver_register()",
+      text:"把通用的 device_driver 放入 I2C 总线的驱动集合。如果已经有设备存在，注册过程中就可能立刻开始匹配。",
+      chain:"下一步：bus_add_driver() → driver_attach()"
+    },
+    "new-device": {
+      owner:"I2C Core · 第 2 阶段",
+      title:"i2c_new_device()",
+      text:"OF 辅助代码先解析 I2C4 下的 imx415@1a；i2c_new_device() 再根据解析结果创建 struct i2c_client。",
+      chain:"生成：adapter=I2C4，addr=0x1a，dev.of_node→imx415@1a"
+    },
+    "device-register": {
+      owner:"Linux 通用驱动模型 · 第 2 阶段",
+      title:"device_register()",
+      text:"登记 client 内嵌的 struct device，于是 sysfs 中出现 4-001a-1。这里只创建软件对象，还没有读取 Sensor ID。",
+      chain:"如果驱动已存在：bus_probe_device() → device_initial_probe()"
+    },
+    "driver-match": {
+      owner:"Linux 通用驱动模型 · 第 3 阶段",
+      title:"driver_match_device()",
+      text:"通用模型知道设备和驱动都属于 I2C，但它不懂 I2C 的匹配细节，所以调用 i2c_bus_type.match。",
+      chain:"进入：i2c_device_match(dev, drv)"
+    },
+    "i2c-match": {
+      owner:"I2C Core · 第 3 阶段",
+      title:"i2c_device_match()",
+      text:"优先用 OF 方式比较 DTS compatible 与驱动 of_match_table；相同返回 1，不同返回 0。",
+      chain:"本板结果：sony,imx415 == sony,imx415 → 匹配成功"
+    },
+    "match-table": {
+      owner:"IMX415 驱动提供的匹配数据",
+      title:"imx415_of_match[]",
+      text:"这不是芯片硬件中保存的数据，而是驱动作者写出的支持列表。",
+      chain:"关键项：{ .compatible = \"sony,imx415\" }"
+    },
+    "really-probe": {
+      owner:"Linux 通用驱动模型 · 第 4 阶段",
+      title:"really_probe()",
+      text:"匹配成功后准备绑定设备。因为 dev->bus 是 i2c_bus_type，所以它先调用 I2C Core 的总线级 probe。",
+      chain:"进入：dev->bus->probe(dev) → i2c_device_probe(dev)"
+    },
+    "i2c-probe": {
+      owner:"I2C Core · 第 4 阶段",
+      title:"i2c_device_probe(dev)",
+      text:"它是适配层：把通用 struct device 转成 struct i2c_client，再找到具体 i2c_driver 的 probe 函数。",
+      chain:"转交：driver->probe(client, id)"
+    },
+    "imx-probe": {
+      owner:"IMX415 驱动 · 第 4 阶段",
+      title:"imx415_probe(client, id)",
+      text:"这才是真正操作硬件的函数：读 DTS、拿资源、执行上电、读取 ID，并注册 V4L2 subdev。",
+      chain:"关键证据：Detected imx415 id 0000e0"
+    }
+  };
+
+  const nodeButtons = Array.from(document.querySelectorAll(".node"));
+  const stepRows = Array.from(document.querySelectorAll(".flow-step"));
+  const controls = Array.from(document.querySelectorAll(".step-control"));
+  const ownerEl = document.getElementById("detailOwner");
+  const titleEl = document.getElementById("detailTitle");
+  const textEl = document.getElementById("detailText");
+  const chainEl = document.getElementById("detailChain");
+
+  function selectNode(button) {
+    const detail = details[button.dataset.node];
+    if (!detail) return;
+    nodeButtons.forEach((item) => item.classList.toggle("active", item === button));
+    ownerEl.textContent = detail.owner;
+    titleEl.textContent = detail.title;
+    textEl.textContent = detail.text;
+    chainEl.textContent = detail.chain;
+  }
+
+  nodeButtons.forEach((button) => {
+    button.addEventListener("click", () => selectNode(button));
+  });
+
+  controls.forEach((control) => {
+    control.addEventListener("click", () => {
+      const filter = control.dataset.filter;
+      controls.forEach((item) => item.classList.toggle("active", item === control));
+      stepRows.forEach((row) => {
+        const focused = filter === "all" || row.dataset.step === filter;
+        row.classList.toggle("muted", !focused);
+        row.classList.toggle("focused", filter !== "all" && focused);
+      });
+      if (filter !== "all") {
+        const firstNode = document.querySelector(`.flow-step[data-step="${filter}"] .node`);
+        if (firstNode) selectNode(firstNode);
+      }
+    });
+  });
+</script>
+</body>
+</html>

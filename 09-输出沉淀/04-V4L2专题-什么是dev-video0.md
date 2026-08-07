@@ -61,6 +61,6 @@ RKISP 完成 ISP 处理后，通过 V4L2 框架把主采集路径暴露成 /dev/
 
 - [[V4L2命令行抓帧记录]]
 - [[01-概念索引]]
-- [[02-从零到Python MVP学习路线]]
+- [[Camera驱动求职第1周执行计划]]
 
 #V4L2 #Camera #RKISP #devvideo0

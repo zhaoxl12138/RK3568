@@ -37,9 +37,10 @@ function parseGeneratedAssignment(source) {
 test('homepage loads classic deferred data and site scripts for file://', async () => {
   const { html } = await dashboardSources();
   const scripts = scriptTags(html);
-  assert.deepEqual(scripts.map(({ src }) => src), [
+  assert.deepEqual(scripts.map(({ src }) => src.split('?', 1)[0]), [
     './generated/vault-data.js', './site.js', './app.js',
   ]);
+  assert.ok(scripts.every(({ src }) => /\?v=[a-f0-9]{10}$/u.test(src)));
   assert.ok(scripts.every(({ attributes }) => /\bdefer\b/u.test(attributes)));
   assert.ok(scripts.every(({ attributes }) => !/\btype\s*=\s*["']module["']/iu.test(attributes)));
   assert.doesNotMatch(html, /<script[^>]+type=["']module["']/iu);
@@ -49,10 +50,13 @@ test('homepage local shell assets resolve without requiring future pages', async
   const { html } = await dashboardSources();
   const existingTargets = [
     './styles.css', './site.css', './generated/vault-data.js', './site.js', './app.js',
-    '../../06-任务/01-下一步任务看板.md',
+    'pages/learning-route.html', '../../04-项目/17-DPHY-从DTS到MediaGraph.html',
   ];
   await Promise.all(existingTargets.map((target) => access(path.resolve(dashboardDir, target))));
-  for (const target of existingTargets) assert.match(html, new RegExp(`(?:src|href)=["']${target.replaceAll('.', '\\.').replaceAll('/', '\\/')}["']`, 'u'));
+  for (const target of existingTargets) {
+    const version = /\.(?:css|js)$/u.test(target) ? '(?:\\?v=[a-f0-9]{10})?' : '';
+    assert.match(html, new RegExp(`(?:src|href)=["']${target.replaceAll('.', '\\.').replaceAll('/', '\\/')}${version}["']`, 'u'));
+  }
 });
 
 test('app is classic-script syntax and avoids file protocol incompatible loading', async () => {
@@ -62,22 +66,22 @@ test('app is classic-script syntax and avoids file protocol incompatible loading
   assert.doesNotMatch(html, /<script[^>]+type=["']module["']/iu);
 });
 
-test('generated data syntax and Phase0 entrance contracts are present', async () => {
+test('generated data syntax and course cockpit contracts are present', async () => {
   const { generated, html } = await dashboardSources();
   const data = parseGeneratedAssignment(generated);
   assert.equal(typeof data.currentStage, 'string');
   assert.ok(Array.isArray(data.currentTasks));
-  assert.match(html, /RK3568\s+Phase0\s+可视化总入口/iu);
-  assert.match(html, /现在从这里开始/iu);
-  assert.match(html, /data-current-stage/iu);
-  assert.match(html, /data-current-task/iu);
-  assert.match(html, /推荐学习路径/iu);
-  assert.match(html, /重要内容/iu);
-  assert.match(html, /href=["'][^"']*06-任务[^"']*01-下一步任务看板\.md["']/iu);
-  for (const page of [
-    'learning-route', 'system-map', 'phase0', 'project',
-    'evidence', 'environment', 'notes', 'archive',
-  ]) assert.match(html, new RegExp(`pages/${page}\\.html`, 'iu'));
+  assert.match(html, /Camera 驱动[\s\S]*学习驾驶舱/iu);
+  assert.match(html, /现在学什么/iu);
+  assert.match(html, /data-course-current/iu);
+  assert.match(html, /data-course-objective/iu);
+  assert.match(html, /data-course-next/iu);
+  assert.match(html, /data-course-route/iu);
+  assert.match(html, /完整学习路线/iu);
+  assert.match(html, /需要时再查/iu);
+  for (const page of ['learning-route', 'phase0', 'evidence', 'environment', 'notes', 'archive']) {
+    assert.match(html, new RegExp(`pages/${page}\\.html`, 'iu'));
+  }
 });
 
 test('homepage exposes keyboard navigation contracts', async () => {
@@ -91,6 +95,6 @@ test('homepage exposes keyboard navigation contracts', async () => {
 test('homepage footer links back to the Obsidian main entry', async () => {
   const { html } = await dashboardSources();
   const footer = html.match(/<footer\b[\s\S]*?<\/footer>/iu)?.[0] ?? '';
-  assert.match(footer, /href=["']\.\.\/\.\.\/00-首页\/00-RK3568学习主入口\.md["']/iu);
-  assert.match(footer, /返回 Obsidian 主入口/iu);
+  assert.match(footer, /href=["']index\.html["']/iu);
+  assert.match(footer, /返回学习驾驶舱首页/iu);
 });

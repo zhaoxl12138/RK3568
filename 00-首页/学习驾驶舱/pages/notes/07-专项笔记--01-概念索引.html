@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>01-概念索引 · RK3568</title><link rel="stylesheet" href="../../site.css?v=357a578eb6"></head><body><div class="page-shell"><nav class="site-nav" data-site-nav aria-label="全站导航"><a class="site-nav__brand" href="../../index.html"><span>RK3568</span><strong>Camera 学习站</strong></a><div class="site-nav__links"><a href="../../index.html" data-nav-key="home">首页</a><a href="06-任务--01-下一步任务看板.html" data-nav-key="task">当前任务</a><a href="../learning-route.html" data-nav-key="route">学习路线</a><a href="../system-map.html" data-nav-key="system">系统地图</a><a href="../../../../04-项目/10-Phase0-可视化总入口.html" data-nav-key="phase0">Phase0</a><a href="../notes.html" data-nav-key="notes" aria-current="page">专项笔记</a><a href="../evidence.html" data-nav-key="evidence">实验依据</a></div><div class="site-nav__tools"><a class="site-nav__stage" href="../learning-route.html#stage-2" title="当前学习阶段">阶段 2 MIPI D-PHY 与 CSI-2</a><details class="site-nav__more"><summary>更多</summary><div class="site-nav__more-panel"><a href="../project.html" data-nav-key="project">项目总览</a><a href="../environment.html" data-nav-key="environment">开发环境</a><a href="../archive.html" data-nav-key="archive">归档</a><a href="obsidian://open?vault=RK3568&amp;file=00-%E9%A6%96%E9%A1%B5%2F00-RK3568%E5%AD%A6%E4%B9%A0%E4%B8%BB%E5%85%A5%E5%8F%A3">在 Obsidian 中打开</a></div></details></div></nav><main id="main-content" class="note-page"><header class="hero"><p class="hero__eyebrow">GENERATED NOTE · 07-专项笔记</p><h1>01-概念索引</h1><p>此页面由 Markdown 知识源自动生成，适合网页阅读；编辑仍请回到 Obsidian。</p><div class="hero__actions"><a class="button" href="obsidian://open?vault=RK3568&amp;file=07-%E4%B8%93%E9%A1%B9%E7%AC%94%E8%AE%B0%2F01-%E6%A6%82%E5%BF%B5%E7%B4%A2%E5%BC%95">在 Obsidian 中打开</a></div></header><article class="note-content"><p>这份文档是学习时的速查表。</p>
+<p>主线看不懂某个词时，先查这里；这里不替代官方文档。</p>
+<h2>知识状态</h2>
+<ul><li><code>已验证</code>：当前板卡有命令、日志、截图或产物支撑。</li><li><code>通用原理</code>：技术机制或官方资料说明，未必已在当前板卡逐项复测。</li><li><code>待验证</code>：后续实验或合理假设，不当作当前结论。</li></ul>
+<p>系统总览：AI Camera系统数据流与模块边界；分阶段验收：Camera驱动分阶段验收标准；排障入口：AI Camera故障排查索引。</p>
+<h2>Buildroot</h2>
+<p>Buildroot 是用来生成嵌入式 Linux 系统的工具。</p>
+<p>在当前板子上，它表现为一个很轻的 Linux 系统：</p>
+<ul><li>没有 Ubuntu 桌面。</li><li>包管理能力弱。</li><li>常见命令和服务被裁剪。</li><li>更接近产品固件。</li></ul>
+<p>当前意义：</p>
+<pre><code class="language-text">板子出厂系统是 Buildroot。
+我们在它上面验证 Camera、OpenCV、RKNN、Nginx、FFmpeg。</code></pre>
+<p>外部资料：</p>
+<ul><li><a href="https://buildroot.org/downloads/manual/manual.html">Buildroot Manual</a></li></ul>
+<h2>MIPI Camera</h2>
+<p>MIPI Camera 通常指通过 MIPI CSI 接口接入 SoC 的摄像头。</p>
+<p>当前链路：</p>
+<pre><code class="language-text">IMX415 sensor -&gt; MIPI CSI -&gt; RK3568 ISP -&gt; V4L2 video node</code></pre>
+<p>优势：</p>
+<ul><li>带宽高，适合高分辨率 Camera。</li><li>延迟低，适合实时视频。</li><li>是手机、车载、嵌入式视觉里常见的 Camera 接口。</li><li>能直接进入 SoC 的 ISP，比 USB Camera 更接近真实产品形态。</li></ul>
+<p>注意：</p>
+<pre><code class="language-text">Camera 的 MIPI CSI 是输入。
+屏幕的 MIPI DSI 是输出。
+这两个都叫 MIPI，但方向和用途不同。</code></pre>
+<h2>RKISP</h2>
+<p>RKISP 是 Rockchip 的图像信号处理链路。</p>
+<p>它负责把 sensor 输出的原始图像转换成应用更容易处理的视频格式。</p>
+<p>当前现象：</p>
+<pre><code class="language-text">/dev/video0 显示为 rkisp_mainpath。</code></pre>
+<p>理解方式：</p>
+<pre><code class="language-text">sensor 不是直接给 OpenCV。
+中间经过 CSI、ISP、V4L2，再给应用层。</code></pre>
+<h2>V4L2</h2>
+<p>V4L2 是 Linux 用户态访问视频设备的标准接口。</p>
+<p>典型设备：</p>
+<pre><code class="language-text">/dev/video0
+/dev/video1
+/dev/media0</code></pre>
+<p>当前用途：</p>
+<ul><li>枚举 Camera。</li><li>查看支持格式。</li><li>抓取原始帧。</li><li>给 GStreamer/OpenCV 提供采集入口。</li></ul>
+<p>外部资料：</p>
+<ul><li><a href="https://www.kernel.org/doc/html/latest/userspace-api/media/v4l/v4l2.html">Linux V4L2 用户空间 API</a></li></ul>
+<h2>Media Controller</h2>
+<p>Media Controller 用来描述复杂 Camera 拓扑。</p>
+<p>当前意义：</p>
+<pre><code class="language-text">/dev/media0 可以帮助理解 sensor、CSI、ISP、video node 之间的连接关系。</code></pre>
+<p>你现在不用深入 media-ctl 命令。</p>
+<p>先知道：</p>
+<pre><code class="language-text">/dev/video0 是数据节点。
+/dev/media0 是拓扑节点。</code></pre>
+<h2>NV12</h2>
+<p>NV12 是 YUV 4:2:0 图像格式。</p>
+<p>数据结构：</p>
+<pre><code class="language-text">先放完整 Y 平面。
+再放交错 UV 平面。</code></pre>
+<p>大小计算：</p>
+<pre><code class="language-text">width * height * 1.5</code></pre>
+<p>当前例子：</p>
+<pre><code class="language-text">1280 * 720 * 1.5 = 1382400 bytes</code></pre>
+<p>为什么重要：</p>
+<pre><code class="language-text">Camera 常输出 NV12。
+OpenCV/AI 模型通常更喜欢 BGR/RGB。
+所以中间需要格式转换。</code></pre>
+<h2>GStreamer</h2>
+<p>GStreamer 是多媒体 pipeline 框架。</p>
+<p>当前用途：</p>
+<pre><code class="language-text">显式指定 /dev/video0 输出 NV12，再转换成 OpenCV 可用的 BGR。</code></pre>
+<p>当前成功 pipeline：</p>
+<pre><code class="language-text">v4l2src device=/dev/video0
+! video/x-raw,format=NV12,width=1280,height=720
+! videoconvert
+! video/x-raw,format=BGR
+! appsink drop=1 sync=false</code></pre>
+<p>关键元素：</p>
+<ul><li><code>v4l2src</code> 从 V4L2 设备取帧。</li><li><code>video/x-raw</code> 指定格式和分辨率。</li><li><code>videoconvert</code> 做颜色格式转换。</li><li><code>appsink</code> 把帧交给应用程序。</li></ul>
+<p>外部资料：</p>
+<ul><li><a href="https://gstreamer.freedesktop.org/documentation/">GStreamer Documentation</a></li><li><a href="https://gstreamer.freedesktop.org/documentation/video4linux2/v4l2src.html">GStreamer v4l2src</a></li><li><a href="https://gstreamer.freedesktop.org/documentation/app/appsink.html">GStreamer appsink</a></li></ul>
+<h2>OpenCV</h2>
+<p>OpenCV 在当前项目中不是用来做复杂算法。</p>
+<p>当前用途：</p>
+<ul><li>接收 Camera 帧。</li><li>做 resize、颜色转换。</li><li>画检测框。</li><li>保存图片。</li><li>显示到 MIPI 屏。</li></ul>
+<p>关键结论：</p>
+<pre><code class="language-text">cv2.VideoCapture(0) 在当前 RK3568 板端已验证失败。
+主路线统一使用 GStreamer pipeline。</code></pre>
+<p>外部资料：</p>
+<ul><li><a href="https://docs.opencv.org/4.x/d8/dfe/classcv_1_1VideoCapture.html">OpenCV VideoCapture</a></li></ul>
+<h2>RKNN</h2>
+<p>RKNN 是 Rockchip NPU 的模型部署体系。</p>
+<p>当前涉及组件：</p>
+<ul><li><code>.rknn</code> 模型文件。</li><li><code>rknn-toolkit-lite2</code> 板端 Python 推理接口。</li><li><code>librknnrt.so</code> 板端 runtime。</li><li><code>rknn_server</code> 板端服务。</li><li>NPU 驱动。</li></ul>
+<p>当前已验证：</p>
+<pre><code class="language-text">01_lenet -&gt; [5]: 1.0
+YOLOv5 RKNN -&gt; person/bus 检测</code></pre>
+<p>外部资料：</p>
+<ul><li><a href="https://github.com/airockchip/rknn-toolkit2">Rockchip RKNN Toolkit2</a></li></ul>
+<h2>YOLOv5 / YOLOv8n</h2>
+<p>YOLO 是目标检测模型。</p>
+<p>当前区别：</p>
+<pre><code class="language-text">当前板端 Buildroot 4.19 官方资料里可直接复用的是 YOLOv5 RKNN。
+最终项目目标可以升级到 YOLOv8n。</code></pre>
+<p>当前原则：</p>
+<pre><code class="language-text">先用 YOLOv5 跑通系统闭环。
+后续再做 YOLOv8n 模型转换和工程升级。</code></pre>
+<h2>RTMP</h2>
+<p>RTMP 是一种实时流媒体推流协议。</p>
+<p>当前用途：</p>
+<pre><code class="language-text">板端 FFmpeg 把检测后的视频推给本机 Nginx RTMP server。</code></pre>
+<p>当前 RTMP 地址：</p>
+<pre><code class="language-text">rtmp://127.0.0.1/live/yolo</code></pre>
+<h2>HLS</h2>
+<p>HLS 是基于 HTTP 的流媒体播放方式。</p>
+<p>文件形态：</p>
+<pre><code class="language-text">yolo.m3u8
+yolo-0.ts
+yolo-1.ts</code></pre>
+<p>当前用途：</p>
+<pre><code class="language-text">Windows 使用 ffplay 访问 http://192.168.0.230/hls/yolo.m3u8。</code></pre>
+<p>常见问题：</p>
+<ul><li><code>.m3u8</code> 不存在会返回 404。</li><li>程序没持续运行时，HLS 可能不可用。</li><li>HLS 分片需要关键帧边界，所以编码端要固定 GOP。</li></ul>
+<p>外部资料：</p>
+<ul><li><a href="https://ffmpeg.org/ffmpeg-formats.html#hls-2">FFmpeg HLS muxer</a></li><li><a href="https://github.com/arut/nginx-rtmp-module">nginx-rtmp-module</a></li></ul>
+<h2>Python MVP</h2>
+<p>Python MVP 是当前已经跑通的第一版系统。</p>
+<p>意义：</p>
+<pre><code class="language-text">快速验证 Camera、OpenCV、RKNN、MIPI、HLS 能连成闭环。</code></pre>
+<p>它不是最终工程形态。</p>
+<p>后续 C++ 的价值：</p>
+<ul><li>更强工程结构。</li><li>更好性能控制。</li><li>更接近岗位项目。</li><li>更方便接 RKNN C API、硬件编码、多线程。</li></ul>
+<p>当前决策：</p>
+<pre><code class="language-text">先把 Python MVP 学透、讲清、复现稳定。
+再升级 C++。</code></pre>
+<p>#概念 #Buildroot #MIPI #V4L2 #GStreamer #OpenCV #RKNN #HLS</p></article><footer class="footer"><a href="../notes.html">返回专项笔记导航</a> · <a href="../../index.html">返回驾驶舱首页</a></footer></main></div><script defer src="../../site.js?v=357a578eb6"></script></body></html>

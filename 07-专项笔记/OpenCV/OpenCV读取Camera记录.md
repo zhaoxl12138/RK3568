@@ -226,9 +226,7 @@ WSL 项目实验脚本：
 \\wsl$\Ubuntu-20.04\home\rk3568\work\rk3568_ai_camera\experiments\opencv_camera\opencv_capture_gst.py
 ```
 
-完整产物索引见：
-
-- [[01-实验产物索引]]
+旧 AI 应用截图和视频已经从当前 Camera 驱动主线清理；本节保留可复现命令与结论。
 
 ## 当前结论
 
@@ -256,7 +254,7 @@ WSL 项目实验脚本：
 
 - [[V4L2命令行抓帧记录]]
 - [[01-下一步任务看板]]
-- [[01-实验产物索引]]
+- [[00-Camera证据索引]]
 
 #OpenCV #Camera #GStreamer #V4L2 #RK3568
 

@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>01-A盘基础资料目录解读 · RK3568</title><link rel="stylesheet" href="../../site.css?v=357a578eb6"></head><body><div class="page-shell"><nav class="site-nav" data-site-nav aria-label="全站导航"><a class="site-nav__brand" href="../../index.html"><span>RK3568</span><strong>Camera 学习站</strong></a><div class="site-nav__links"><a href="../../index.html" data-nav-key="home">首页</a><a href="06-任务--01-下一步任务看板.html" data-nav-key="task">当前任务</a><a href="../learning-route.html" data-nav-key="route">学习路线</a><a href="../system-map.html" data-nav-key="system">系统地图</a><a href="../../../../04-项目/10-Phase0-可视化总入口.html" data-nav-key="phase0">Phase0</a><a href="../notes.html" data-nav-key="notes" aria-current="page">专项笔记</a><a href="../evidence.html" data-nav-key="evidence">实验依据</a></div><div class="site-nav__tools"><a class="site-nav__stage" href="../learning-route.html#stage-2" title="当前学习阶段">阶段 2 MIPI D-PHY 与 CSI-2</a><details class="site-nav__more"><summary>更多</summary><div class="site-nav__more-panel"><a href="../project.html" data-nav-key="project">项目总览</a><a href="../environment.html" data-nav-key="environment">开发环境</a><a href="../archive.html" data-nav-key="archive">归档</a><a href="obsidian://open?vault=RK3568&amp;file=00-%E9%A6%96%E9%A1%B5%2F00-RK3568%E5%AD%A6%E4%B9%A0%E4%B8%BB%E5%85%A5%E5%8F%A3">在 Obsidian 中打开</a></div></details></div></nav><main id="main-content" class="note-page"><header class="hero"><p class="hero__eyebrow">GENERATED NOTE · 08-附录/资料包</p><h1>01-A盘基础资料目录解读</h1><p>此页面由 Markdown 知识源自动生成，适合网页阅读；编辑仍请回到 Obsidian。</p><div class="hero__actions"><a class="button" href="obsidian://open?vault=RK3568&amp;file=08-%E9%99%84%E5%BD%95%2F%E8%B5%84%E6%96%99%E5%8C%85%2F01-A%E7%9B%98%E5%9F%BA%E7%A1%80%E8%B5%84%E6%96%99%E7%9B%AE%E5%BD%95%E8%A7%A3%E8%AF%BB">在 Obsidian 中打开</a></div></header><article class="note-content"><p>来源：</p>
+<p><code>E:\【正点原子】RK3568开发板资料（A盘）-基础资料</code></p>
+<p>本文件是目录级解读，不是当前学习主线。</p>
+<p>当前学习入口仍然看 01-下一步任务看板。</p>
+<h2>总体判断</h2>
+<p>A 盘基础资料不是一套线性教程，而是一个资料仓库。</p>
+<p>它包含：</p>
+<ul><li>官方用户手册</li><li>原理图和硬件资料</li><li>RK 官方参考文档</li><li>系统镜像</li><li>开发工具</li><li>示例源码</li><li>软件安装包</li></ul>
+<p>对当前 RK3568 AI Camera 项目来说，不应该从头到尾看完。</p>
+<p>正确用法：</p>
+<ul><li>实时取舍以 01-下一步任务看板 为准；当时阶段只看和 Camera/V4L2/OpenCV/RKNN/推流有关的资料。</li><li>遇到具体问题时，再查 RK 官方大文档。</li><li>Android、Qt UI、OpenHarmony、多屏、硬件认证资料暂时不看。</li></ul>
+<h2>顶层目录判断</h2>
+<table><thead><tr><th>目录</th><th>内容</th><th>当前优先级</th><th>判断</th></tr></thead><tbody><tr><td><code>01、程序源码</code></td><td>AI、Camera、Qt、驱动等例程</td><td>中</td><td>只取 Camera/AI 例程，不读全部源码</td></tr><tr><td><code>02、开发板原理图</code></td><td>底板、核心板、模块原理图</td><td>低</td><td>调硬件问题时查</td></tr><tr><td><code>03、核心板资料</code></td><td>核心板规格、引脚、TRM、认证</td><td>低</td><td>做底板/硬件设计时才重点看</td></tr><tr><td><code>04、软件</code></td><td>串口驱动、Qt、DevEco 等软件</td><td>低</td><td>只在缺工具时用</td></tr><tr><td><code>05、开发工具</code></td><td>烧录工具、交叉编译工具</td><td>中</td><td>烧录/交叉编译阶段用</td></tr><tr><td><code>06、参考资料</code></td><td>外设/芯片资料</td><td>低</td><td>查芯片手册用</td></tr><tr><td><code>07、硬件资料</code></td><td>开发板规格、连接器、模块资料</td><td>低</td><td>接线/硬件问题时查</td></tr><tr><td><code>08、RK官方文档</code></td><td>Rockchip 大量 Linux/Android 官方文档</td><td>中偏后</td><td>遇到 ISP/RKNN/MPP/GStreamer/V4L2 问题时查</td></tr><tr><td><code>09、系统镜像</code></td><td>Buildroot、Debian、Android、Linux5.10 镜像</td><td>中</td><td>烧录/切系统时用</td></tr><tr><td><code>10、用户手册</code></td><td>正点原子整理过的教程文档</td><td>高</td><td>当前最主要阅读入口</td></tr><tr><td><code>压缩包</code></td><td>在线链接、资料更新记录、选型手册</td><td>低</td><td>只查版本变化</td></tr></tbody></table>
+<h2>关键说明文件结论</h2>
+<h3>AI 例程软件说明</h3>
+<p>路径：</p>
+<p><code>01、程序源码\01、AI例程\03、软件及驱动\readme.txt</code></p>
+<p>结论：</p>
+<ul><li>本地包含 <code>rknn-toolkit2-1.5.0</code>、<code>rknpu2-1.5.0</code>、<code>rknn-toolkit2-2.0.0</code>。</li><li>后续如果要更新 RKNN 工具，应去 Rockchip GitHub：</li><li><code>https://github.com/rockchip-linux/rknn-toolkit2</code></li><li>旧的 <code>rknpu</code> 仓库已经停止更新，新版 rknpu 在 <code>rknn-toolkit2</code> 里面找。</li></ul>
+<p>当前判断：</p>
+<ul><li>先不急着跑 AI。</li><li>AI/RKNN 例程已经归档；当前先完成 Camera 驱动链路，不再从这里跳转。</li></ul>
+<h3>交叉编译工具说明</h3>
+<p>路径：</p>
+<p><code>05、开发工具\03、交叉编译工具\必看！使用说明.txt</code></p>
+<p>结论：</p>
+<ul><li>出厂系统默认是 Linux 4.19。</li><li>4.19 Buildroot 工具链和 5.10 Buildroot 工具链不能混用。</li><li>工具链由 Buildroot SDK 生成，正点原子只是打包方便使用。</li><li>写 C/Qt 应用可以直接用打包好的工具链。</li><li>如果开发 Linux 内核，仍然需要编译 Buildroot SDK。</li></ul>
+<p>当前判断：</p>
+<ul><li>当前板端是 Buildroot + Linux 4.19。</li><li>以后写 C++17/OpenCV 程序时，优先用 4.19 Buildroot 交叉编译器。</li></ul>
+<h3>系统镜像说明</h3>
+<p>路径：</p>
+<p><code>09、系统镜像\镜像说明.txt</code></p>
+<p>结论：</p>
+<ul><li>4.19 镜像：Buildroot、Debian、Android11、Android12。</li><li>5.10 镜像：Linux5.10 Buildroot、Android13。</li><li>用户手册主要基于 4.19 内核镜像编写。</li><li>5.10 可参考用户手册，但不是完全一致。</li></ul>
+<p>当前判断：</p>
+<ul><li>当前不切 5.10。</li><li>当前所有操作默认按 4.19 Buildroot 走。</li></ul>
+<h3>硬件资料重要说明</h3>
+<p>路径：</p>
+<p><code>07、硬件资料\02、底板板载芯片资料\重要说明，必看.txt</code></p>
+<p>结论：</p>
+<ul><li>里面给出的芯片手册主要用于画封装。</li><li>不代表实际开发板一定用了对应品牌物料。</li><li>实际品牌以实物为准。</li></ul>
+<p>当前判断：</p>
+<ul><li>这类资料暂时不看。</li></ul>
+<h2>用户手册目录判断</h2>
+<p><code>10、用户手册</code> 是当前最重要的目录。</p>
+<p>当前路线优先级：</p>
+<p>1. <code>01、测试文档\01【正点原子】ATK-DLRK3568_Buildroot系统快速体验手册V1.3.pdf</code></p>
+<ul><li>已完成第一轮验机。</li></ul>
+<p>2. <code>03、辅助文档\30【正点原子】基于Buildroot系统Camera应用开发手册V1.1.pdf</code></p>
+<ul><li>已读。</li><li>价值有限。</li><li>主要有用内容是：</li><li><code>v4l2-ctl --list-devices</code></li><li><code>v4l2-ctl --list-formats-ext</code></li><li>OpenCV Python/C++ 简单示例</li><li>CMake 交叉编译示例</li><li>不深入讲 RK ISP、media graph、V4L2 buffer、NV12 内存布局。</li></ul>
+<p>3. <code>03、辅助文档\19【正点原子】ATK-DLRK3568_OpenCV4使用手册V1.0.pdf</code></p>
+<ul><li>下一阶段看。</li><li>用于把 Camera 帧送入 OpenCV。</li></ul>
+<p>4. <code>01、测试文档\03【正点原子】ATK-DLRK3568_AI例程测试手册V1.0.pdf</code></p>
+<ul><li>后置。</li><li>用于验证 RKNN/NPU。</li></ul>
+<p>5. <code>03、辅助文档\18【正点原子】ATK-DLRK3568_RTMP推流V1.1.pdf</code></p>
+<ul><li>推流阶段看。</li></ul>
+<p>6. <code>03、辅助文档\33【正点原子】基于Buildroot系统_交叉编译器安装与使用参考手册V1.0.pdf</code></p>
+<ul><li>写 C++17/CMake 项目时看。</li></ul>
+<h2>RK官方文档中后续可能有用的方向</h2>
+<p><code>08、RK官方文档</code> 数量很大，不适合现在通读。</p>
+<p>后面可能用到的方向：</p>
+<ul><li><code>CAMERA/ISP2X</code></li><li>查 RK ISP、VI、调试、tuning。</li><li><code>Linux/Camera</code></li><li>查 Rockchip Linux Camera 架构和问题定位。</li><li><code>NPU/rknn-toolkit2</code></li><li>查 RKNN Toolkit2 使用。</li><li><code>NPU/rknpu2</code></li><li>查 RKNN Runtime / C API。</li><li><code>Linux/Multimedia</code></li><li>查 RGA、MPP、GStreamer。</li></ul>
+<p>当前判断：</p>
+<ul><li>这些是问题驱动型文档。</li><li>当前不要主动读。</li></ul>
+<p>#附录 #资料包 #A盘 #RK3568</p></article><footer class="footer"><a href="../notes.html">返回专项笔记导航</a> · <a href="../../index.html">返回驾驶舱首页</a></footer></main></div><script defer src="../../site.js?v=357a578eb6"></script></body></html>

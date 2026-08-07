@@ -4,56 +4,39 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
-  <title>学习路线 · RK3568 驾驶舱</title>
-  <link rel="stylesheet" href="../site.css">
-  <script defer src="../generated/vault-data.js"></script>
-  <script defer src="../site.js"></script>
+  <meta name="description" content="RK3568 Camera 从总览到 Bring-up 排障的 00–11 唯一学习路线。">
+  <title>完整学习路线 · RK3568 Camera</title>
+  <link rel="stylesheet" href="../site.css?v=357a578eb6">
+  <script defer src="../generated/vault-data.js?v=357a578eb6"></script>
+  <script defer src="../site.js?v=357a578eb6"></script>
 </head>
 <body>
   <a class="skip-link" href="#main-content">跳到主要内容</a>
-  <nav class="site-nav" data-site-nav aria-label="网站导航">
-    <a class="site-nav__brand" href="../index.html">RK3568 / 驾驶舱</a>
-    <div class="site-nav__links">
-      <a href="../index.html">驾驶舱首页</a>
-      <a aria-current="page" href="learning-route.html">学习路线</a>
-      <a href="system-map.html">系统地图</a>
-      <a href="phase0.html">Phase0 可视化</a>
-      <a href="../../../06-任务/01-下一步任务看板.md">任务看板</a>
-    </div>
-  </nav>
+  <nav class="site-nav" data-site-nav aria-label="RK3568 Camera 课程导航"><a class="site-nav__brand" href="../index.html"><span>RK3568</span><strong>Camera 课程</strong></a><div class="site-nav__links"><a href="../index.html" data-nav-key="home">学习首页</a><a href="learning-route.html" data-nav-key="route" aria-current="page">完整路线</a></div><details class="site-nav__more course-menu"><summary>课程目录</summary><div class="site-nav__more-panel"><a href="#stage-00">00 总览</a><a href="#stage-04">04 MIPI CSI-2 / D-PHY</a><a href="#stage-11">11 Bring-up 排障</a></div></details><details class="site-nav__more reference-menu"><summary>资料与实验</summary><div class="site-nav__more-panel"><a href="evidence.html">实验依据</a><a href="notes.html">专项笔记</a><a href="environment.html">开发环境</a><a href="phase0.html">可视化参考</a></div></details><div class="site-nav__tools"><a class="site-nav__stage" href="../../../04-项目/17-DPHY-从DTS到MediaGraph.html">当前 04 · MIPI CSI-2 / D-PHY</a></div></nav>
   <div class="page-shell">
     <main id="main-content">
-      <section class="site-state" data-current-state aria-label="当前学习状态">
-        <div class="site-state__item"><span class="site-state__label">当前阶段</span><p class="site-state__value" data-current-stage>尚未生成当前阶段</p></div>
-        <div class="site-state__item"><span class="site-state__label">首条未完成任务</span><p class="site-state__value" data-current-task>当前没有未完成任务</p></div>
-        <a class="button" data-current-task-link href="../../../06-任务/01-下一步任务看板.md">进入任务看板</a>
-      </section>
       <header class="hero">
-        <p class="hero__eyebrow">RECOMMENDED ROUTE · PHASE 0 → 10</p>
-        <h1>从系统地图走到可复现 MVP</h1>
-        <p>每个阶段只回答一个核心问题，并用最小证据决定是否进入下一站。当前阶段由任务看板同步。</p>
-        <div class="hero__actions">
-          <a class="button" href="notes/01-主线--02-从零到Python MVP学习路线.html">打开主线学习路线</a>
-          <a class="button button--quiet" href="../../../06-任务/01-下一步任务看板.md">查看当前任务</a>
-        </div>
+        <p class="hero__eyebrow">ONE ROUTE · 00 → 11</p>
+        <h1>RK3568 Camera<br>完整学习路线</h1>
+        <p>按顺序学习，不再从文件夹和专题入口中寻找下一步。每个阶段都对应一份已经存在的网页内容。</p>
+        <div class="hero__actions"><a class="button" data-course-next href="../../../04-项目/17-DPHY-从DTS到MediaGraph.html">进入阶段 04：MIPI CSI-2 / D-PHY</a><a class="button button--ghost" href="../index.html">返回学习驾驶舱</a></div>
       </header>
+
       <section aria-labelledby="route-title">
-        <div class="section-title"><h2 id="route-title">阶段路线</h2><p>问题 → 通过标准 / 入口</p></div>
+        <div class="section-title"><h2 id="route-title">00–11 主线</h2><p>已完成 00–03 · 当前 04 · 后续 05–11</p></div>
+        <div data-course-route aria-label="RK3568 Camera 完整学习路线"></div>
+      </section>
+
+      <section aria-labelledby="rule-title">
+        <div class="section-title"><h2 id="rule-title">怎么使用这条路线</h2><p>先学习和实板验证，再生成正式章节页面</p></div>
         <div class="grid">
-          <article class="card" data-stage="0"><span class="badge badge--blue">阶段 0</span><h3>系统地图</h3><p><strong>要回答的问题：</strong>数据如何从 Camera 到显示和网络？</p><p><strong>通过标准：</strong>能说清每层输入、输出和边界。</p><a class="card__link" data-route-kind="acceptance" href="notes/07-专项笔记--系统--AI Camera分阶段验收标准.html">验收标准</a><a class="card__link" data-route-kind="evidence" href="notes/07-专项笔记--系统--AI Camera系统数据流与模块边界.html">证据记录</a><a class="card__link" data-route-kind="obsidian" href="notes/07-专项笔记--系统--AI Camera系统数据流与模块边界.html">Obsidian 入口</a></article>
-          <article class="card card--accent" data-stage="1"><span class="badge badge--orange">阶段 1</span><h3>Buildroot 板端验机</h3><p><strong>要回答的问题：</strong>板子、系统、网络和 Camera 是否可用？</p><p><strong>通过标准 / 入口：</strong>串口、SSH、系统信息和 Camera 出图均有记录。</p><a class="card__link" data-route-kind="acceptance" href="notes/07-专项笔记--系统--AI Camera分阶段验收标准.html">验收标准</a><a class="card__link" data-route-kind="evidence" href="notes/05-实验与证据--01-板子到手验机记录.html">证据记录</a><a class="card__link" data-route-kind="obsidian" href="notes/05-实验与证据--01-板子到手验机记录.html">Obsidian 入口</a></article>
-          <article class="card" data-stage="2"><span class="badge badge--purple">阶段 2</span><h3>Camera / V4L2</h3><p><strong>要回答的问题：</strong><code>/dev/video0</code> 代表什么？</p><p><strong>通过标准：</strong>解释 node、entity、pad、link 的关系。</p><a class="card__link" data-route-kind="acceptance" href="notes/07-专项笔记--系统--AI Camera分阶段验收标准.html">验收标准</a><a class="card__link" data-route-kind="evidence" href="notes/07-专项笔记--Camera-V4L2--V4L2命令行抓帧记录.html">证据记录</a><a class="card__link" data-route-kind="obsidian" href="notes/07-专项笔记--Camera-V4L2--V4L2命令行抓帧记录.html">Obsidian 入口</a></article>
-          <article class="card" data-stage="3"><span class="badge badge--blue">阶段 3</span><h3>NV12 抓帧</h3><p><strong>要回答的问题：</strong>原始帧是什么格式？</p><p><strong>通过标准：</strong>说明 Y / UV 平面、stride 和查看方式。</p><a class="card__link" data-route-kind="acceptance" href="notes/07-专项笔记--系统--AI Camera分阶段验收标准.html">验收标准</a><a class="card__link" data-route-kind="evidence" href="notes/07-专项笔记--Camera-V4L2--V4L2命令行抓帧记录.html">证据记录</a><a class="card__link" data-route-kind="obsidian" href="notes/07-专项笔记--Camera-V4L2--V4L2命令行抓帧记录.html">Obsidian 入口</a></article>
-          <article class="card" data-stage="4"><span class="badge badge--green">阶段 4</span><h3>OpenCV / GStreamer</h3><p><strong>要回答的问题：</strong>为什么默认摄像头打开方式会失败？</p><p><strong>通过标准：</strong>得到成功 pipeline 和 BGR 图像。</p><a class="card__link" data-route-kind="acceptance" href="notes/07-专项笔记--系统--AI Camera分阶段验收标准.html">验收标准</a><a class="card__link" data-route-kind="evidence" href="notes/07-专项笔记--OpenCV--OpenCV读取Camera记录.html">证据记录</a><a class="card__link" data-route-kind="obsidian" href="notes/07-专项笔记--OpenCV--OpenCV读取Camera记录.html">Obsidian 入口</a></article>
-          <article class="card" data-stage="5"><span class="badge badge--orange">阶段 5</span><h3>RKNN 最小例程</h3><p><strong>要回答的问题：</strong>Python 如何调用 NPU？</p><p><strong>通过标准：</strong>能区分模型、runtime、驱动和应用。</p><a class="card__link" data-route-kind="acceptance" href="notes/07-专项笔记--系统--AI Camera分阶段验收标准.html">验收标准</a><a class="card__link" data-route-kind="evidence" href="notes/07-专项笔记--AI-RKNN--官方AI例程运行记录.html">证据记录</a><a class="card__link" data-route-kind="obsidian" href="notes/07-专项笔记--AI-RKNN--官方AI例程运行记录.html">Obsidian 入口</a></article>
-          <article class="card" data-stage="6"><span class="badge badge--purple">阶段 6</span><h3>Camera + RKNN</h3><p><strong>要回答的问题：</strong>图像如何进入模型并产生框？</p><p><strong>通过标准：</strong>解释预处理、量化、后处理和坐标回映。</p><a class="card__link" data-route-kind="acceptance" href="notes/07-专项笔记--系统--AI Camera分阶段验收标准.html">验收标准</a><a class="card__link" data-route-kind="evidence" href="notes/07-专项笔记--AI-RKNN--YOLOv5 Python最小推理记录.html">证据记录</a><a class="card__link" data-route-kind="obsidian" href="notes/07-专项笔记--AI-RKNN--YOLOv5 Python最小推理记录.html">Obsidian 入口</a></article>
-          <article class="card" data-stage="7"><span class="badge badge--blue">阶段 7</span><h3>MIPI 显示</h3><p><strong>要回答的问题：</strong>推理结果如何显示？</p><p><strong>通过标准：</strong>区分 Camera MIPI 与 Display MIPI 两条链路。</p><a class="card__link" data-route-kind="acceptance" href="notes/07-专项笔记--系统--AI Camera分阶段验收标准.html">验收标准</a><a class="card__link" data-route-kind="evidence" href="notes/07-专项笔记--Display-MIPI--MIPI屏显示链路.html">证据记录</a><a class="card__link" data-route-kind="obsidian" href="notes/07-专项笔记--Display-MIPI--MIPI屏显示链路.html">Obsidian 入口</a></article>
-          <article class="card" data-stage="8"><span class="badge badge--green">阶段 8</span><h3>RTMP / HLS</h3><p><strong>要回答的问题：</strong>画面如何离开板子？</p><p><strong>通过标准：</strong>区分编码、封装、协议、服务端和播放器。</p><a class="card__link" data-route-kind="acceptance" href="notes/07-专项笔记--系统--AI Camera分阶段验收标准.html">验收标准</a><a class="card__link" data-route-kind="evidence" href="notes/07-专项笔记--Streaming--RTMP-HLS推流记录.html">证据记录</a><a class="card__link" data-route-kind="obsidian" href="notes/07-专项笔记--Streaming--RTMP-HLS推流记录.html">Obsidian 入口</a></article>
-          <article class="card" data-stage="9"><span class="badge badge--orange">阶段 9</span><h3>Python MVP</h3><p><strong>要回答的问题：</strong>能否独立复现完整链路？</p><p><strong>通过标准：</strong>从启动到拉流，并能解释失败定位顺序。</p><a class="card__link" data-route-kind="acceptance" href="notes/07-专项笔记--系统--AI Camera分阶段验收标准.html">验收标准</a><a class="card__link" data-route-kind="evidence" href="notes/01-主线--02-从零到Python MVP学习路线.html">证据记录</a><a class="card__link" data-route-kind="obsidian" href="notes/01-主线--02-从零到Python MVP学习路线.html">Obsidian 入口</a></article>
-          <article class="card" data-stage="10"><span class="badge badge--purple">阶段 10</span><h3>C++ 工程化</h3><p><strong>要回答的问题：</strong>如何提升可维护性和性能？</p><p><strong>入口：</strong>当前复盘完成后，再将验证过的链路工程化。</p><a class="card__link" data-route-kind="acceptance" href="notes/07-专项笔记--系统--AI Camera分阶段验收标准.html">验收标准</a><a class="card__link" data-route-kind="evidence" href="notes/01-主线--02-从零到Python MVP学习路线.html">证据记录</a><a class="card__link" data-route-kind="obsidian" href="notes/01-主线--02-从零到Python MVP学习路线.html">Obsidian 入口</a></article>
+          <article class="card"><h3>1 · 只沿主线前进</h3><p>先完成当前阶段。参考页只在需要查证命令、日志、原理图或源码位置时打开。</p></article>
+          <article class="card"><h3>2 · 每阶段留下证据</h3><p>至少保留一份 DTS/源码位置、一条板端命令输出，以及一段可以用于面试的口头表达。</p></article>
+          <article class="card"><h3>3 · 完成后再沉淀网页</h3><p>章节正文按“为什么学、RK3568 对应、代码位置、实验验证、面试表达”逐步统一。</p></article>
         </div>
       </section>
-      <footer class="footer">当前状态以任务看板和实验记录为准。</footer>
+
+      <footer class="footer">主线之外的动画、框架图、实验记录和历史资料统一放在“资料与实验”。</footer>
     </main>
   </div>
 </body>

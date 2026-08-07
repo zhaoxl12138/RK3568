@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>2026-07-28-直连板端读取IMX415配置 · RK3568</title><link rel="stylesheet" href="../../site.css?v=357a578eb6"></head><body><div class="page-shell"><nav class="site-nav" data-site-nav aria-label="全站导航"><a class="site-nav__brand" href="../../index.html"><span>RK3568</span><strong>Camera 学习站</strong></a><div class="site-nav__links"><a href="../../index.html" data-nav-key="home">首页</a><a href="06-任务--01-下一步任务看板.html" data-nav-key="task">当前任务</a><a href="../learning-route.html" data-nav-key="route">学习路线</a><a href="../system-map.html" data-nav-key="system">系统地图</a><a href="../../../../04-项目/10-Phase0-可视化总入口.html" data-nav-key="phase0">Phase0</a><a href="../notes.html" data-nav-key="notes" aria-current="page">专项笔记</a><a href="../evidence.html" data-nav-key="evidence">实验依据</a></div><div class="site-nav__tools"><a class="site-nav__stage" href="../learning-route.html#stage-2" title="当前学习阶段">阶段 2 MIPI D-PHY 与 CSI-2</a><details class="site-nav__more"><summary>更多</summary><div class="site-nav__more-panel"><a href="../project.html" data-nav-key="project">项目总览</a><a href="../environment.html" data-nav-key="environment">开发环境</a><a href="../archive.html" data-nav-key="archive">归档</a><a href="obsidian://open?vault=RK3568&amp;file=00-%E9%A6%96%E9%A1%B5%2F00-RK3568%E5%AD%A6%E4%B9%A0%E4%B8%BB%E5%85%A5%E5%8F%A3">在 Obsidian 中打开</a></div></details></div></nav><main id="main-content" class="note-page"><header class="hero"><p class="hero__eyebrow">GENERATED NOTE · 05-实验与证据</p><h1>2026-07-28-直连板端读取IMX415配置</h1><p>此页面由 Markdown 知识源自动生成，适合网页阅读；编辑仍请回到 Obsidian。</p><div class="hero__actions"><a class="button" href="obsidian://open?vault=RK3568&amp;file=05-%E5%AE%9E%E9%AA%8C%E4%B8%8E%E8%AF%81%E6%8D%AE%2F2026-07-28-%E7%9B%B4%E8%BF%9E%E6%9D%BF%E7%AB%AF%E8%AF%BB%E5%8F%96IMX415%E9%85%8D%E7%BD%AE">在 Obsidian 中打开</a></div></header><article class="note-content"><h2>连接状态</h2>
+<ul><li>SSH 地址：<code>root@192.168.0.230</code></li><li>SSH 公钥登录已成功</li><li>板端内核：<code>Linux 4.19.232 aarch64</code></li></ul>
+<h2>当前运行设备树节点</h2>
+<pre><code class="language-text">/sys/firmware/devicetree/base/i2c@fe5d0000/imx415@1a</code></pre>
+<p>已读取到：</p>
+<pre><code class="language-text">compatible: sony,imx415
+status: okay
+clock-names: xvclk
+rockchip,camera-module-facing: back
+rockchip,camera-module-lens-name: CS-P1150-IRC-8M-FAU
+rockchip,camera-module-name: CMK-OT1522-FG3</code></pre>
+<p>二进制属性中还存在：</p>
+<pre><code class="language-text">reg
+reset-gpios
+power-gpios
+clocks
+power-domains</code></pre>
+<p>设备树中没有看到 <code>avdd-supply</code>、<code>dvdd-supply</code>、<code>dovdd-supply</code>，这与 dmesg 中的 <code>using dummy regulator</code> 对应。</p>
+<h2>MIPI 端点</h2>
+<pre><code class="language-text">data-lanes: 1 2 3 4
+remote-endpoint: 已配置</code></pre>
+<p>说明当前 Sensor 使用 4 条 MIPI Data Lane，并通过设备树 endpoint 与 CSI 端连接。</p>
+<h2>驱动绑定证据</h2>
+<pre><code class="language-text">/sys/bus/i2c/devices/4-001a-1/name       imx415
+/sys/bus/i2c/devices/4-001a-1/modalias   of:Nimx415T&lt;NULL&gt;Csony,imx415
+driver                                    ../../../../../bus/i2c/drivers/imx415</code></pre>
+<p>V4L2 子设备：</p>
+<pre><code class="language-text">/sys/class/video4linux/v4l-subdev3: m00_b_imx415 4-001a-1</code></pre>
+<p>主视频节点：</p>
+<pre><code class="language-text">/dev/video0 → rkisp_mainpath
+driver      → rkisp</code></pre>
+<h2>当前已证明的配置链</h2>
+<pre><code class="language-text">设备树 imx415@1a
+  compatible = sony,imx415
+  reg = 0x1a
+  data-lanes = 1 2 3 4
+  remote-endpoint 已连接
+        ↓
+imx415 驱动绑定
+        ↓
+/dev/v4l-subdev3
+        ↓
+RKISP 驱动
+        ↓
+/dev/video0</code></pre>
+<h2>当前下一步</h2>
+<p>下一步不是继续背 <code>media-ctl</code> 输出，而是读取 <code>compatible</code>、<code>reg</code>、<code>clock-names</code>、<code>reset-gpios</code>、<code>power-gpios</code>、<code>data-lanes</code> 各属性分别如何被驱动使用，再定位对应的设备树源码和 Sensor 驱动源码。</p>
+<h2>直连反查补充</h2>
+<h3>驱动绑定</h3>
+<p>板端读取到：</p>
+<pre><code class="language-text">DRIVER=imx415
+OF_NAME=imx415
+OF_FULLNAME=/i2c@fe5d0000/imx415@1a
+OF_COMPATIBLE_0=sony,imx415
+MODALIAS=of:Nimx415T&lt;NULL&gt;Csony,imx415</code></pre>
+<p>驱动路径为：</p>
+<pre><code class="language-text">/sys/bus/i2c/drivers/imx415</code></pre>
+<p>说明 <code>compatible = &quot;sony,imx415&quot;</code> 已经匹配到内核中的 IMX415 驱动。</p>
+<h3>endpoint 反向连接</h3>
+<p>IMX415 endpoint 的 <code>remote-endpoint</code> 指向：</p>
+<pre><code class="language-text">/csi2-dphy0/ports/port@0/endpoint@2</code></pre>
+<p>两端都配置了：</p>
+<pre><code class="language-text">data-lanes: 1 2 3 4</code></pre>
+<p>因此设备树中 Sensor 和 CSI-2 D-PHY 的连接不是靠名称猜出来的，而是靠两端 endpoint 的 phandle 互相指向建立的。</p>
+<h3>内核配置</h3>
+<p>当前内核配置确认：</p>
+<pre><code class="language-text">CONFIG_MEDIA_CONTROLLER=y
+CONFIG_VIDEO_IMX415=y
+CONFIG_VIDEO_ROCKCHIP_ISP1=y
+CONFIG_VIDEO_ROCKCHIP_ISP=y
+CONFIG_VIDEO_ROCKCHIP_ISP_VERSION_V1X=y
+CONFIG_VIDEO_ROCKCHIP_ISP_VERSION_V21=y</code></pre>
+<p><code>CONFIG_VIDEO_IMX415=y</code> 表示 IMX415 驱动直接编译进内核，不是单独的 <code>.ko</code> 模块。因此板端没有 <code>/sys/module/imx415</code> 目录，并不表示驱动不存在；它是 built-in 驱动。</p></article><footer class="footer"><a href="../notes.html">返回专项笔记导航</a> · <a href="../../index.html">返回驾驶舱首页</a></footer></main></div><script defer src="../../site.js?v=357a578eb6"></script></body></html>

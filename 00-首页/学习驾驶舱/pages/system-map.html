@@ -4,28 +4,55 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
-  <title>系统地图 · RK3568 驾驶舱</title>
-  <link rel="stylesheet" href="../site.css">
-  <script defer src="../generated/vault-data.js"></script>
-  <script defer src="../site.js"></script>
+  <title>Camera 驱动系统地图 · RK3568</title>
+  <link rel="stylesheet" href="../site.css?v=357a578eb6">
+  <script defer src="../generated/vault-data.js?v=357a578eb6"></script>
+  <script defer src="../site.js?v=357a578eb6"></script>
 </head>
 <body>
   <a class="skip-link" href="#main-content">跳到主要内容</a>
-  <nav class="site-nav" data-site-nav aria-label="网站导航"><a class="site-nav__brand" href="../index.html">RK3568 / 驾驶舱</a><div class="site-nav__links"><a href="../index.html">驾驶舱首页</a><a href="learning-route.html">学习路线</a><a aria-current="page" href="system-map.html">系统地图</a><a href="phase0.html">Phase0 可视化</a><a href="project.html">项目</a><a href="evidence.html">证据</a><a href="environment.html">环境</a><a href="notes.html">笔记</a><a href="archive.html">归档</a><a href="../../../06-任务/01-下一步任务看板.md">任务看板</a><a href="../../../00-首页/00-RK3568学习主入口.md">返回 Obsidian 主入口</a></div></nav>
+  <nav class="site-nav" data-site-nav aria-label="全站导航"><a class="site-nav__brand" href="../index.html"><span>RK3568</span><strong>Camera 学习站</strong></a><div class="site-nav__links"><a href="../index.html" data-nav-key="home">首页</a><a href="notes/06-任务--01-下一步任务看板.html" data-nav-key="task">当前任务</a><a href="learning-route.html" data-nav-key="route">学习路线</a><a href="system-map.html" data-nav-key="system" aria-current="page">系统地图</a><a href="../../../04-项目/10-Phase0-可视化总入口.html" data-nav-key="phase0">Phase0</a><a href="notes.html" data-nav-key="notes">专项笔记</a><a href="evidence.html" data-nav-key="evidence">实验依据</a></div><div class="site-nav__tools"><a class="site-nav__stage" href="learning-route.html#stage-2" title="当前学习阶段">阶段 2 MIPI D-PHY 与 CSI-2</a><details class="site-nav__more"><summary>更多</summary><div class="site-nav__more-panel"><a href="project.html" data-nav-key="project">项目总览</a><a href="environment.html" data-nav-key="environment">开发环境</a><a href="archive.html" data-nav-key="archive">归档</a><a href="obsidian://open?vault=RK3568&amp;file=00-%E9%A6%96%E9%A1%B5%2F00-RK3568%E5%AD%A6%E4%B9%A0%E4%B8%BB%E5%85%A5%E5%8F%A3">在 Obsidian 中打开</a></div></details></div></nav>
   <div class="page-shell"><main id="main-content">
-    <section class="site-state" data-current-state aria-label="当前学习状态"><div class="site-state__item"><span class="site-state__label">当前阶段</span><p class="site-state__value" data-current-stage>尚未生成当前阶段</p></div><div class="site-state__item"><span class="site-state__label">首条未完成任务</span><p class="site-state__value" data-current-task>当前没有未完成任务</p></div><a class="button" data-current-task-link href="../../../06-任务/01-下一步任务看板.md">进入任务看板</a></section>
-    <header class="hero"><p class="hero__eyebrow">SYSTEM MAP · DATA BOUNDARIES</p><h1>从 Camera 到输出的系统地图</h1><p>把每个模块看成一个可验证边界：先确认输入和输出，再深入专项笔记。</p><div class="hero__actions"><a class="button" href="notes/07-专项笔记--系统--AI Camera系统数据流与模块边界.html">打开系统边界笔记</a><a class="button button--quiet" href="../../../04-项目/15-Phase0-RK3568全系统框架图.html">打开全系统框架图</a></div></header>
-    <section aria-labelledby="chain-title"><div class="section-title"><h2 id="chain-title">主数据链路</h2><p>采集 → 处理 → 推理 → 输出</p></div><div class="grid">
-      <article class="card" data-module="camera"><span class="badge badge--blue">01 · 输入</span><h3>Camera</h3><p>传感器产生原始图像；先确认供电、时序、分辨率与出图。</p><a class="card__link" href="notes/07-专项笔记--Camera-V4L2--IMX415驱动调试与最小demo路线.html">Camera 专项 →</a></article>
-      <article class="card" data-module="v4l2"><span class="badge badge--green">02 · 内核接口</span><h3>V4L2</h3><p>把媒体设备和视频节点暴露给用户空间，负责格式与缓冲区边界。</p><a class="card__link" href="notes/07-专项笔记--Camera-V4L2--V4L2命令行抓帧记录.html">V4L2 专项 →</a></article>
-      <article class="card" data-module="gstreamer"><span class="badge badge--purple">03 · 管线</span><h3>GStreamer</h3><p>用 caps 和 pipeline 串联采集、转换、编码与输出，显式描述数据格式。</p><a class="card__link" href="notes/07-专项笔记--系统--AI Camera系统数据流与模块边界.html">查看管线边界 →</a></article>
-      <article class="card" data-module="opencv"><span class="badge badge--orange">04 · 图像处理</span><h3>OpenCV</h3><p>接收可用帧并完成颜色转换、缩放和应用侧视觉处理。</p><a class="card__link" href="notes/07-专项笔记--OpenCV--OpenCV读取Camera记录.html">OpenCV 专项 →</a></article>
-      <article class="card" data-module="rknn"><span class="badge badge--orange">05 · NPU</span><h3>RKNN</h3><p>承接模型输入、NPU runtime 和后处理，输出类别、置信度与坐标。</p><a class="card__link" href="notes/07-专项笔记--AI-RKNN--官方AI例程运行记录.html">RKNN 专项 →</a></article>
-      <article class="card" data-module="display"><span class="badge badge--blue">06 · 本地输出</span><h3>Display</h3><p>把处理后的画面送到屏幕；验证方向、分辨率和显示时序。</p><a class="card__link" href="notes/07-专项笔记--Display-MIPI--MIPI屏显示链路.html">Display 专项 →</a></article>
-      <article class="card" data-module="streaming"><span class="badge badge--green">07 · 网络输出</span><h3>Streaming</h3><p>编码并通过 RTMP/HLS 送出，让 Windows 或服务端可以拉流播放。</p><a class="card__link" href="notes/07-专项笔记--Streaming--RTMP-HLS推流记录.html">Streaming 专项 →</a></article>
-    </div></section>
-    <section aria-labelledby="boundary-title"><div class="section-title"><h2 id="boundary-title">先记住两条边界</h2></div><div class="grid"><article class="card"><h3>数据边界</h3><p>每一层都要能说清格式、内存位置、时序和失败现象。</p></article><article class="card"><h3>控制边界</h3><p>Camera 配置、模型推理和输出播放是不同问题，按链路逐段验收。</p></article></div></section>
-    <footer class="footer">系统地图是学习导航摘要，详细结论回到专项 Markdown。</footer>
+    <section class="site-state" data-current-state aria-label="当前学习状态"><div class="site-state__item"><span class="site-state__label">当前阶段</span><p class="site-state__value" data-current-stage>尚未生成当前阶段</p></div><div class="site-state__item"><span class="site-state__label">首条未完成任务</span><p class="site-state__value" data-current-task>当前没有未完成任务</p></div><a class="button" data-current-task-link href="notes/06-任务--01-下一步任务看板.html">进入任务看板</a></section>
+
+    <header class="hero">
+      <p class="hero__eyebrow">CAMERA DRIVER MAP · CONTROL + DATA</p>
+      <h1>从 IMX415 到 /dev/video0</h1>
+      <p>Camera 驱动不是一条单线：I2C 控制链负责“让 Sensor 能工作”，MIPI 数据链负责“把图像送进 RKISP”。两条链在 Sensor 处汇合。</p>
+      <div class="hero__actions"><a class="button" href="../../../04-项目/14-Phase0-驱动层全链路框架图.html">打开驱动全链路图</a><a class="button button--quiet" href="notes/06-任务--Camera驱动第1章-IMX415-Sensor与驱动.html">复习 Sensor 与 probe</a></div>
+    </header>
+
+    <section aria-labelledby="control-title">
+      <div class="section-title"><h2 id="control-title">控制链：配置和启动 Sensor</h2><p>DTS → I2C Core → IMX415 driver</p></div>
+      <div class="grid">
+        <article class="card card--accent" data-module="dts"><span class="badge badge--blue">01 · 硬件描述</span><h3>DTS / I2C4</h3><p>提供 compatible、0x1a、clock、GPIO、供电和 endpoint 信息。</p><a class="card__link" href="notes/06-任务--Camera驱动第1章-IMX415-Sensor与驱动.html">查看第 1 章 →</a></article>
+        <article class="card" data-module="i2c-core"><span class="badge badge--green">02 · 总线框架</span><h3>I2C Core</h3><p>创建 i2c_client，比较 compatible，匹配后通过总线 probe 入口调用 Sensor 驱动。</p><a class="card__link" href="../../../04-项目/16-IMX415-三层驱动调用流程.html">查看三层调用图 →</a></article>
+        <article class="card" data-module="sensor-driver"><span class="badge badge--orange">03 · 芯片驱动</span><h3>imx415_probe()</h3><p>取得 DTS 资源、执行上电时序、读取 0000e0，并注册 V4L2 subdev。</p><a class="card__link" href="notes/07-专项笔记--Camera-V4L2--IMX415驱动调试与最小demo路线.html">查看调试路线 →</a></article>
+      </div>
+    </section>
+
+    <section aria-labelledby="data-title">
+      <div class="section-title"><h2 id="data-title">数据链：传输和处理图像</h2><p>IMX415 → D-PHY → CSI-2 → RKISP → V4L2</p></div>
+      <div class="grid">
+        <article class="card card--accent" data-module="sensor"><span class="badge badge--blue">04 · RAW 源</span><h3>IMX415 Sensor</h3><p>按寄存器配置输出 SGBRG10_1X10；图像数据不经过 I2C。</p></article>
+        <article class="card" data-module="dphy"><span class="badge badge--purple">05 · 物理层</span><h3>MIPI D-PHY</h3><p>在时钟 lane 和多条 data lane 上接收差分高速串行信号，恢复可靠比特流。</p><a class="card__link" href="../../../04-项目/12-Phase0-数据流动画.html">查看数据流动画 →</a></article>
+        <article class="card" data-module="csi2"><span class="badge badge--green">06 · 协议层</span><h3>CSI-2 Receiver</h3><p>解析包头、虚拟通道和数据类型，把 RAW10 像素流交给 ISP。</p><a class="card__link" href="../../../04-项目/14-Phase0-驱动层全链路框架图.html">定位 CSI 节点 →</a></article>
+        <article class="card" data-module="rkisp"><span class="badge badge--orange">07 · 图像处理</span><h3>RKISP</h3><p>接收 RAW Bayer，完成裁剪和 ISP 处理，并产生 mainpath、selfpath 等输出。</p><a class="card__link" href="../../../04-项目/15-Phase0-RK3568全系统框架图.html">定位 RKISP →</a></article>
+        <article class="card" data-module="v4l2"><span class="badge badge--blue">08 · 用户态接口</span><h3>Media / V4L2</h3><p>Media Graph 描述实体连接，V4L2 video node 让应用申请 buffer、设置格式和抓帧。</p><a class="card__link" href="notes/07-专项笔记--Camera-V4L2--V4L2命令行抓帧记录.html">查看抓帧记录 →</a></article>
+        <article class="card card--accent" data-module="video-node"><span class="badge badge--green">09 · 可验证输出</span><h3>/dev/video0</h3><p>它是 rkisp_mainpath 暴露的采集节点，不是 IMX415 本身；当前可输出 NV12。</p><a class="card__link" href="notes/09-输出沉淀--04-V4L2专题-什么是dev-video0.html">查看面试答案 →</a></article>
+      </div>
+    </section>
+
+    <section aria-labelledby="debug-title">
+      <div class="section-title"><h2 id="debug-title">调试时从哪一层开始</h2><p>按证据定位，不从应用层反猜底层</p></div>
+      <div class="grid">
+        <article class="card"><h3>没有识别到 Sensor</h3><p>先查原理图、DTS、I2C 地址、上电时序、时钟、RESET/PDN 和 Sensor ID。</p></article>
+        <article class="card"><h3>识别成功但没有图像</h3><p>继续查 endpoint、lane 数、频率、D-PHY、CSI-2、RKISP 和 Media Graph。</p></article>
+        <article class="card"><h3>有节点但应用抓帧失败</h3><p>再查 video node、格式、分辨率、stride、VB2 buffer 和 stream on。</p></article>
+      </div>
+    </section>
+
+    <footer class="footer">当前地图止于 /dev/video0；YOLO、RKNN、屏显和推流已经退出 Camera 驱动求职主线。</footer>
   </main></div>
 </body>
 </html>

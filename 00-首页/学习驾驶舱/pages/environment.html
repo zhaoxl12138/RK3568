@@ -5,22 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
   <title>环境入口 · RK3568 驾驶舱</title>
-  <link rel="stylesheet" href="../site.css">
-  <script defer src="../generated/vault-data.js"></script>
-  <script defer src="../site.js"></script>
+  <link rel="stylesheet" href="../site.css?v=357a578eb6">
+  <script defer src="../generated/vault-data.js?v=357a578eb6"></script>
+  <script defer src="../site.js?v=357a578eb6"></script>
 </head>
 <body>
   <a class="skip-link" href="#main-content">跳到主要内容</a>
-  <nav class="site-nav" data-site-nav aria-label="网站导航"><a class="site-nav__brand" href="../index.html">RK3568 / 驾驶舱</a><div class="site-nav__links"><a href="../index.html">驾驶舱首页</a><a href="learning-route.html">学习路线</a><a href="system-map.html">系统地图</a><a href="phase0.html">Phase0 可视化</a><a href="project.html">项目</a><a href="evidence.html">证据</a><a aria-current="page" href="environment.html">环境</a><a href="notes.html">笔记</a><a href="archive.html">归档</a><a href="../../../06-任务/01-下一步任务看板.md">任务看板</a></div></nav>
+  <nav class="site-nav" data-site-nav aria-label="全站导航"><a class="site-nav__brand" href="../index.html"><span>RK3568</span><strong>Camera 学习站</strong></a><div class="site-nav__links"><a href="../index.html" data-nav-key="home">首页</a><a href="notes/06-任务--01-下一步任务看板.html" data-nav-key="task">当前任务</a><a href="learning-route.html" data-nav-key="route">学习路线</a><a href="system-map.html" data-nav-key="system">系统地图</a><a href="../../../04-项目/10-Phase0-可视化总入口.html" data-nav-key="phase0">Phase0</a><a href="notes.html" data-nav-key="notes">专项笔记</a><a href="evidence.html" data-nav-key="evidence">实验依据</a></div><div class="site-nav__tools"><a class="site-nav__stage" href="learning-route.html#stage-2" title="当前学习阶段">阶段 2 MIPI D-PHY 与 CSI-2</a><details class="site-nav__more"><summary>更多</summary><div class="site-nav__more-panel"><a href="project.html" data-nav-key="project">项目总览</a><a href="environment.html" data-nav-key="environment" aria-current="page">开发环境</a><a href="archive.html" data-nav-key="archive">归档</a><a href="obsidian://open?vault=RK3568&amp;file=00-%E9%A6%96%E9%A1%B5%2F00-RK3568%E5%AD%A6%E4%B9%A0%E4%B8%BB%E5%85%A5%E5%8F%A3">在 Obsidian 中打开</a></div></details></div></nav>
   <div class="page-shell"><main id="main-content">
-    <header class="hero"><p class="hero__eyebrow">ENVIRONMENT · THREE CONTEXTS</p><h1>环境与工具链</h1><p>按实际工作边界分成板端、Ubuntu / SDK 和 WSL2 / VSCode 三组，先找对应说明再开始实验。</p></header>
-    <section aria-labelledby="environment-title"><div class="section-title"><h2 id="environment-title">环境分组</h2><p>说明 → 资料入口</p></div><div class="grid">
-      <article class="card card--accent"><span class="badge badge--orange">板端</span><h3>板端 Buildroot</h3><p>确认 Buildroot 4.19、串口、SSH、网络和 Camera 基线。</p><a class="button" href="notes/03-环境--00-环境入口.html">打开环境入口</a></article>
-      <article class="card"><span class="badge badge--blue">主机工具链</span><h3>Ubuntu / SDK</h3><p>查看 SDK 编译注意事项和主机侧构建准备。</p><a class="button" href="notes/03-环境--01-Ubuntu与SDK编译注意事项.html">打开 Ubuntu / SDK 说明</a></article>
-      <article class="card"><span class="badge badge--purple">开发工作区</span><h3>WSL2 / VSCode</h3><p>了解 WSL2 开发环境现状与 VSCode 使用边界。</p><a class="button" href="notes/03-环境--02-WSL2和VSCode使用说明.html">打开 WSL2 / VSCode 说明</a><a class="card__link" href="notes/03-环境--03-WSL2开发环境现状.html">查看现状记录 →</a></article>
+    <header class="hero"><p class="hero__eyebrow">WORKING CONTEXT · READY</p><h1>当前开发环境已就绪</h1><p>环境不再作为学习主目录；这里只保留追踪 Camera 驱动时需要的最小工作上下文。</p></header>
+    <section aria-labelledby="environment-title"><div class="section-title"><h2 id="environment-title">最小工作上下文</h2><p>位置 → 用途</p></div><div class="grid">
+      <article class="card card--accent"><span class="badge badge--orange">板端</span><h3>RK3568 开发板</h3><p><code>root@192.168.0.230</code>，用于读取运行时 DTS、I2C、dmesg、Media Graph 和 V4L2 输出。</p><a class="button" href="notes/05-实验与证据--2026-07-28-直连板端读取IMX415配置.html">查看板端证据</a></article>
+      <article class="card"><span class="badge badge--blue">源码</span><h3>RK3568 Linux SDK</h3><p>WSL 路径 <code>/home/rk3568/work/rk3568_linux_sdk</code>，用于追 DTS、I2C Core、IMX415 和 RKISP 源码。</p><a class="button" href="notes/06-任务--Camera驱动第1章-IMX415-Sensor与驱动.html">查看源码对照</a></article>
+      <article class="card"><span class="badge badge--purple">阅读</span><h3>Source Insight</h3><p>Windows 侧源码镜像用于跳转定义和查看调用关系；修改、编译仍回到 WSL SDK。</p><a class="button" href="notes/06-任务--Camera驱动求职第1周执行计划.html">返回周计划</a></article>
     </div></section>
-    <section aria-labelledby="appendix-title"><div class="section-title"><h2 id="appendix-title">资料包入口</h2></div><div class="grid"><article class="card"><h3>附录与资料包</h3><p>需要查板卡资料、版本记录或 PDF 注意事项时，从附录入口进入。</p><a class="button" href="notes/08-附录--00-附录入口.html">打开附录入口</a></article></div></section>
-    <footer class="footer">环境说明是运行上下文索引，实际状态以板端记录和环境 Markdown 为准。</footer>
+    <section aria-labelledby="appendix-title"><div class="section-title"><h2 id="appendix-title">资料包入口</h2></div><div class="grid"><article class="card"><h3>原理图与资料说明</h3><p>需要重新确认板卡资料、版本或 PDF 来源时再进入附录。</p><a class="button" href="notes/08-附录--00-附录入口.html">打开附录入口</a></article></div></section>
+    <footer class="footer">环境能工作只是前提；当前学习进度以 Camera 驱动任务看板和章节验收为准。</footer>
   </main></div>
 </body>
 </html>
