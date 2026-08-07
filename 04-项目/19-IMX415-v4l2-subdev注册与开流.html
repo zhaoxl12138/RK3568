@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IMX415 v4l2_subdev：从注册到开流</title>
+<link rel="stylesheet" href="../00-首页/学习驾驶舱/site.css?v=f618744eb8">
+<script defer src="../00-首页/学习驾驶舱/generated/vault-data.js?v=f618744eb8"></script>
+<script defer src="../00-首页/学习驾驶舱/site.js?v=f618744eb8"></script>
+<style>
+:root{--bg:#080c14;--surface:rgba(255,255,255,.035);--surface-strong:rgba(255,255,255,.055);--border:rgba(255,255,255,.11);--text:#c9d2dc;--muted:#8fa0b0;--bright:#f0f5fa;--blue:#42a5f5;--cyan:#26c6da;--purple:#9b7bff;--orange:#ffa726;--green:#66bb6a;--red:#ef5350}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.7 Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}code,pre{font-family:Consolas,"JetBrains Mono",monospace;color:#d8e9ff}.hero{padding:54px 24px 34px;text-align:center;border-bottom:1px solid var(--border);background:radial-gradient(circle at 50% -20%,rgba(155,123,255,.24),transparent 45%),linear-gradient(180deg,#111827,#080c14)}h1{margin:0;color:var(--bright);font-size:clamp(1.8rem,4vw,2.75rem);letter-spacing:-.04em}h1 span{background:linear-gradient(135deg,var(--cyan),var(--purple));-webkit-background-clip:text;background-clip:text;color:transparent}.sub{max-width:980px;margin:12px auto 0;color:#a9bac9}.container{max-width:1680px;margin:auto;padding:30px 24px 72px}.context-links{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:20px}.context-links a{color:#d7e7f7;text-decoration:none;border:1px solid rgba(155,123,255,.38);background:rgba(155,123,255,.09);border-radius:999px;padding:7px 13px;font-size:.85rem}.title{margin:38px 0 16px;padding-left:14px;border-left:3px solid var(--purple);color:var(--bright);font-size:1.24rem}.memory,.identity-grid,.explain-grid,.evidence-grid{display:grid;gap:14px}.memory{grid-template-columns:repeat(4,minmax(0,1fr))}.identity-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.explain-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.evidence-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.card,.identity,.explain,.evidence,.note,.quiz{padding:18px;border:1px solid var(--border);border-radius:18px;background:var(--surface)}.card .k,.identity .k,.evidence .k{font-size:.75rem;font-weight:700;letter-spacing:.07em}.card h2,.identity h3,.explain h3,.evidence h3{margin:7px 0;color:var(--bright);font-size:1.05rem}.card p,.identity p,.explain p,.evidence p{margin:0;color:#afbfcc;font-size:.9rem}.identity code{display:inline-block;margin:4px 0 8px}.blue{color:#90caf9}.cyan{color:#80deea}.orange{color:#ffcc80}.purple{color:#c3b4ff}.green{color:#a5d6a7}.red{color:#ef9a9a}.diagram{padding:16px;border:1px solid var(--border);border-radius:24px;background:linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px),var(--surface);background-size:28px 28px}.diagram svg{width:100%;height:auto;display:block}.lane{fill:rgba(255,255,255,.022);stroke:rgba(255,255,255,.1);stroke-width:1.5}.lane-i2c{fill:rgba(38,198,218,.035)}.lane-v4l2{fill:rgba(155,123,255,.035)}.lane-media{fill:rgba(255,167,38,.035)}.lane-result{fill:rgba(102,187,106,.035)}.lane-title{fill:#edf4fb;font-size:19px;font-weight:700;text-anchor:middle}.lane-sub{fill:#91a2b1;font-size:12px;text-anchor:middle}.node{fill:#101722;stroke:rgba(255,255,255,.2);stroke-width:1.4}.n-i2c{fill:#0d2529;stroke:rgba(38,198,218,.58)}.n-v4l2{fill:#201a34;stroke:rgba(155,123,255,.62)}.n-media{fill:#281d0e;stroke:rgba(255,167,38,.58)}.n-result{fill:#14251b;stroke:rgba(102,187,106,.58)}.n-error{fill:#2a1518;stroke:rgba(239,83,80,.6)}.assignment{fill:#171824;stroke:rgba(200,190,255,.44);stroke-dasharray:5 4}.node-title{fill:#eef4f9;font-size:14px;font-weight:700;text-anchor:middle}.node-sub{fill:#a6b8c7;font-size:11px;text-anchor:middle}.edge{fill:none;stroke:#8196a9;stroke-width:1.7;marker-end:url(#arrow-reg)}.edge-data{fill:none;stroke:#9a89d7;stroke-width:1.5;stroke-dasharray:6 5;marker-end:url(#arrow-data)}.edge-stream{fill:none;stroke:#75a982;stroke-width:1.9;marker-end:url(#arrow-stream)}.edge-label{fill:#a4b4c2;font-size:11px;text-anchor:middle}.start{fill:#121b26;stroke:#f0b45d;stroke-width:1.8}.start-text{fill:#ffe0a7;font-size:12px;font-weight:700;text-anchor:middle}.legend{display:flex;gap:18px;flex-wrap:wrap;margin:12px 2px 0;color:#96a8b7;font-size:.82rem}.legend span{display:inline-flex;align-items:center;gap:7px}.legend i{width:32px;height:0;border-top:2px solid #8196a9}.legend .dash{border-top-style:dashed;border-color:#9a89d7}.source-box{margin-top:14px;padding:15px 17px;border-left:3px solid var(--cyan);background:rgba(38,198,218,.05);border-radius:0 14px 14px 0}.source-box pre{margin:0;white-space:pre-wrap;font-size:.82rem;line-height:1.65}.meaning{display:grid;grid-template-columns:190px 1fr;gap:0;margin-top:10px;border:1px solid var(--border);border-radius:16px;overflow:hidden}.meaning div{padding:12px 14px;border-top:1px solid var(--border)}.meaning div:nth-child(-n+2){border-top:0}.meaning .term{color:#d8e9ff;font-weight:700;background:rgba(0,0,0,.17)}.meaning .desc{color:#aebdca}.note{margin-top:22px;border-color:rgba(38,198,218,.28);background:rgba(38,198,218,.055)}.note strong{color:#f0f8ff}.warning{border-color:rgba(239,83,80,.3);background:rgba(239,83,80,.055)}.warning strong{color:#ffc4c4}.quiz{margin-top:14px}.quiz h3{margin:0 0 10px;color:var(--bright)}.quiz ol{margin:0;padding-left:22px}.quiz li+li{margin-top:7px}.quiz details{margin-top:14px;padding-top:12px;border-top:1px solid var(--border)}.quiz summary{cursor:pointer;color:#9edcf0;font-weight:700}.quiz details p{margin:10px 0 0;color:#b9c7d2}@media(max-width:1000px){.memory{grid-template-columns:repeat(2,minmax(0,1fr))}.identity-grid,.evidence-grid{grid-template-columns:1fr}.diagram{padding:8px}.meaning{grid-template-columns:160px 1fr}}@media(max-width:620px){.memory,.explain-grid{grid-template-columns:1fr}.hero{padding:40px 16px 28px}.container{padding:24px 14px 56px}.lane-title{font-size:15px}.node-title{font-size:11px}.node-sub,.edge-label,.lane-sub{font-size:9px}.meaning{grid-template-columns:1fr}.meaning div{border-top:1px solid var(--border)!important}.meaning .term{padding-bottom:5px}.meaning .desc{padding-top:5px}}
+.register-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.register-card{padding:18px;border:1px solid var(--border);border-radius:18px;background:var(--surface)}.register-card .step{font-size:.75rem;font-weight:700;color:var(--cyan);letter-spacing:.06em}.register-card h3{margin:7px 0;color:var(--bright);font-size:1rem}.register-card p{margin:0;color:#afbfcc;font-size:.9rem}.function-table-wrap{margin-top:16px;overflow:auto;border:1px solid var(--border);border-radius:18px}.function-table{width:100%;border-collapse:collapse;min-width:900px;background:rgba(255,255,255,.018)}.function-table th,.function-table td{padding:12px 14px;text-align:left;vertical-align:top;border-bottom:1px solid var(--border)}.function-table th{color:#e7eff6;background:rgba(155,123,255,.1)}.function-table tr:last-child td{border-bottom:0}.function-table td:first-child{white-space:nowrap;color:#d8e9ff;font-weight:700}.function-table td:nth-child(2){color:#9edcf0;white-space:nowrap}.function-table td:last-child{color:#afbfcc}.reading-path{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-top:16px}.read-step{position:relative;padding:14px;border:1px solid rgba(38,198,218,.25);border-radius:15px;background:rgba(38,198,218,.045)}.read-step b{display:block;color:#eef7fb}.read-step span{color:#9fb0be;font-size:.84rem}.priority-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:16px}.priority{padding:15px;border:1px solid var(--border);border-radius:15px;background:var(--surface)}.priority h3{margin:0 0 7px;font-size:.98rem}.priority p{margin:0;color:#aebdca;font-size:.87rem}.priority.must{border-color:rgba(102,187,106,.35)}.priority.must h3{color:#a5d6a7}.priority.understand{border-color:rgba(255,167,38,.34)}.priority.understand h3{color:#ffcc80}.priority.skip{border-color:rgba(143,160,176,.25)}.priority.skip h3{color:#aebdca}.deep-dive{margin-top:28px;border:1px solid var(--border);border-radius:18px;background:rgba(255,255,255,.02);overflow:hidden}.deep-dive>summary{cursor:pointer;padding:16px 18px;color:#d8e9ff;font-weight:700;background:rgba(155,123,255,.07)}.deep-dive[open]>summary{border-bottom:1px solid var(--border)}.deep-dive>.title{margin-left:18px;margin-right:18px}.deep-dive>.diagram,.deep-dive>.explain-grid,.deep-dive>.source-box,.deep-dive>.legend{margin-left:18px;margin-right:18px}.deep-dive>.source-box,.deep-dive>.legend{margin-bottom:18px}@media(max-width:1100px){.reading-path{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:850px){.register-grid,.priority-grid{grid-template-columns:1fr}.reading-path{grid-template-columns:1fr}}
+.function-mindmap{position:relative;padding:24px;border:1px solid var(--border);border-radius:24px;background:linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px),var(--surface);background-size:28px 28px;overflow:hidden}.mind-root{max-width:520px;margin:0 auto 52px;padding:18px 22px;text-align:center;border:1px solid rgba(155,123,255,.65);border-radius:18px;background:linear-gradient(135deg,rgba(155,123,255,.18),rgba(38,198,218,.1));box-shadow:0 0 34px rgba(155,123,255,.1)}.mind-root span{display:block;color:#c9bcff;font-size:.75rem;font-weight:700;letter-spacing:.1em}.mind-root strong{display:block;margin-top:4px;color:#f2f5ff;font-size:1.35rem}.mind-root small{display:block;margin-top:4px;color:#aab8c6}.mind-root::after{content:"";position:absolute;left:50%;height:36px;margin-top:19px;border-left:2px solid rgba(155,123,255,.55)}.mind-branches{position:relative;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}.mind-branches::before{content:"";position:absolute;left:12.5%;right:12.5%;top:-18px;border-top:2px solid rgba(155,123,255,.42)}.mind-branch{position:relative;padding:17px;border:1px solid var(--border);border-radius:18px;background:rgba(8,12,20,.88)}.mind-branch::before{content:"";position:absolute;left:50%;top:-18px;height:18px;border-left:2px solid rgba(155,123,255,.42)}.mind-branch header{margin:-17px -17px 15px;padding:13px 15px;border-radius:17px 17px 0 0;background:rgba(255,255,255,.04)}.mind-branch .branch-no{display:block;font-size:.7rem;font-weight:700;letter-spacing:.08em}.mind-branch h3{margin:2px 0 0;color:#f0f5fa;font-size:1rem}.mind-branch ol{list-style:none;margin:0;padding:0}.mind-node{position:relative;padding:11px 10px;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:#101722;text-align:center}.mind-node+.mind-node{margin-top:28px}.mind-node+.mind-node::before{content:"↓";position:absolute;left:50%;top:-27px;transform:translateX(-50%);color:#8296aa;font-weight:700}.mind-node code{display:block;color:#e7f2ff;font-weight:700;overflow-wrap:anywhere}.mind-node span{display:block;margin-top:3px;color:#9eafbd;font-size:.78rem;line-height:1.45}.mind-node.callback{border-style:dashed;border-color:rgba(155,123,255,.55);background:rgba(155,123,255,.08)}.mind-node.callback+.mind-node::before{content:"⇣";color:#b9a9ff}.branch-register{border-color:rgba(66,165,245,.28)}.branch-register .branch-no{color:#90caf9}.branch-probe{border-color:rgba(38,198,218,.3)}.branch-probe .branch-no{color:#80deea}.branch-framework{border-color:rgba(255,167,38,.3)}.branch-framework .branch-no{color:#ffcc80}.branch-runtime{border-color:rgba(102,187,106,.3)}.branch-runtime .branch-no{color:#a5d6a7}.map-legend{display:flex;gap:18px;flex-wrap:wrap;margin:14px 2px 0;color:#9dabb8;font-size:.82rem}.map-legend span{display:inline-flex;align-items:center;gap:7px}.map-legend i{width:30px;border-top:2px solid #8196a9}.map-legend i.dashed{border-top-style:dashed;border-color:#9b7bff}.function-index{margin-top:16px;border:1px solid var(--border);border-radius:16px;background:rgba(255,255,255,.02);overflow:hidden}.function-index>summary{cursor:pointer;padding:14px 16px;color:#b9c9d7;font-weight:700;background:rgba(255,255,255,.025)}.function-index .function-table-wrap{margin:0;border:0;border-top:1px solid var(--border);border-radius:0}@media(max-width:1180px){.mind-branches{grid-template-columns:repeat(2,minmax(0,1fr));gap:34px 16px}.mind-branches::before{display:none}.mind-branch::before{display:none}}@media(max-width:680px){.function-mindmap{padding:14px}.mind-root{margin-bottom:22px}.mind-root::after{display:none}.mind-branches{grid-template-columns:1fr;gap:14px}}
+.entry-groups{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.entry-card{padding:17px;border:1px solid var(--border);border-radius:17px;background:var(--surface)}.entry-card .entry-framework{font-size:.72rem;font-weight:700;letter-spacing:.07em}.entry-card h3{margin:5px 0 10px;color:#eef5fb;font-size:1rem}.entry-card ul{margin:0;padding-left:19px;color:#afbfcc}.entry-card li+li{margin-top:5px}.entry-card code{color:#ddecff}.entry-i2c{border-color:rgba(38,198,218,.3)}.entry-i2c .entry-framework{color:#80deea}.entry-subdev{border-color:rgba(155,123,255,.32)}.entry-subdev .entry-framework{color:#c3b4ff}.entry-control{border-color:rgba(255,167,38,.32)}.entry-control .entry-framework{color:#ffcc80}.internal-strip{display:grid;grid-template-columns:220px 1fr;gap:16px;align-items:center;margin-top:14px;padding:15px 17px;border:1px dashed rgba(143,160,176,.32);border-radius:16px;background:rgba(143,160,176,.04)}.internal-strip strong{color:#eef5fb}.internal-strip p{margin:0;color:#aab8c5}.internal-strip code{white-space:nowrap}@media(max-width:900px){.entry-groups{grid-template-columns:1fr}.internal-strip{grid-template-columns:1fr;gap:6px}}
+</style>
+</head>
+<body class="site-nav-offset">
+<a class="skip-link" href="#main-content">跳到主要内容</a>
+<nav class="site-nav" data-site-nav aria-label="全站导航"><a class="site-nav__brand" href="../00-首页/学习驾驶舱/index.html"><span>RK3568</span><strong>Camera 学习站</strong></a><div class="site-nav__links"><a href="../00-首页/学习驾驶舱/index.html" data-nav-key="home">首页</a><a href="../00-首页/学习驾驶舱/pages/notes/06-任务--01-下一步任务看板.html" data-nav-key="task" aria-current="page">当前任务</a><a href="../00-首页/学习驾驶舱/pages/learning-route.html" data-nav-key="route">学习路线</a><a href="../00-首页/学习驾驶舱/pages/system-map.html" data-nav-key="system">系统地图</a><a href="10-Phase0-可视化总入口.html" data-nav-key="phase0">Phase0</a><a href="../00-首页/学习驾驶舱/pages/notes.html" data-nav-key="notes">专项笔记</a><a href="../00-首页/学习驾驶舱/pages/evidence.html" data-nav-key="evidence">实验依据</a></div><div class="site-nav__tools"><a class="site-nav__stage" href="../00-首页/学习驾驶舱/pages/notes/06-任务--Camera驱动第1章-IMX415-Sensor与驱动.html" title="当前学习阶段">阶段 1 IMX415 Sensor 与驱动</a><details class="site-nav__more"><summary>更多</summary><div class="site-nav__more-panel"><a href="../00-首页/学习驾驶舱/pages/project.html">项目总览</a><a href="../00-首页/学习驾驶舱/pages/environment.html">开发环境</a><a href="../00-首页/学习驾驶舱/pages/archive.html">归档</a></div></details></div></nav>
+<header class="hero">
+<h1>IMX415 <span><code>v4l2_subdev</code></span>：从注册到开流</h1>
+<p class="sub">先按职责整理 <code>imx415.c</code>：谁注册驱动、谁执行 probe、谁注册 V4L2 subdev、谁负责格式、曝光和开流。内部宏和 I2C 字节细节暂时不追。</p>
+<nav class="context-links" aria-label="本章导航"><a href="#function-map">从关键函数地图开始</a><a href="18-RK3568-Camera从DTS到videoX真实启动时序.html">← 返回 Camera 真实启动主线</a><a href="16-IMX415-三层驱动调用流程.html">前置：I2C 匹配与 probe</a><a href="17-DPHY-从DTS到MediaGraph.html">后续：D-PHY 与 Media Graph →</a><a href="../00-首页/学习驾驶舱/pages/notes/06-任务--Camera驱动第1章-IMX415-Sensor与驱动.html">打开第 1 章笔记</a></nav>
+</header>
+<main id="main-content" class="container">
+<section id="function-map">
+<h2 class="title">先看这里：三个“注册”不要混</h2>
+<div class="register-grid">
+<article class="register-card"><div class="step">注册 1 · I2C 驱动</div><h3><code>sensor_mod_init()</code></h3><p>调用 <code>i2c_add_driver(&amp;imx415_i2c_driver)</code>，把整套 IMX415 驱动交给 I2C Core。设备匹配成功后，系统才会回调 <code>imx415_probe()</code>。</p></article>
+<article class="register-card"><div class="step">注册 2 · V4L2 操作能力</div><h3><code>v4l2_i2c_subdev_init()</code></h3><p>把 <code>i2c_client</code>、<code>v4l2_subdev</code> 和 <code>imx415_subdev_ops</code> 关联起来。它不是注册 I2C 驱动。</p></article>
+<article class="register-card"><div class="step">注册 3 · Camera 子设备</div><h3><code>v4l2_async_register_subdev_sensor_common()</code></h3><p>把 IMX415 作为 Sensor subdev 加入 V4L2 异步框架，之后才能与 D-PHY、CSI 和 RKISP 完成绑定。</p></article>
+</div>
+
+<h2 class="title">关键函数思维导图：先看关系，再记职责</h2>
+<section id="function-mindmap" class="function-mindmap" aria-label="IMX415 关键函数生命周期思维导图">
+<div class="mind-root"><span>中心主题</span><strong>IMX415 驱动生命周期</strong><small>注册驱动 → 匹配并初始化 → 加入 Camera 框架 → 响应运行期操作</small></div>
+<div class="mind-branches">
+<article class="mind-branch branch-register">
+<header><span class="branch-no">分支 1</span><h3>驱动注册</h3></header>
+<ol>
+<li class="mind-node"><code>sensor_mod_init()</code><span>模块初始化入口</span></li>
+<li class="mind-node"><code>i2c_add_driver()</code><span>把驱动交给 I2C Core</span></li>
+<li class="mind-node callback"><code>imx415_i2c_driver</code><span>结构体保存 match / probe / remove</span></li>
+</ol>
+</article>
+<article class="mind-branch branch-probe">
+<header><span class="branch-no">分支 2</span><h3>匹配与 probe</h3></header>
+<ol>
+<li class="mind-node callback"><code>.probe = imx415_probe</code><span>compatible 匹配成功后由 I2C Core 回调</span></li>
+<li class="mind-node"><code>imx415_probe()</code><span>获取 DTS 资源、初始化 controls 和软件对象</span></li>
+<li class="mind-node"><code>__imx415_power_on()</code><span>执行 GPIO、RESET、xvclk 上电时序</span></li>
+<li class="mind-node"><code>imx415_check_sensor_id()</code><span>I2C 读取并确认芯片 ID</span></li>
+</ol>
+</article>
+<article class="mind-branch branch-framework">
+<header><span class="branch-no">分支 3</span><h3>V4L2 / Media 注册</h3></header>
+<ol>
+<li class="mind-node"><code>v4l2_i2c_subdev_init()</code><span>关联 client、subdev 与 subdev_ops</span></li>
+<li class="mind-node"><code>media_entity_pads_init()</code><span>建立 IMX415 的 Source Pad</span></li>
+<li class="mind-node"><code>v4l2_async_register_subdev_sensor_common()</code><span>注册 Sensor subdev，等待管线绑定</span></li>
+</ol>
+</article>
+<article class="mind-branch branch-runtime">
+<header><span class="branch-no">分支 4</span><h3>运行期控制与开流</h3></header>
+<ol>
+<li class="mind-node callback"><code>imx415_pad_ops</code><span>回调到 imx415_set_fmt()：选择输出模式</span></li>
+<li class="mind-node callback"><code>imx415_ctrl_ops</code><span>回调到 imx415_set_ctrl()：曝光、增益、VBLANK</span></li>
+<li class="mind-node callback"><code>imx415_video_ops</code><span>回调到 imx415_s_stream()：接收开流/停流请求</span></li>
+<li class="mind-node"><code>__imx415_start_stream()</code><span>写模式寄存器并退出 Standby，输出 RAW10</span></li>
+</ol>
+</article>
+</div>
+</section>
+<div class="map-legend"><span><i></i>实线：真实执行顺序或函数调用</span><span><i class="dashed"></i>虚线：结构体保存的回调关系</span></div>
+
+<section id="framework-entries">
+<h2 class="title">重点：对外入口与内部函数</h2>
+<div class="entry-groups">
+<article class="entry-card entry-i2c"><div class="entry-framework">LINUX I2C / PM 框架</div><h3>I2C Driver 入口</h3><ul><li><code>imx415_probe()</code>：匹配成功后的初始化入口</li><li><code>imx415_remove()</code>：设备移除时的清理入口</li><li><code>imx415_pm_ops</code>：运行时电源管理入口</li></ul></article>
+<article class="entry-card entry-subdev"><div class="entry-framework">V4L2 CAMERA 框架</div><h3>V4L2 subdev_ops</h3><ul><li><code>imx415_set_fmt()</code>：选择输出模式</li><li><code>imx415_s_stream()</code>：开流与停流</li><li><code>imx415_get_fmt()</code>：读取当前格式</li></ul></article>
+<article class="entry-card entry-control"><div class="entry-framework">V4L2 CONTROL 框架</div><h3>V4L2 ctrl_ops</h3><ul><li><code>imx415_set_ctrl()</code>：统一处理曝光、增益、VBLANK 等控制请求</li></ul></article>
+</div>
+<div class="internal-strip"><strong>内部函数不需要注册</strong><p>这些入口被框架调用后，再继续调用 <code>__imx415_power_on()</code>、<code>imx415_check_sensor_id()</code>、<code>imx415_read_reg()</code>、<code>imx415_write_reg()</code>、<code>__imx415_start_stream()</code> 等内部实现。</p></div>
+</section>
+
+<details class="function-index">
+<summary>需要按函数名查询时，展开完整函数速查表</summary>
+<div class="function-table-wrap">
+<table class="function-table">
+<thead><tr><th>代码名</th><th>角色</th><th>现在要记住什么</th></tr></thead>
+<tbody>
+<tr><td><code>sensor_mod_init()</code></td><td>驱动注册入口</td><td>调用 <code>i2c_add_driver()</code>；它不直接调用 <code>imx415_probe()</code>。</td></tr>
+<tr><td><code>imx415_i2c_driver</code></td><td>驱动描述结构体</td><td>它不是函数；其中声明匹配表、<code>probe</code>、<code>remove</code> 和电源管理入口。</td></tr>
+<tr><td><code>imx415_probe()</code></td><td>初始化总入口</td><td>匹配成功后由 I2C Core 调用；负责资源获取、控制项、上电、读 ID、subdev 和 Media 注册。</td></tr>
+<tr><td><code>__imx415_power_on()</code></td><td>上电时序</td><td>处理电源 GPIO、RESET 和 xvclk，让 Sensor 进入可通信状态。</td></tr>
+<tr><td><code>imx415_check_sensor_id()</code></td><td>芯片确认</td><td>通过 I2C 读取并比较 Sensor ID；成功只能证明控制通道和基本上电可用。</td></tr>
+<tr><td><code>v4l2_i2c_subdev_init()</code></td><td>关联 V4L2 能力</td><td>把 client、subdev 与 <code>imx415_subdev_ops</code> 绑定起来。</td></tr>
+<tr><td><code>media_entity_pads_init()</code></td><td>建立数据端口</td><td>初始化 IMX415 唯一的 Source Pad，表示 RAW 图像从 Sensor 输出。</td></tr>
+<tr><td><code>v4l2_async_register_subdev_sensor_common()</code></td><td>注册 Sensor subdev</td><td>将 IMX415 放入异步匹配体系，等待 Camera 管线完成绑定。</td></tr>
+<tr><td><code>imx415_set_fmt()</code></td><td>选择输出模式</td><td>根据分辨率、格式等选择并保存当前 Sensor mode。</td></tr>
+<tr><td><code>imx415_set_ctrl()</code></td><td>设置控制参数</td><td>处理曝光、增益、VBLANK 等控制项，并在合适时机写入 Sensor 寄存器。</td></tr>
+<tr><td><code>imx415_s_stream()</code></td><td>开流/停流入口</td><td>接收 V4L2 的开流请求；开流时调用 <code>__imx415_start_stream()</code>。</td></tr>
+<tr><td><code>__imx415_start_stream()</code></td><td>真正启动 Sensor</td><td>写全局和模式寄存器表、应用 controls，最后退出 Standby，开始输出 RAW10。</td></tr>
+</tbody>
+</table>
+</div>
+</details>
+
+<h2 class="title">推荐代码阅读顺序</h2>
+<div class="reading-path">
+<article class="read-step"><b>1. 驱动入口</b><span><code>sensor_mod_init()</code> → <code>imx415_i2c_driver</code></span></article>
+<article class="read-step"><b>2. probe 骨架</b><span>先看 <code>imx415_probe()</code> 的大步骤，不钻辅助函数。</span></article>
+<article class="read-step"><b>3. 上电与识别</b><span><code>__imx415_power_on()</code> → <code>imx415_check_sensor_id()</code></span></article>
+<article class="read-step"><b>4. 加入 Camera 框架</b><span>subdev → Source Pad → async register</span></article>
+<article class="read-step"><b>5. 运行期操作</b><span><code>set_fmt()</code> → <code>set_ctrl()</code> → <code>s_stream()</code></span></article>
+</div>
+
+<div class="priority-grid">
+<article class="priority must"><h3>当前必须掌握</h3><p>能从驱动注册讲到 probe，再讲到上电读 ID、注册 subdev，最后说清格式、曝光和开流分别由哪个函数负责。</p></article>
+<article class="priority understand"><h3>只需理解职责</h3><p><code>imx415_subdev_ops</code>、<code>imx415_video_ops</code>、<code>imx415_pad_ops</code> 是“函数入口表”，框架通过它们找到具体回调。</p></article>
+<article class="priority skip"><h3>暂时不追</h3><p><code>to_imx415/container_of</code>、<code>i2c_transfer</code> 字节细节、<code>pm_runtime</code> 内部实现，以及 V4L2 宏展开。</p></article>
+</div>
+</section>
+
+<h2 class="title">理解这些函数前，先记住四个概念</h2>
+<section class="memory" aria-label="四个核心结论">
+<article class="card"><div class="k cyan">概念 1</div><h2>subdev 是软件对象</h2><p>它不是硬件模块，也不是第三方库，而是 Linux V4L2 框架描述 Camera 子设备的内核对象。</p></article>
+<article class="card"><div class="k blue">概念 2</div><h2>I2C 身份不会消失</h2><p><code>i2c_client</code> 继续保存 I2C4、地址 0x1a 和 DTS 节点；subdev 只是在它上面增加 Camera 能力。</p></article>
+<article class="card"><div class="k orange">概念 3</div><h2>Pad 描述数据方向</h2><p>IMX415 只有一个图像输出端，所以 <code>pad0</code> 是 Source，并通过 endpoint 连接 D-PHY 的 Sink。</p></article>
+<article class="card"><div class="k green">概念 4</div><h2>STREAMON 才调用开流</h2><p>注册阶段建立对象和链路；应用执行 STREAMON 后，才进入 <code>imx415_s_stream(1)</code> 输出 RAW10。</p></article>
+</section>
+
+<h2 class="title">补充概念：同一颗 IMX415 的三个软件身份</h2>
+<section class="identity-grid">
+<article class="identity"><div class="k cyan">I2C CORE</div><h3><code>struct i2c_client</code></h3><p>保存 <code>adapter=I2C4</code>、<code>addr=0x1a</code>、<code>dev.of_node=imx415@1a</code>。解决“如何找到并通过 I2C 控制 Sensor”。</p></article>
+<article class="identity"><div class="k purple">V4L2</div><h3><code>struct v4l2_subdev</code></h3><p>保存标准 subdev 身份和操作表入口；具体的 <code>cur_mode</code>、<code>streaming</code>、<code>ctrl_handler</code> 等状态主要保存在 <code>struct imx415</code> 中。</p></article>
+<article class="identity"><div class="k orange">MEDIA CONTROLLER</div><h3><code>media_entity + media_pad</code></h3><p>声明它是 Camera Sensor，并有一个 Source Pad。解决“IMX415 在图像拓扑中的位置以及数据流向哪里”。</p></article>
+</section>
+<p class="note"><strong>核心关系：</strong><code>v4l2_i2c_subdev_init()</code> 不是删除 <code>i2c_client</code>，而是把同一颗 IMX415 的 I2C 身份、V4L2 身份和操作函数关联起来。</p>
+
+<details class="deep-dive">
+<summary>源码细节参考：展开 probe → subdev → Media Graph 完整流程图</summary>
+<h2 class="title">流程图一：probe 阶段，subdev 怎样注册并加入 Media Graph</h2>
+<section class="diagram" aria-label="IMX415 v4l2 subdev 注册流程">
+<svg viewBox="0 0 1600 1080" role="img" aria-labelledby="registerTitle registerDesc">
+<title id="registerTitle">IMX415 v4l2_subdev 注册流程</title><desc id="registerDesc">imx415_probe 中先初始化 V4L2 subdev 和控制项，完成上电与芯片 ID 检查后，声明 Sensor Entity 与 Source Pad，并异步注册进入 Media Graph。</desc>
+<defs><marker id="arrow-reg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="#8196a9"/></marker><marker id="arrow-data" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="#9a89d7"/></marker><marker id="arrow-stream" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="#75a982"/></marker></defs>
+<rect class="lane lane-i2c" x="18" y="18" width="370" height="1044" rx="22"/><rect class="lane lane-v4l2" x="408" y="18" width="370" height="1044" rx="22"/><rect class="lane lane-media" x="798" y="18" width="370" height="1044" rx="22"/><rect class="lane lane-result" x="1188" y="18" width="394" height="1044" rx="22"/>
+<text class="lane-title" x="203" y="56">IMX415 probe 主线</text><text class="lane-sub" x="203" y="78">真实执行顺序从这里开始</text><text class="lane-title" x="593" y="56">V4L2 身份与能力</text><text class="lane-sub" x="593" y="78">subdev / ops / controls</text><text class="lane-title" x="983" y="56">Media 图形身份</text><text class="lane-sub" x="983" y="78">entity / pad / async bind</text><text class="lane-title" x="1385" y="56">运行时可见结果</text><text class="lane-sub" x="1385" y="78">板端命令能看到什么</text>
+
+<rect class="start" x="65" y="112" width="276" height="70" rx="12"/><text class="start-text" x="203" y="142">从这里开始串行</text><text class="node-sub" x="203" y="163">imx415_probe(client, id)</text>
+<rect class="node n-i2c" x="48" y="232" width="310" height="90" rx="12"/><text class="node-title" x="203" y="265">sd = &amp;imx415-&gt;subdev</text><text class="node-sub" x="203" y="291">取得内嵌的软件对象</text><path class="edge" d="M203 182 L203 232"/>
+<rect class="node n-v4l2" x="438" y="232" width="310" height="100" rx="12"/><text class="node-title" x="593" y="266">v4l2_i2c_subdev_init()</text><text class="node-sub" x="593" y="291">关联 sd、client 与 subdev_ops</text><text class="node-sub" x="593" y="312">不是创建硬件，也不是替换 client</text><path class="edge" d="M358 277 L438 277"/>
+
+<rect class="node n-i2c" x="48" y="390" width="310" height="96" rx="12"/><text class="node-title" x="203" y="422">i2c_client</text><text class="node-sub" x="203" y="447">I2C4 / 0x1a / dev.of_node</text><text class="node-sub" x="203" y="468">I2C 控制身份继续保留</text><path class="edge-data" d="M438 300 C405 300 405 438 358 438"/><text class="edge-label" x="400" y="368">对象关联</text>
+<rect class="node n-v4l2" x="438" y="390" width="310" height="96" rx="12"/><text class="node-title" x="593" y="422">imx415_subdev_ops</text><text class="node-sub" x="593" y="447">core / video / pad</text><text class="node-sub" x="593" y="468">包含 s_stream、set_fmt 等入口</text><path class="edge-data" d="M593 332 L593 390"/><text class="edge-label" x="656" y="365">操作表引用</text>
+<rect class="node n-v4l2" x="438" y="544" width="310" height="90" rx="12"/><text class="node-title" x="593" y="577">imx415_initialize_controls()</text><text class="node-sub" x="593" y="602">曝光 / 增益 / VBLANK 等</text><path class="edge" d="M593 486 L593 544"/>
+
+<rect class="node n-i2c" x="48" y="544" width="310" height="90" rx="12"/><text class="node-title" x="203" y="577">__imx415_power_on()</text><text class="node-sub" x="203" y="602">供电、复位、xvclk</text><path class="edge" d="M438 589 L358 589"/>
+<rect class="node n-i2c" x="48" y="692" width="310" height="96" rx="12"/><text class="node-title" x="203" y="724">imx415_check_sensor_id()</text><text class="node-sub" x="203" y="749">I2C 读取 0x311A</text><text class="node-sub" x="203" y="770">检测值：0000e0</text><path class="edge" d="M203 634 L203 692"/>
+<rect class="node n-error" x="438" y="692" width="310" height="96" rx="12"/><text class="node-title" x="593" y="724">ID 不正确</text><text class="node-sub" x="593" y="749">返回 -ENODEV</text><text class="node-sub" x="593" y="770">probe 失败并清理资源</text><path class="edge-data" d="M358 740 L438 740"/><text class="edge-label" x="398" y="726">失败分支</text>
+
+<rect class="node assignment" x="838" y="232" width="310" height="110" rx="12"/><text class="node-title" x="993" y="264">字段赋值，不是函数调用</text><text class="node-sub" x="993" y="289">pad.flags = MEDIA_PAD_FL_SOURCE</text><text class="node-sub" x="993" y="312">entity.function = CAM_SENSOR</text><path class="edge" d="M203 788 C203 840 790 840 790 287 L838 287"/><text class="edge-label" x="606" y="824">ID 成功后继续串行</text>
+<rect class="node n-media" x="838" y="402" width="310" height="96" rx="12"/><text class="node-title" x="993" y="434">media_entity_pads_init()</text><text class="node-sub" x="993" y="459">初始化 1 个 Source Pad</text><text class="node-sub" x="993" y="480">Sensor 图像从这里输出</text><path class="edge" d="M993 342 L993 402"/>
+<rect class="node n-media" x="838" y="558" width="310" height="100" rx="12"/><text class="node-title" x="993" y="590">生成 subdev 名称</text><text class="node-sub" x="993" y="615">m00_b_imx415 4-001a-1</text><text class="node-sub" x="993" y="637">模块索引 + 朝向 + 驱动 + I2C 设备</text><path class="edge" d="M993 498 L993 558"/>
+<rect class="node n-media" x="838" y="718" width="310" height="108" rx="12"/><text class="node-title" x="993" y="750">v4l2_async_register_</text><text class="node-title" x="993" y="771">subdev_sensor_common()</text><text class="node-sub" x="993" y="799">加入异步匹配框架，等待 D-PHY/RKISP</text><path class="edge" d="M993 658 L993 718"/>
+
+<rect class="node n-result" x="1228" y="232" width="314" height="96" rx="12"/><text class="node-title" x="1385" y="264">V4L2 subdev 节点</text><text class="node-sub" x="1385" y="289">/dev/v4l-subdev3</text><text class="node-sub" x="1385" y="310">控制/枚举入口，不是帧数据节点</text><path class="edge-data" d="M1148 772 C1205 772 1185 280 1228 280"/><text class="edge-label" x="1194" y="526">注册结果</text>
+<rect class="node n-result" x="1228" y="430" width="314" height="108" rx="12"/><text class="node-title" x="1385" y="462">Media Entity</text><text class="node-sub" x="1385" y="487">type: V4L2 subdev / Sensor</text><text class="node-sub" x="1385" y="509">pad0: Source</text><path class="edge-data" d="M1148 450 L1228 484"/><text class="edge-label" x="1191" y="450">属性结果</text>
+<rect class="node n-result" x="1228" y="642" width="314" height="108" rx="12"/><text class="node-title" x="1385" y="674">异步 endpoint 绑定</text><text class="node-sub" x="1385" y="699">IMX415 pad0 → D-PHY pad0</text><text class="node-sub" x="1385" y="721">link: ENABLED</text><path class="edge" d="M1148 772 C1192 772 1192 696 1228 696"/>
+<rect class="start" x="1248" y="858" width="274" height="96" rx="12"/><text class="start-text" x="1385" y="890">注册阶段完成</text><text class="node-sub" x="1385" y="914">对象和拓扑已就绪</text><text class="node-sub" x="1385" y="936">此时还没有持续图像帧</text><path class="edge" d="M1385 750 L1385 858"/>
+</svg>
+</section>
+<div class="legend"><span><i></i>实线：真实执行顺序或调用</span><span><i class="dash"></i>虚线：对象、属性、结果或失败分支关系</span></div>
+
+<section class="explain-grid">
+<article class="explain"><h3><code>v4l2_i2c_subdev_init()</code> 的三个输入</h3><div class="meaning"><div class="term"><code>sd</code></div><div class="desc">要初始化的 IMX415 V4L2 子设备对象。</div><div class="term"><code>client</code></div><div class="desc">已经由 I2C Core 创建并与驱动绑定的 IMX415 I2C 设备对象。</div><div class="term"><code>imx415_subdev_ops</code></div><div class="desc">V4L2 能够调用的 core、video、pad 操作入口。</div></div></article>
+<article class="explain"><h3><code>imx415_subdev_ops</code> 提供什么</h3><div class="meaning"><div class="term"><code>core</code></div><div class="desc">电源和私有 ioctl 等基础控制。</div><div class="term"><code>video</code></div><div class="desc"><code>s_stream</code>、帧间隔和 MIPI bus 配置。</div><div class="term"><code>pad</code></div><div class="desc">枚举 RAW 格式、分辨率，获取或设置 pad format。</div></div></article>
+</section>
+<div class="source-box"><pre>sd = &amp;imx415-&gt;subdev;
+v4l2_i2c_subdev_init(sd, client, &amp;imx415_subdev_ops);
+imx415_initialize_controls(imx415);
+__imx415_power_on(imx415);
+imx415_check_sensor_id(imx415, client);
+
+imx415-&gt;pad.flags = MEDIA_PAD_FL_SOURCE;
+sd-&gt;entity.function = MEDIA_ENT_F_CAM_SENSOR;
+media_entity_pads_init(&amp;sd-&gt;entity, 1, &amp;imx415-&gt;pad);
+v4l2_async_register_subdev_sensor_common(sd);</pre></div>
+</details>
+
+<details class="deep-dive">
+<summary>源码细节参考：展开 STREAMON → imx415_s_stream 完整调用图</summary>
+<h2 class="title">流程图二：应用 STREAMON 后，subdev 怎样让 IMX415 真正出图</h2>
+<section class="diagram" aria-label="IMX415 v4l2 subdev 开流调用流程">
+<svg viewBox="0 0 1600 760" role="img" aria-labelledby="streamTitle streamDesc">
+<title id="streamTitle">IMX415 v4l2_subdev 开流调用流程</title><desc id="streamDesc">应用对 RKISP mainpath 执行 STREAMON 后，RKISP 启动媒体管线并通过 V4L2 subdev video ops 调用 imx415_s_stream，Sensor 写入模式、控制和 streaming 寄存器后开始输出 RAW10。</desc>
+<defs><marker id="arrow-reg2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="#8196a9"/></marker><marker id="arrow-stream2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="#75a982"/></marker></defs>
+<rect class="lane lane-result" x="18" y="18" width="370" height="724" rx="22"/><rect class="lane lane-media" x="408" y="18" width="370" height="724" rx="22"/><rect class="lane lane-v4l2" x="798" y="18" width="370" height="724" rx="22"/><rect class="lane lane-i2c" x="1188" y="18" width="394" height="724" rx="22"/>
+<text class="lane-title" x="203" y="56">应用 / Video Node</text><text class="lane-sub" x="203" y="78">真正取帧的用户态入口</text><text class="lane-title" x="593" y="56">RKISP Pipeline</text><text class="lane-sub" x="593" y="78">启动整条 Camera 链路</text><text class="lane-title" x="983" y="56">V4L2 subdev 回调</text><text class="lane-sub" x="983" y="78">通过 ops 找到 IMX415 函数</text><text class="lane-title" x="1385" y="56">IMX415 硬件动作</text><text class="lane-sub" x="1385" y="78">I2C 配置后输出 MIPI RAW10</text>
+<rect class="node n-result" x="48" y="132" width="310" height="94" rx="12"/><text class="node-title" x="203" y="164">应用打开 /dev/video0</text><text class="node-sub" x="203" y="189">RKISP mainpath 帧数据节点</text><text class="node-sub" x="203" y="210">不是 IMX415 subdev 节点</text>
+<rect class="node n-result" x="48" y="292" width="310" height="94" rx="12"/><text class="node-title" x="203" y="324">VIDIOC_STREAMON</text><text class="node-sub" x="203" y="349">请求开始连续采集</text><text class="node-sub" x="203" y="370">注册成功不等于已经开流</text><path d="M203 226 L203 292" fill="none" stroke="#8196a9" stroke-width="1.7" marker-end="url(#arrow-reg2)"/>
+<rect class="node n-media" x="438" y="292" width="310" height="94" rx="12"/><text class="node-title" x="593" y="324">RKISP 启动 Pipeline</text><text class="node-sub" x="593" y="349">准备 CSI / ISP / buffer</text><text class="node-sub" x="593" y="370">通知链路中的 subdev 开流</text><path d="M358 339 L438 339" fill="none" stroke="#8196a9" stroke-width="1.7" marker-end="url(#arrow-reg2)"/>
+<rect class="node n-v4l2" x="828" y="132" width="310" height="104" rx="12"/><text class="node-title" x="983" y="164">imx415_video_ops</text><text class="node-sub" x="983" y="189">.s_stream = imx415_s_stream</text><text class="node-sub" x="983" y="212">注册阶段已经保存的回调关系</text>
+<rect class="node n-v4l2" x="828" y="292" width="310" height="94" rx="12"/><text class="node-title" x="983" y="324">imx415_s_stream(sd, 1)</text><text class="node-sub" x="983" y="349">to_imx415(sd)</text><text class="node-sub" x="983" y="370">从 subdev 找回 imx415 私有对象</text><path d="M748 339 L828 339" fill="none" stroke="#8196a9" stroke-width="1.7" marker-end="url(#arrow-reg2)"/><path d="M983 236 L983 292" fill="none" stroke="#9a89d7" stroke-width="1.5" stroke-dasharray="6 5" marker-end="url(#arrow-reg2)"/>
+<rect class="node n-v4l2" x="828" y="458" width="310" height="94" rx="12"/><text class="node-title" x="983" y="490">pm_runtime_get_sync()</text><text class="node-sub" x="983" y="515">确保 Sensor 处于可工作电源状态</text><text class="node-sub" x="983" y="536">然后调用 __imx415_start_stream()</text><path d="M983 386 L983 458" fill="none" stroke="#8196a9" stroke-width="1.7" marker-end="url(#arrow-reg2)"/>
+<rect class="node n-i2c" x="1228" y="132" width="314" height="104" rx="12"/><text class="node-title" x="1385" y="164">写模式寄存器表</text><text class="node-sub" x="1385" y="189">global_reg_list + reg_list</text><text class="node-sub" x="1385" y="212">分辨率、时序、MIPI 输出配置</text><path d="M1138 505 C1195 505 1188 184 1228 184" fill="none" stroke="#8196a9" stroke-width="1.7" marker-end="url(#arrow-reg2)"/>
+<rect class="node n-i2c" x="1228" y="292" width="314" height="94" rx="12"/><text class="node-title" x="1385" y="324">应用 V4L2 Controls</text><text class="node-sub" x="1385" y="349">曝光 / 增益 / VBLANK</text><text class="node-sub" x="1385" y="370">__v4l2_ctrl_handler_setup()</text><path d="M1385 236 L1385 292" fill="none" stroke="#8196a9" stroke-width="1.7" marker-end="url(#arrow-reg2)"/>
+<rect class="node n-i2c" x="1228" y="458" width="314" height="94" rx="12"/><text class="node-title" x="1385" y="490">写 0x3000 = 0</text><text class="node-sub" x="1385" y="515">IMX415_REG_CTRL_MODE</text><text class="node-sub" x="1385" y="536">退出 Standby，进入 Streaming</text><path d="M1385 386 L1385 458" fill="none" stroke="#8196a9" stroke-width="1.7" marker-end="url(#arrow-reg2)"/>
+<rect class="start" x="1248" y="618" width="274" height="82" rx="12"/><text class="start-text" x="1385" y="650">IMX415 开始输出 RAW10</text><text class="node-sub" x="1385" y="676">Source Pad → D-PHY → CSI → RKISP</text><path d="M1385 552 L1385 618" fill="none" stroke="#75a982" stroke-width="1.9" marker-end="url(#arrow-stream2)"/>
+<path d="M1248 659 C1120 718 376 718 358 386" fill="none" stroke="#75a982" stroke-width="1.9" marker-end="url(#arrow-stream2)"/><text class="edge-label" x="789" y="706">帧数据最终进入 RKISP buffer，由 /dev/video0 交给应用</text>
+</svg>
+</section>
+<div class="legend"><span><i></i>灰色实线：控制调用</span><span><i class="dash"></i>紫色虚线：注册期保存的回调关系</span><span><i style="border-color:#75a982"></i>绿色实线：开流后的图像方向</span></div>
+</details>
+
+<section class="evidence-grid">
+<article class="evidence"><div class="k purple">SUBDEV 证据</div><h3><code>/dev/v4l-subdev3</code></h3><p>对应 <code>m00_b_imx415 4-001a-1</code>。它代表 Sensor 子设备身份，主要用于控制和拓扑，不承载应用取出的完整帧。</p></article>
+<article class="evidence"><div class="k orange">MEDIA 证据</div><h3><code>pad0: Source</code></h3><p><code>media-ctl -p</code> 显示 IMX415 的 RAW10 格式及到 <code>rockchip-csi2-dphy0</code> 的 ENABLED Link。</p></article>
+<article class="evidence"><div class="k green">VIDEO 证据</div><h3><code>/dev/video0</code></h3><p>这是 RKISP mainpath 的帧数据节点。只有 STREAMON、抓帧成功且没有 CSI/MIPI 错误，才能证明完整出图链路工作。</p></article>
+</section>
+
+<p class="note"><strong>一句话复述：</strong>IMX415 驱动先通过 <code>v4l2_i2c_subdev_init()</code> 把 I2C client 包装成 V4L2 Sensor subdev，再通过 Media Entity、Source Pad 和异步注册加入 Camera 拓扑；应用对 RKISP 的 <code>/dev/video0</code> 执行 STREAMON 后，框架沿 Pipeline 调用 <code>imx415_s_stream(1)</code>，Sensor 才开始输出 RAW10。</p>
+<p class="note warning"><strong>排障边界：</strong>读 ID 成功只证明 I2C 控制通道和基本上电正常；存在 <code>/dev/v4l-subdev3</code> 只证明 Sensor 已注册；Media Link 为 ENABLED 只证明拓扑建立。真正出图仍需要格式一致、D-PHY/CSI/RKISP 正常和抓帧成功。</p>
+
+<h2 class="title">本节自测：先理解，不进入正式面试</h2>
+<section class="quiz">
+<h3>完成这三题，才能进入下一小节</h3>
+<ol><li>哪个函数把整套 <code>imx415_i2c_driver</code> 注册给 I2C Core？它会不会直接调用 <code>imx415_probe()</code>？</li><li><code>imx415_probe()</code> 可以按哪几个大阶段来讲？</li><li>设置格式、设置曝光/增益、开始开流，分别看哪三个函数？</li></ol>
+<details><summary>学习完成后再展开参考答案</summary><p><code>sensor_mod_init()</code> 调用 <code>i2c_add_driver()</code> 注册驱动，但不直接调用 probe；<code>imx415_probe()</code> 可概括为读取 DTS 与获取资源、初始化 controls、上电、读取 ID、初始化并注册 subdev/Media Entity；运行期分别看 <code>imx415_set_fmt()</code>、<code>imx415_set_ctrl()</code>、<code>imx415_s_stream()</code>。</p></details>
+</section>
+</main>
+</body>
+</html>
