@@ -235,7 +235,172 @@ m00_b_imx415 4-001a-1
 
 `Source` 是图像数据从该 pad 发出，`Sink` 是图像数据从该 pad 收入；这不是 I2C 的读写方向。
 
-### 5.2 逐节点对照
+### 5.2 逐行读 entity 70：IMX415 Sensor
+
+以后分析 `media-ctl -p`，不能只把这一段压缩成“Sensor 连接 D-PHY”。必须保留：
+
+```text
+entity 是谁
+→ 哪个 pad 在输出或输入
+→ pad 当前是什么格式
+→ link 接到对端哪个 pad
+→ link 是否 ENABLED
+```
+
+当前板端原始信息：
+
+```text
+- entity 70: m00_b_imx415 4-001a-1 (1 pad, 1 link)
+             type V4L2 subdev subtype Sensor flags 0
+             device node name /dev/v4l-subdev3
+        pad0: Source
+                [fmt:SGBRG10_1X10/3864x2192@10000/300000 field:none
+                 crop.bounds:(12,16)/3840x2160]
+                -> "rockchip-csi2-dphy0":0 [ENABLED]
+```
+
+#### 5.2.1 `entity 70: m00_b_imx415 4-001a-1`
+
+| 字段 | 意义 |
+| --- | --- |
+| `entity 70` | Media Controller 为这个运行时功能模块分配的 entity ID；编号可能随注册顺序变化，不能硬编码 |
+| `m00_b_imx415` | Sensor subdev 的名称：模块索引 00、后置方向 back、Sensor 型号 IMX415 |
+| `4-001a-1` | 来自底层设备名称，核心信息是 I2C4、地址 `0x1a`；末尾 `-1` 是该 Rockchip BSP 的设备命名结果 |
+| `(1 pad, 1 link)` | 这个 entity 有一个端口，并建立了一条 Media link |
+
+它对应的真实硬件是 IMX415，但在 Media Graph 中表示的是 IMX415 驱动注册出的 **V4L2 Sensor Subdev**。
+
+#### 5.2.2 `type V4L2 subdev subtype Sensor`
+
+这说明它是 Camera 管线中的 Sensor 子设备，不是给应用程序直接读取图像的 Video Node。
+
+Sensor subdev 负责的典型能力包括：
+
+```text
+选择输出模式和分辨率
+设置曝光、增益和 VBLANK
+执行上电与开流/停流
+通过 I2C 读写 Sensor 寄存器
+向下游报告 RAW 格式、帧率和 CSI-2 配置
+```
+
+它不是 `/dev/video0`，也不负责给应用排队图像缓冲区。
+
+#### 5.2.3 `/dev/v4l-subdev3`
+
+```text
+device node name /dev/v4l-subdev3
+```
+
+表示 V4L2 为这个 subdev 创建了用户态控制节点。它主要用于查询或配置 subdev，不是存放连续图像帧的文件，因此不能通过：
+
+```bash
+cat /dev/v4l-subdev3
+```
+
+取得图片。应用抓帧使用的是 RKISP 注册的 `/dev/videoX` 节点。
+
+#### 5.2.4 `pad0: Source`
+
+```text
+pad0: Source
+```
+
+逐词理解：
+
+```text
+pad    = entity 的图像数据端口
+pad0   = 这个 entity 的第 0 个端口
+Source = 图像数据从这个端口流出
+```
+
+IMX415 是整条图像链路的数据源，所以只有一个 Source pad：
+
+```text
+IMX415 entity
+└── pad0 Source：输出 RAW Bayer 图像
+```
+
+`Source/Sink` 描述的是 **图像数据流方向**，不是 I2C 读写方向。
+
+#### 5.2.5 `fmt:SGBRG10_1X10/3864x2192`
+
+| 字段 | 意义 |
+| --- | --- |
+| `SGBRG10` | Bayer 排列为 GBRG，每个像素有效位宽为 10 bit，即 RAW10 |
+| `_1X10` | Media Bus Code 的总线表达：一个采样对应 10 位数据 |
+| `3864x2192` | 当前 Sensor mode 在该 pad 上报告的完整输出尺寸 |
+| `field:none` | 非隔行扫描，即逐行图像 |
+
+因此这个位置仍然是 RAW Bayer：
+
+```text
+不是 YUV
+不是 NV12
+不是 RGB
+```
+
+#### 5.2.6 `@10000/300000`
+
+这里是帧间隔的分数表达：
+
+```text
+10000 / 300000 秒
+= 1 / 30 秒
+≈ 30 fps
+```
+
+它不是 MIPI link frequency。真正的 Lane 速率、`link_freq` 和 `pixel_rate` 需要结合 Sensor mode、V4L2 controls 与 D-PHY 开流代码继续确认。
+
+#### 5.2.7 `crop.bounds:(12,16)/3840x2160`
+
+表示当前 pad 报告的有效图像窗口边界：
+
+```text
+起点：(12, 16)
+大小：3840 x 2160
+```
+
+也就是从完整的 `3864x2192` mode 中描述一个 4K 有效区域。这里先把它理解成有效窗口/裁剪边界，不把它简单等同于“ISP 已经执行裁剪”；真正在哪一级应用 crop，要继续结合各 entity 的 `crop` 与驱动实现判断。
+
+#### 5.2.8 `-> "rockchip-csi2-dphy0":0 [ENABLED]`
+
+这是这一段最重要的 Media link：
+
+```text
+IMX415 entity 的 pad0 Source
+        ↓
+rockchip-csi2-dphy0 entity 的 pad0 Sink
+```
+
+冒号后的 `:0` 指的是 **D-PHY 的 pad0**，不是 entity ID，也不是 I2C 地址。
+
+```text
+                 pad0 Source                 pad0 Sink
+IMX415 Sensor  -------------------------->  rockchip-csi2-dphy0
+```
+
+`[ENABLED]` 能证明：
+
+```text
+这条软件 Media link 已经创建
+并且当前处于启用状态
+```
+
+但不能单独证明：
+
+```text
+IMX415 已经 STREAMON
+四条物理 Lane 都有正常信号
+CSI-2 包没有 CRC/ECC 错误
+应用已经收到有效图像帧
+```
+
+#### 5.2.9 把整个 entity 用一句话读出来
+
+> Linux 已将 IMX415 注册为一个 V4L2 Sensor Subdev。它有一个 `pad0 Source`，当前报告 `SGBRG10_1X10` RAW10、`3864x2192`、约 30 fps，并描述了 `(12,16)/3840x2160` 的有效窗口；该 Source pad 通过一条已启用的软件 Media link 连接到 `rockchip-csi2-dphy0` 的 `pad0 Sink`。
+
+### 5.3 逐节点对照
 
 | 运行时节点 | 它在做什么 | 从输出得到的证据 |
 | --- | --- | --- |
@@ -245,7 +410,7 @@ m00_b_imx415 4-001a-1
 | `rkisp-isp-subdev` | ISP 图像处理子设备 | pad0 收 `SGBRG10`；pad2 输出 `YUYV8/3840x2160` |
 | `rkisp_mainpath` | ISP 主输出视频节点 | 对应 `/dev/video0` |
 
-### 5.3 格式为何改变，以及当前证据的边界
+### 5.4 格式为何改变，以及当前证据的边界
 
 ```text
 Sensor / D-PHY / rkisp-csi-subdev：仍是 SGBRG10 RAW
