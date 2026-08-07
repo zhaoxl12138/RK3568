@@ -167,12 +167,15 @@
     var title = document.createElement('strong');
     var status = courseStageStatus(stage);
     anchor.className = 'course-menu__item ' + status;
-    if (viewedStage && viewedStage.id === stage.id) anchor.classList.add('is-viewing');
     anchor.href = new URL(stage.path, siteRoot).href;
     number.textContent = stage.id;
     title.textContent = stage.title;
     anchor.appendChild(number);
     anchor.appendChild(title);
+    if (viewedStage && viewedStage.id === stage.id) {
+      anchor.classList.add('is-viewing');
+      anchor.setAttribute('aria-current', 'step');
+    }
     container.appendChild(anchor);
   }
 
@@ -182,13 +185,13 @@
     var viewedStage = pageStageInfo ? pageStageInfo.stage : null;
     var currentStage = currentCourseStage();
     var pathname = decodedPathname();
-    var activeKey = /\/pages\/learning-route\.html$/.test(pathname) ? 'route' : 'home';
+    var activeKey = 'home';
     var primaryItems = [
       { key: 'home', label: '学习首页', path: 'index.html' },
       { key: 'route', label: '完整路线', path: 'pages/learning-route.html' },
+      { key: 'project', label: '项目', path: 'pages/project.html' },
     ];
     var referenceItems = [
-      { key: 'system', label: '总览地图', path: 'pages/system-map.html' },
       { key: 'evidence', label: '实验依据', path: 'pages/evidence.html' },
       { key: 'notes', label: '专项笔记', path: 'pages/notes.html' },
       { key: 'environment', label: '开发环境', path: 'pages/environment.html' },
@@ -199,20 +202,23 @@
     var i;
     var j;
 
+    if (pageStageInfo || /\/pages\/learning-route\.html$/.test(pathname)) activeKey = 'route';
+    else if (/\/pages\/project\.html$/.test(pathname)) activeKey = 'project';
+
     if (!document.querySelector('.page-shell')) document.body.classList.add('site-nav-offset');
 
     for (i = 0; i < navigationNodes.length; i += 1) {
       var navigation = navigationNodes[i];
       var brand = document.createElement('a');
       var links = document.createElement('div');
-      var tools = document.createElement('div');
-      var stageLink = document.createElement('a');
       var courseMenu = document.createElement('details');
       var courseSummary = document.createElement('summary');
       var coursePanel = document.createElement('div');
       var referenceMenu = document.createElement('details');
       var referenceSummary = document.createElement('summary');
       var referencePanel = document.createElement('div');
+      var tools = document.createElement('div');
+      var stageLink = document.createElement('a');
 
       navigation.className = 'site-nav';
       navigation.setAttribute('aria-label', 'RK3568 Camera 课程导航');
@@ -241,6 +247,10 @@
 
       referenceMenu.className = 'site-nav__more reference-menu';
       referenceSummary.textContent = '资料与实验';
+      referenceSummary.setAttribute('data-nav-key', 'reference');
+      if (activeKey === 'home' && !/\/index\.html$/.test(pathname) && !/学习驾驶舱\/$/.test(pathname)) {
+        referenceSummary.setAttribute('aria-current', 'page');
+      }
       referenceMenu.appendChild(referenceSummary);
       referencePanel.className = 'site-nav__more-panel reference-menu__panel';
       for (j = 0; j < referenceItems.length; j += 1) {
@@ -254,6 +264,7 @@
       stageLink.href = new URL(currentStage.path, siteRoot).href;
       stageLink.textContent = '当前 ' + currentStage.id + ' · ' + currentStage.title;
       stageLink.title = '当前学习阶段';
+      if (viewedStage && viewedStage.id === currentStage.id) stageLink.setAttribute('aria-current', 'page');
       tools.appendChild(stageLink);
       navigation.appendChild(tools);
     }

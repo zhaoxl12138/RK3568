@@ -65,7 +65,7 @@ test('shared runtime provides course navigation, context, route, and adjacency',
   ]) {
     assert.match(source, new RegExp(`function\\s+${functionName}\\s*\\(`, 'u'));
   }
-  for (const label of ['学习首页', '完整路线', '课程目录', '资料与实验']) {
+  for (const label of ['学习首页', '完整路线', '项目', '课程目录', '资料与实验']) {
     assert.match(source, new RegExp(label, 'u'));
   }
   assert.doesNotMatch(source, /primaryItems\s*=\s*\[[\s\S]*?label:\s*['"](?:当前任务|Phase0)['"]/u);
@@ -73,6 +73,51 @@ test('shared runtime provides course navigation, context, route, and adjacency',
   assert.match(source, /is-complete/u);
   assert.match(source, /is-current/u);
   assert.match(source, /is-planned/u);
+});
+
+test('shared navigation keeps the approved top-level structure', () => {
+  const { source } = loadCourseContract();
+
+  for (const label of ['学习首页', '完整路线', '项目']) {
+    assert.match(source, new RegExp(`label:\\s*['"]${label}['"]`, 'u'));
+  }
+  assert.match(source, /courseSummary\.textContent\s*=\s*['"]课程目录['"]/u);
+  assert.match(source, /referenceSummary\.textContent\s*=\s*['"]资料与实验['"]/u);
+  assert.match(source, /stageLink\.textContent\s*=\s*['"]当前 /u);
+  assert.doesNotMatch(source, /label:\s*['"](?:课程|实验|参考)['"]/u);
+});
+
+test('mainline context keeps course progress and previous-route-next navigation', () => {
+  const { source } = loadCourseContract();
+
+  assert.match(source, /function\s+renderCourseProgress\s*\(/u);
+  assert.match(source, /progress\.className\s*=\s*['"]course-progress['"]/u);
+  assert.match(source, /返回完整学习路线/u);
+  assert.match(source, /appendAdjacentLink/u);
+});
+
+test('stage 03 to 04 to 05 follows the intended Camera learning chain', () => {
+  const { contract } = loadCourseContract();
+  const stages = Array.from(contract.stages);
+  const three = stages.find(({ id }) => id === '03');
+  const four = stages.find(({ id }) => id === '04');
+  const five = stages.find(({ id }) => id === '05');
+
+  assert.equal(three.title, 'IMX415 Sensor');
+  assert.equal(four.title, 'MIPI CSI-2 / D-PHY');
+  assert.equal(five.title, 'V4L2 Subdev');
+  for (const stage of [three, four, five]) {
+    assert.doesNotMatch(stage.path, /Phase0|下一步任务|task/iu);
+  }
+});
+
+test('system map is stage 00 while Phase0 stays reference-only', () => {
+  const systemMap = read('00-首页/学习驾驶舱/pages/system-map.html');
+  const phase0 = read('00-首页/学习驾驶舱/pages/phase0.html');
+
+  assert.match(systemMap, /阶段 00|系统总览/u);
+  assert.match(phase0, /可视化参考/u);
+  assert.doesNotMatch(phase0, /data-course-stage=["']00["']/u);
 });
 
 test('homepage is a focused learning cockpit', () => {

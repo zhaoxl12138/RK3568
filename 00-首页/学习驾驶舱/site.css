@@ -345,10 +345,10 @@ a:focus {
   .site-nav > .course-menu { grid-column: 2; }
   .site-nav > .reference-menu { grid-column: 1; grid-row: 3; }
   .site-nav__links a { flex: 0 1 auto; padding: .38rem .55rem; font-size: .76rem; }
-  .site-nav__tools { justify-self: end; }
-  .site-nav__stage { display: none; }
+  .site-nav__tools { grid-column: 1 / -1; grid-row: 4; justify-self: stretch; }
+  .site-nav__stage { display: flex; justify-content: center; width: 100%; }
   .site-nav__more-panel { right: 0; }
-  .course-menu__grid { position: fixed; top: 7.5rem; right: 1rem; left: 1rem; grid-template-columns: 1fr; width: auto; max-height: calc(100vh - 9rem); overflow-y: auto; transform: none; }
+  .course-menu__grid { position: fixed; top: 11rem; right: 1rem; left: 1rem; grid-template-columns: 1fr; width: auto; max-height: calc(100vh - 12.5rem); overflow-y: auto; transform: none; }
   .reference-menu__panel { right: auto; left: 0; }
   .site-nav-offset { padding-top: 0; }
   .course-context, .site-nav-offset .course-context { margin-top: 0; }

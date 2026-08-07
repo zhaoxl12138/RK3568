@@ -123,7 +123,7 @@ test('shared runtime builds one course-focused global navigation', () => {
 
   assert.match(siteJs, /function\s+renderSiteNavigation\s*\(/u);
   assert.match(siteJs, /function\s+renderCourseNavigation\s*\(/u);
-  for (const label of ['学习首页', '完整路线', '课程目录', '资料与实验', '总览地图', '实验依据', '专项笔记']) {
+  for (const label of ['学习首页', '完整路线', '项目', '课程目录', '资料与实验', '可视化参考', '专项笔记']) {
     assert.match(siteJs, new RegExp(label, 'u'), `shared navigation missing ${label}`);
   }
   assert.match(siteJs, /COURSE_STAGES/u);
@@ -164,19 +164,17 @@ test('Task 3 pages expose shared assets and the complete site navigation', () =>
   }
 });
 
-test('system map and phase0 pages expose the complete content navigation', () => {
+test('system map and visual reference pages expose the reduced global navigation', () => {
   const pages = ['system-map.html', 'phase0.html']
     .map((name) => path.join(siteRoot, 'pages', name));
   const navigationTargets = [
     '../index.html',
-    'notes/06-任务--01-下一步任务看板.html',
     'learning-route.html',
-    'system-map.html',
-    '../../../04-项目/10-Phase0-可视化总入口.html',
-    'notes.html',
     'evidence.html',
     'project.html',
+    'notes.html',
     'environment.html',
+    'phase0.html',
     'archive.html',
   ];
 

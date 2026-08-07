@@ -4,19 +4,19 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
-  <title>Camera 驱动系统地图 · RK3568</title>
-  <link rel="stylesheet" href="../site.css?v=357a578eb6">
-  <script defer src="../generated/vault-data.js?v=357a578eb6"></script>
-  <script defer src="../site.js?v=357a578eb6"></script>
+  <title>阶段 00 · RK3568 Camera 系统总览</title>
+  <link rel="stylesheet" href="../site.css?v=c8d4dec3dc">
+  <script defer src="../generated/vault-data.js?v=c8d4dec3dc"></script>
+  <script defer src="../site.js?v=c8d4dec3dc"></script>
 </head>
 <body>
   <a class="skip-link" href="#main-content">跳到主要内容</a>
-  <nav class="site-nav" data-site-nav aria-label="全站导航"><a class="site-nav__brand" href="../index.html"><span>RK3568</span><strong>Camera 学习站</strong></a><div class="site-nav__links"><a href="../index.html" data-nav-key="home">首页</a><a href="notes/06-任务--01-下一步任务看板.html" data-nav-key="task">当前任务</a><a href="learning-route.html" data-nav-key="route">学习路线</a><a href="system-map.html" data-nav-key="system" aria-current="page">系统地图</a><a href="../../../04-项目/10-Phase0-可视化总入口.html" data-nav-key="phase0">Phase0</a><a href="notes.html" data-nav-key="notes">专项笔记</a><a href="evidence.html" data-nav-key="evidence">实验依据</a></div><div class="site-nav__tools"><a class="site-nav__stage" href="learning-route.html#stage-2" title="当前学习阶段">阶段 2 MIPI D-PHY 与 CSI-2</a><details class="site-nav__more"><summary>更多</summary><div class="site-nav__more-panel"><a href="project.html" data-nav-key="project">项目总览</a><a href="environment.html" data-nav-key="environment">开发环境</a><a href="archive.html" data-nav-key="archive">归档</a><a href="obsidian://open?vault=RK3568&amp;file=00-%E9%A6%96%E9%A1%B5%2F00-RK3568%E5%AD%A6%E4%B9%A0%E4%B8%BB%E5%85%A5%E5%8F%A3">在 Obsidian 中打开</a></div></details></div></nav>
+  <nav class="site-nav" data-site-nav aria-label="RK3568 Camera 课程导航"><a class="site-nav__brand" href="../index.html"><span>RK3568</span><strong>Camera 课程</strong></a><div class="site-nav__links"><a href="../index.html" data-nav-key="home">学习首页</a><a href="learning-route.html" data-nav-key="route" aria-current="page">完整路线</a><a href="project.html" data-nav-key="project">项目</a></div><details class="site-nav__more course-menu"><summary>课程目录</summary><div class="site-nav__more-panel"><a href="system-map.html">00 总览</a><a href="../../../04-项目/17-DPHY-从DTS到MediaGraph.html">04 MIPI CSI-2 / D-PHY</a></div></details><details class="site-nav__more reference-menu"><summary data-nav-key="reference">资料与实验</summary><div class="site-nav__more-panel reference-menu__panel"><a href="evidence.html">实验依据</a><a href="notes.html">专项笔记</a><a href="environment.html">开发环境</a><a href="phase0.html">可视化参考</a><a href="archive.html">归档</a></div></details><div class="site-nav__tools"><a class="site-nav__stage" href="../../../04-项目/17-DPHY-从DTS到MediaGraph.html">当前 04 · MIPI CSI-2 / D-PHY</a></div></nav>
   <div class="page-shell"><main id="main-content">
     <section class="site-state" data-current-state aria-label="当前学习状态"><div class="site-state__item"><span class="site-state__label">当前阶段</span><p class="site-state__value" data-current-stage>尚未生成当前阶段</p></div><div class="site-state__item"><span class="site-state__label">首条未完成任务</span><p class="site-state__value" data-current-task>当前没有未完成任务</p></div><a class="button" data-current-task-link href="notes/06-任务--01-下一步任务看板.html">进入任务看板</a></section>
 
     <header class="hero">
-      <p class="hero__eyebrow">CAMERA DRIVER MAP · CONTROL + DATA</p>
+      <p class="hero__eyebrow">阶段 00 · 系统总览</p>
       <h1>从 IMX415 到 /dev/video0</h1>
       <p>Camera 驱动不是一条单线：I2C 控制链负责“让 Sensor 能工作”，MIPI 数据链负责“把图像送进 RKISP”。两条链在 Sensor 处汇合。</p>
       <div class="hero__actions"><a class="button" href="../../../04-项目/14-Phase0-驱动层全链路框架图.html">打开驱动全链路图</a><a class="button button--quiet" href="notes/06-任务--Camera驱动第1章-IMX415-Sensor与驱动.html">复习 Sensor 与 probe</a></div>
