@@ -3,3 +3,6 @@
 .trash/
 Thumbs.db
 .DS_Store
+$out/
+tmp/
+.superpowers/

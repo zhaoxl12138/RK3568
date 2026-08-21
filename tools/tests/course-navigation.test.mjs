@@ -8,12 +8,15 @@ import { fileURLToPath } from 'node:url';
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const siteRoot = path.join(repoRoot, '00-首页', '学习驾驶舱');
 const siteJsPath = path.join(siteRoot, 'site.js');
+const generatedPath = path.join(siteRoot, 'generated', 'vault-data.js');
+const courseMapPath = path.join(repoRoot, '00-首页', 'course-map.json');
 
 function read(relativePath) {
   return fs.readFileSync(path.join(repoRoot, relativePath), 'utf8');
 }
 
 function loadCourseContract() {
+  const generated = fs.readFileSync(generatedPath, 'utf8');
   const source = fs.readFileSync(siteJsPath, 'utf8');
   const listeners = {};
   const context = {
@@ -26,9 +29,21 @@ function loadCourseContract() {
       location: new URL('file:///E:/obsidian_github/RK3568/00-首页/学习驾驶舱/index.html'),
     },
   };
+  vm.runInNewContext(generated, context, { filename: generatedPath });
   vm.runInNewContext(source, context, { filename: siteJsPath });
   return { contract: context.window.RK3568_COURSE, source };
 }
+
+test('course runtime is generated from the single course map', () => {
+  const courseMap = JSON.parse(fs.readFileSync(courseMapPath, 'utf8'));
+  const { contract, source } = loadCourseContract();
+
+  assert.deepEqual(JSON.parse(JSON.stringify(contract.stages)), courseMap.stages);
+  assert.equal(courseMap.currentStage, '05');
+  assert.equal(contract.currentStage, '05');
+  assert.equal(fs.existsSync(path.join(repoRoot, '00-首页', '00-当前学习状态.md')), false);
+  assert.doesNotMatch(source, /COURSE_CURRENT_STAGE|var\s+COURSE_STAGES\s*=|MIPI CSI-2 \/ D-PHY[\s\S]*?path:/u);
+});
 
 test('course runtime defines one ordered 00-11 route', () => {
   const { contract } = loadCourseContract();
@@ -38,7 +53,7 @@ test('course runtime defines one ordered 00-11 route', () => {
     '00', '01', '02', '03', '04', '05',
     '06', '07', '08', '09', '10', '11',
   ]);
-  assert.equal(contract.currentStage, '04');
+  assert.equal(contract.currentStage, '05');
   assert.equal(new Set(Array.from(contract.stages, ({ path: stagePath }) => stagePath)).size, 12);
   assert.ok(contract.stages.every(({ objective }) => typeof objective === 'string' && objective.length > 10));
 });
@@ -52,6 +67,37 @@ test('all course targets exist and use one page per stage', () => {
     return fs.existsSync(target) ? [] : [`${id}: ${stagePath}`];
   });
   assert.equal(missing.length, 0, `missing course targets:\n${Array.from(missing).join('\n')}`);
+  const matureStages = contract.stages.filter(({ maturity }) => maturity !== 'placeholder');
+  assert.ok(matureStages.every(({ sourcePath }) => sourcePath.endsWith('.md')));
+  assert.ok(matureStages.every(({ sourcePath }) => fs.existsSync(path.join(repoRoot, sourcePath))));
+  assert.ok(contract.stages.filter(({ maturity }) => maturity === 'placeholder').every(({ sourcePath }) => sourcePath === null));
+});
+
+test('every course target loads generated course data before the shared runtime', () => {
+  const { contract } = loadCourseContract();
+  for (const stage of contract.stages) {
+    const html = fs.readFileSync(path.resolve(siteRoot, stage.path), 'utf8');
+    const dataIndex = html.search(/<script[^>]+vault-data\.js/iu);
+    const siteIndex = html.search(/<script[^>]+site\.js/iu);
+    assert.ok(dataIndex >= 0 && dataIndex < siteIndex, `${stage.id} must load vault-data.js before site.js`);
+  }
+});
+
+test('capability matrix uses C01-C10 and maps every capability to course stages', () => {
+  const matrix = read('07-专项笔记/系统/Camera驱动能力验收矩阵.md');
+  const ids = Array.from(matrix.matchAll(/^\|\s*(C\d{2})\s*\|/gmu), (match) => match[1]);
+
+  assert.deepEqual(ids, Array.from({ length: 10 }, (_, index) => `C${String(index + 1).padStart(2, '0')}`));
+  for (const row of matrix.matchAll(/^\|\s*C\d{2}\s*\|([^\n]+)$/gmu)) {
+    assert.match(row[1], /\|\s*(?:\d{2})(?:\s*,\s*\d{2})*\s*\|/u);
+  }
+});
+
+test('main entry points directly to the current source-reading index', () => {
+  const entry = read('00-首页/00-RK3568学习主入口.md');
+  assert.match(entry, /\[\[02-源码陪读\/05-V4L2-Subdev\/00-源码陪读索引(?:\||\]\])/u);
+  assert.doesNotMatch(entry, /\[\[00-当前学习状态/u);
+  assert.doesNotMatch(entry, /Camera驱动第2章-MIPI-DPHY与CSI2/u);
 });
 
 test('shared runtime provides course navigation, context, route, and adjacency', () => {
@@ -96,17 +142,23 @@ test('mainline context keeps course progress and previous-route-next navigation'
   assert.match(source, /appendAdjacentLink/u);
 });
 
-test('stage 03 to 04 to 05 follows the intended Camera learning chain', () => {
+test('stage 03 to 08 follows the intended Camera learning chain', () => {
   const { contract } = loadCourseContract();
   const stages = Array.from(contract.stages);
   const three = stages.find(({ id }) => id === '03');
   const four = stages.find(({ id }) => id === '04');
   const five = stages.find(({ id }) => id === '05');
+  const six = stages.find(({ id }) => id === '06');
+  const seven = stages.find(({ id }) => id === '07');
+  const eight = stages.find(({ id }) => id === '08');
 
   assert.equal(three.title, 'IMX415 Sensor');
   assert.equal(four.title, 'MIPI CSI-2 / D-PHY');
   assert.equal(five.title, 'V4L2 Subdev');
-  for (const stage of [three, four, five]) {
+  assert.equal(six.title, 'Media Controller');
+  assert.equal(seven.title, 'RKISP');
+  assert.equal(eight.title, 'V4L2 用户态取流');
+  for (const stage of [three, four, five, six, seven, eight]) {
     assert.doesNotMatch(stage.path, /Phase0|下一步任务|task/iu);
   }
 });

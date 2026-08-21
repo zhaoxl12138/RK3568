@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>DTS基础语法 · RK3568</title><link rel="stylesheet" href="../../site.css?v=410aa77861"></head><body><div class="page-shell"><nav class="site-nav" data-site-nav aria-label="RK3568 Camera 课程导航"><a class="site-nav__brand" href="../../index.html"><span>RK3568</span><strong>Camera 课程</strong></a><div class="site-nav__links"><a href="../../index.html" data-nav-key="home">学习首页</a><a href="../learning-route.html" data-nav-key="route">完整路线</a><a href="../project.html" data-nav-key="project">项目</a></div><details class="site-nav__more course-menu"><summary>课程目录</summary><div class="site-nav__more-panel course-menu__grid"><a class="course-menu__item" href="../system-map.html"><span>00</span><strong>总览</strong></a><a class="course-menu__item" href="../../../../04-项目/15-Linux设备模型与总线分层.html"><span>01</span><strong>Linux Driver Model</strong></a><a class="course-menu__item" href="../../../../04-项目/20-DTS到运行时设备发现.html"><span>02</span><strong>DTS 与设备发现</strong></a><a class="course-menu__item" href="../../../../04-项目/16-IMX415-三层驱动调用流程.html"><span>03</span><strong>IMX415 Sensor</strong></a><a class="course-menu__item" href="../../../../04-项目/17-DPHY-从DTS到MediaGraph.html"><span>04</span><strong>MIPI CSI-2 / D-PHY</strong></a><a class="course-menu__item" href="../../../../04-项目/19-IMX415-v4l2-subdev注册与开流.html"><span>05</span><strong>V4L2 Subdev</strong></a><a class="course-menu__item" href="../../../../04-项目/21-MediaController-Entity-Pad-Link.html"><span>06</span><strong>Media Controller</strong></a><a class="course-menu__item" href="../../../../04-项目/22-RKISP-从RAW到VideoNode.html"><span>07</span><strong>RKISP</strong></a><a class="course-menu__item" href="../../../../04-项目/23-V4L2-VB2用户态取流.html"><span>08</span><strong>V4L2 用户态取流</strong></a><a class="course-menu__item" href="07-专项笔记--OpenCV--OpenCV读取Camera记录.html"><span>09</span><strong>GStreamer / OpenCV</strong></a><a class="course-menu__item" href="07-专项笔记--系统--AI Camera系统数据流与模块边界.html"><span>10</span><strong>RKNN / YOLO</strong></a><a class="course-menu__item" href="07-专项笔记--系统--AI Camera故障排查索引.html"><span>11</span><strong>Camera Bring-up 排障</strong></a></div></details><details class="site-nav__more reference-menu"><summary data-nav-key="reference" aria-current="page">资料与实验</summary><div class="site-nav__more-panel reference-menu__panel"><a href="../evidence.html" data-nav-key="evidence">实验依据</a><a href="../notes.html" data-nav-key="notes">专项笔记</a><a href="../environment.html" data-nav-key="environment">开发环境</a><a href="../phase0.html" data-nav-key="phase0">可视化参考</a><a href="../archive.html" data-nav-key="archive">归档</a><a href="obsidian://open?vault=RK3568&amp;file=00-%E9%A6%96%E9%A1%B5%2F00-RK3568%E5%AD%A6%E4%B9%A0%E4%B8%BB%E5%85%A5%E5%8F%A3">在 Obsidian 中打开</a></div></details><div class="site-nav__tools"><a class="site-nav__stage course-status" href="../learning-route.html#stage-05" title="当前学习阶段">当前 阶段 05 · V4L2 Subdev</a></div></nav><main id="main-content" class="note-page"><header class="hero"><p class="hero__eyebrow">GENERATED NOTE · 08-附录/参考</p><h1>DTS基础语法 </h1><p>此页面由 Markdown 知识源自动生成，适合网页阅读；编辑仍请回到 Obsidian。</p><div class="hero__actions"><a class="button" href="obsidian://open?vault=RK3568&amp;file=08-%E9%99%84%E5%BD%95%2F%E5%8F%82%E8%80%83%2FDTS%E5%9F%BA%E7%A1%80%E8%AF%AD%E6%B3%95">在 Obsidian 中打开</a></div></header><article class="note-content"><p>---<br>id: reference-dts-syntax<br>doc-type: reference<br>title: DTS 基础语法<br>learning-status: understood<br>evidence-status: none<br>publish-status: draft<br>updated: 2026-08-10<br>---</p>
+<h2>DTS 基础语法</h2>
+<p>本页保存通用 DTS 语法；RK3568 + IMX415 的实际课程主线见 02-DTS与设备发现。</p>
+<h3>一、DTS 本质上是什么</h3>
+<p>DTS 是 <strong>Device Tree Source，设备树源码</strong>。</p>
+<p>它不负责实现驱动算法，而是告诉 Linux：</p>
+<pre><code class="language-text">板子上有什么硬件
+硬件挂在哪条总线上
+使用什么地址
+时钟、GPIO、电源是什么
+设备之间如何连接
+哪些控制器需要启用
+应该由哪个驱动匹配</code></pre>
+<p>对于你的 IMX415，可以先概括成：</p>
+<pre><code class="language-text">DTS 描述板级连接
+Sensor Driver 控制 IMX415
+DPHY/CSI/ISP 驱动控制 RK3568 内部硬件
+V4L2/Media Controller 把它们组织成 Camera 链路</code></pre>
+<p>---</p>
+<h3>二、先看文件头：这份 DTS 从哪里继承东西</h3>
+<p>开头：</p>
+<pre><code class="language-dts">/dts-v1/;
+
+#include &lt;dt-bindings/gpio/gpio.h&gt;
+#include &lt;dt-bindings/pinctrl/rockchip.h&gt;
+#include &lt;dt-bindings/display/media-bus-format.h&gt;
+#include &quot;rk3568.dtsi&quot;
+#include &quot;rk3568-evb.dtsi&quot;</code></pre>
+<p>你要这样理解。</p>
+<h4>1. <code>/dts-v1/;</code></h4>
+<p>说明这是 DTS version 1 格式。</p>
+<p>不用深入，它类似文件格式声明。</p>
+<h4>2. <code>#include</code></h4>
+<p>这份板级 DTS 没有重新定义整个 RK3568，而是包含了：</p>
+<pre><code class="language-text">rk3568.dtsi
+    RK3568 SoC 内部硬件模块的基础定义
+
+rk3568-evb.dtsi
+    RK3568 EVB 板的一些公共配置
+
+当前这个 DTS
+    对具体正点原子板卡做启用、关闭和修改</code></pre>
+<p>因此你看到：</p>
+<pre><code class="language-dts">&amp;rkisp {
+    status = &quot;okay&quot;;
+};</code></pre>
+<p>不是在这里创建 <code>rkisp</code>，而是在修改其他 <code>.dtsi</code> 中已经定义好的 <code>rkisp</code> 节点。</p>
+<p>关系类似：</p>
+<pre><code class="language-text">rk3568.dtsi：
+先定义“RK3568 有一个 ISP”
+
+当前板级 DTS：
+再声明“这块板要启用这个 ISP”</code></pre>
+<p>---</p>
+<h3>三、看懂 DTS 最重要的四种语法</h3>
+<h4>1. 普通节点</h4>
+<p>例如：</p>
+<pre><code class="language-dts">imx415: imx415@1a {
+    ...
+};</code></pre>
+<p>它表示定义一个设备节点。</p>
+<p>拆开：</p>
+<pre><code class="language-text">imx415:
+    label，标签，供其他节点使用 &amp;imx415 引用
+
+imx415@1a
+    节点名称和 unit address
+
+@1a
+    这里对应 I2C 地址 0x1a</code></pre>
+<p>注意：</p>
+<pre><code class="language-text">imx415: 是标签
+imx415@1a 是节点名</code></pre>
+<p>两者可以相同，也可以不同。</p>
+<p>---</p>
+<h4>2. <code>&amp;xxx</code></h4>
+<p>例如：</p>
+<pre><code class="language-dts">&amp;i2c4 {
+    status = &quot;okay&quot;;
+};</code></pre>
+<p>这里的 <code>&amp;i2c4</code> 表示：</p>
+<blockquote>引用其他 <code>.dtsi</code> 中已经有标签 <code>i2c4:</code> 的节点，然后补充或修改它。</blockquote>
+<p>所以：</p>
+<pre><code class="language-dts">&amp;i2c4 {
+    imx415: imx415@1a {
+        ...
+    };
+};</code></pre>
+<p>意思是：</p>
+<pre><code class="language-text">在 RK3568 的 I2C4 控制器下面
+挂载一个地址为 0x1a 的 IMX415</code></pre>
+<p>---</p>
+<h4>3. <code>&lt;&amp;xxx ...&gt;</code></h4>
+<p>例如：</p>
+<pre><code class="language-dts">clocks = &lt;&amp;cru CLK_CIF_OUT&gt;;</code></pre>
+<p>表示引用另一个设备或控制器。</p>
+<p>这里：</p>
+<pre><code class="language-text">&amp;cru
+    引用 RK3568 的 Clock &amp; Reset Unit
+
+CLK_CIF_OUT
+    使用其中一个 Camera/CIF 输出时钟</code></pre>
+<p>再如：</p>
+<pre><code class="language-dts">reset-gpios = &lt;&amp;gpio3 RK_PB6 GPIO_ACTIVE_LOW&gt;;</code></pre>
+<p>拆解：</p>
+<pre><code class="language-text">&amp;gpio3
+    GPIO bank 3
+
+RK_PB6
+    B 组第 6 号引脚
+
+GPIO_ACTIVE_LOW
+    低电平表示有效</code></pre>
+<p>---</p>
+<h4>4. <code>status</code></h4>
+<p>常见：</p>
+<pre><code class="language-dts">status = &quot;okay&quot;;
+status = &quot;disabled&quot;;</code></pre>
+<p>含义：</p>
+<pre><code class="language-text">okay
+    设备启用，内核可以为它创建 platform/I2C 设备并匹配驱动
+
+disabled
+    设备禁用，正常情况下不会参与初始化</code></pre>
+<p>但要注意：</p>
+<blockquote><code>status = &quot;okay&quot;</code> 只代表“允许初始化”，不代表驱动一定 probe 成功，更不代表一定出图。</blockquote>
+<p>还需要：</p>
+<pre><code class="language-text">驱动存在
+compatible 匹配
+供电正确
+时钟正确
+GPIO正确
+I2C通信成功
+endpoint正确
+MIPI配置正确</code></pre>
+<p>---</p></article><footer class="footer"><a href="../notes.html">返回专项笔记导航</a> · <a href="../../index.html">返回驾驶舱首页</a></footer></main></div><script defer src="../../generated/vault-data.js?v=410aa77861"></script><script defer src="../../site.js?v=410aa77861"></script></body></html>

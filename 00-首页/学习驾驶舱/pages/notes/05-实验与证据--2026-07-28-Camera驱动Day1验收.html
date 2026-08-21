@@ -1,48 +1,48 @@
 <!doctype html>
-<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>2026-07-28-Camera驱动Day1验收 · RK3568</title><link rel="stylesheet" href="../../site.css?v=c8d4dec3dc"></head><body><div class="page-shell"><nav class="site-nav" data-site-nav aria-label="全站导航"><a class="site-nav__brand" href="../../index.html"><span>RK3568</span><strong>Camera 学习站</strong></a><div class="site-nav__links"><a href="../../index.html" data-nav-key="home">首页</a><a href="06-任务--01-下一步任务看板.html" data-nav-key="task">当前任务</a><a href="../learning-route.html" data-nav-key="route">学习路线</a><a href="../system-map.html" data-nav-key="system">系统地图</a><a href="../../../../04-项目/10-Phase0-可视化总入口.html" data-nav-key="phase0">Phase0</a><a href="../notes.html" data-nav-key="notes" aria-current="page">专项笔记</a><a href="../evidence.html" data-nav-key="evidence">实验依据</a></div><div class="site-nav__tools"><a class="site-nav__stage" href="../learning-route.html#stage-2" title="当前学习阶段">阶段 2 MIPI D-PHY 与 CSI-2</a><details class="site-nav__more"><summary>更多</summary><div class="site-nav__more-panel"><a href="../project.html" data-nav-key="project">项目总览</a><a href="../environment.html" data-nav-key="environment">开发环境</a><a href="../archive.html" data-nav-key="archive">归档</a><a href="obsidian://open?vault=RK3568&amp;file=00-%E9%A6%96%E9%A1%B5%2F00-RK3568%E5%AD%A6%E4%B9%A0%E4%B8%BB%E5%85%A5%E5%8F%A3">在 Obsidian 中打开</a></div></details></div></nav><main id="main-content" class="note-page"><header class="hero"><p class="hero__eyebrow">GENERATED NOTE · 05-实验与证据</p><h1>2026-07-28-Camera驱动Day1验收</h1><p>此页面由 Markdown 知识源自动生成，适合网页阅读；编辑仍请回到 Obsidian。</p><div class="hero__actions"><a class="button" href="obsidian://open?vault=RK3568&amp;file=05-%E5%AE%9E%E9%AA%8C%E4%B8%8E%E8%AF%81%E6%8D%AE%2F2026-07-28-Camera%E9%A9%B1%E5%8A%A8Day1%E9%AA%8C%E6%94%B6">在 Obsidian 中打开</a></div></header><article class="note-content"><h2>审批结论</h2>
-<p><strong>有条件通过。</strong> RK3568 Camera 驱动链路的关键板端证据已经具备，但 <code>dmesg</code> 命令因引号未闭合没有真正执行，需要补采一次日志。</p>
-<h2>已确认事实</h2>
-<h3>系统</h3>
-<ul><li>主机名：<code>ATK-DLRK3568</code></li><li>内核：<code>Linux 4.19.232</code></li><li>架构：<code>aarch64</code></li><li>内核编译时间：<code>2025-01-15</code></li></ul>
-<h3>视频节点</h3>
-<ul><li><code>/dev/video0</code> ～ <code>/dev/video8</code> 均存在。</li><li><code>/dev/video-camera0</code> 是 <code>/dev/video0</code> 的符号链接。</li><li><code>rkisp_mainpath</code> 对应 <code>/dev/video0</code> ～ <code>/dev/video6</code>。</li><li><code>rkisp-statistics</code> 对应 <code>/dev/video7</code>、<code>/dev/video8</code>。</li><li>主采集节点 <code>/dev/video0</code> 的驱动名为 <code>rkisp_v5</code>。</li></ul>
-<h3>当前输出格式</h3>
-<ul><li>分辨率：<code>3840x2160</code></li><li>像素格式：<code>NV12</code></li><li>多平面视频采集：<code>Video Capture Multiplanar</code></li><li>当前裁剪区域：<code>3840x2160</code></li><li>Sensor 链路像素格式：<code>SGBRG10_1X10</code></li></ul>
-<h3>Media Graph</h3>
-<p>板端已经给出了完整链路：</p>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>2026-07-28-Camera驱动Day1验收 · RK3568</title><link rel="stylesheet" href="../../site.css?v=410aa77861"></head><body><div class="page-shell"><nav class="site-nav" data-site-nav aria-label="RK3568 Camera 课程导航"><a class="site-nav__brand" href="../../index.html"><span>RK3568</span><strong>Camera 课程</strong></a><div class="site-nav__links"><a href="../../index.html" data-nav-key="home">学习首页</a><a href="../learning-route.html" data-nav-key="route">完整路线</a><a href="../project.html" data-nav-key="project">项目</a></div><details class="site-nav__more course-menu"><summary>课程目录</summary><div class="site-nav__more-panel course-menu__grid"><a class="course-menu__item" href="../system-map.html"><span>00</span><strong>总览</strong></a><a class="course-menu__item" href="../../../../04-项目/15-Linux设备模型与总线分层.html"><span>01</span><strong>Linux Driver Model</strong></a><a class="course-menu__item" href="../../../../04-项目/20-DTS到运行时设备发现.html"><span>02</span><strong>DTS 与设备发现</strong></a><a class="course-menu__item" href="../../../../04-项目/16-IMX415-三层驱动调用流程.html"><span>03</span><strong>IMX415 Sensor</strong></a><a class="course-menu__item" href="../../../../04-项目/17-DPHY-从DTS到MediaGraph.html"><span>04</span><strong>MIPI CSI-2 / D-PHY</strong></a><a class="course-menu__item" href="../../../../04-项目/19-IMX415-v4l2-subdev注册与开流.html"><span>05</span><strong>V4L2 Subdev</strong></a><a class="course-menu__item" href="../../../../04-项目/21-MediaController-Entity-Pad-Link.html"><span>06</span><strong>Media Controller</strong></a><a class="course-menu__item" href="../../../../04-项目/22-RKISP-从RAW到VideoNode.html"><span>07</span><strong>RKISP</strong></a><a class="course-menu__item" href="../../../../04-项目/23-V4L2-VB2用户态取流.html"><span>08</span><strong>V4L2 用户态取流</strong></a><a class="course-menu__item" href="07-专项笔记--OpenCV--OpenCV读取Camera记录.html"><span>09</span><strong>GStreamer / OpenCV</strong></a><a class="course-menu__item" href="07-专项笔记--系统--AI Camera系统数据流与模块边界.html"><span>10</span><strong>RKNN / YOLO</strong></a><a class="course-menu__item" href="07-专项笔记--系统--AI Camera故障排查索引.html"><span>11</span><strong>Camera Bring-up 排障</strong></a></div></details><details class="site-nav__more reference-menu"><summary data-nav-key="reference" aria-current="page">资料与实验</summary><div class="site-nav__more-panel reference-menu__panel"><a href="../evidence.html" data-nav-key="evidence">实验依据</a><a href="../notes.html" data-nav-key="notes">专项笔记</a><a href="../environment.html" data-nav-key="environment">开发环境</a><a href="../phase0.html" data-nav-key="phase0">可视化参考</a><a href="../archive.html" data-nav-key="archive">归档</a><a href="obsidian://open?vault=RK3568&amp;file=00-%E9%A6%96%E9%A1%B5%2F00-RK3568%E5%AD%A6%E4%B9%A0%E4%B8%BB%E5%85%A5%E5%8F%A3">在 Obsidian 中打开</a></div></details><div class="site-nav__tools"><a class="site-nav__stage course-status" href="../learning-route.html#stage-05" title="当前学习阶段">当前 阶段 05 · V4L2 Subdev</a></div></nav><main id="main-content" class="note-page"><header class="hero"><p class="hero__eyebrow">GENERATED NOTE · 05-实验与证据</p><h1>2026-07-28-Camera驱动Day1验收 </h1><p>此页面由 Markdown 知识源自动生成，适合网页阅读；编辑仍请回到 Obsidian。</p><div class="hero__actions"><a class="button" href="obsidian://open?vault=RK3568&amp;file=05-%E5%AE%9E%E9%AA%8C%E4%B8%8E%E8%AF%81%E6%8D%AE%2F2026-07-28-Camera%E9%A9%B1%E5%8A%A8Day1%E9%AA%8C%E6%94%B6">在 Obsidian 中打开</a></div></header><article class="note-content"><p>---<br>id: EVID-20260728-CAMERA-DAY1<br>doc-type: evidence<br>title: Camera 驱动 Day 1 板端验收<br>course-stage: &quot;04&quot;<br>learning-status: validated<br>evidence-status: verified<br>publish-status: published<br>collected-at: 2026-07-28 (具体时分未记录)<br>board: ATK-DLRK3568 + IMX415<br>system: Buildroot (release string 未保留)<br>kernel: 4.19.232<br>sdk-commit: 未记录<br>dtb: 运行中 DTB 文件名与哈希未记录<br>device-ip: 192.168.0.230<br>raw-output-file: 无独立原始文件；关键输出摘录保存在本文<br>updated: 2026-08-10<br>---</p>
+<h2>2026-07-28｜Camera 驱动 Day 1 板端验收</h2>
+<h2>环境快照</h2>
+<table><thead><tr><th>字段</th><th>采集当时的值</th><th>审计说明</th></tr></thead><tbody><tr><td>采集时间</td><td>2026-07-28，具体时分未记录</td><td>不扩写为精确时间</td></tr><tr><td>板卡 / Sensor</td><td><code>ATK-DLRK3568</code> / IMX415</td><td>来自主机名、驱动与 Media Graph 摘录</td></tr><tr><td>系统</td><td>Buildroot，release string 未保留</td><td>不能据此还原 rootfs 版本</td></tr><tr><td>内核</td><td><code>Linux 4.19.232 aarch64</code></td><td>本次板端 <code>uname</code> 记录；不要与 Media API <code>4.19.255</code> 混写</td></tr><tr><td>DTB / SDK commit</td><td>未记录</td><td>只能证明运行时属性，不能追溯到唯一源码提交</td></tr><tr><td>设备 IP</td><td><code>192.168.0.230</code></td><td>仅代表本次连接环境，不是固定地址</td></tr><tr><td>原始输出文件</td><td>未单独保存</td><td>本文只保留命令和关键输出摘录</td></tr></tbody></table>
+<p>环境版本冲突的完整处置见 环境基线/RK3568-IMX415当前基线。</p>
+<h2>操作目的</h2>
+<p>核对 IMX415 的 probe、异步绑定、Media Graph、RKISP 主路径与查询时格式状态，判断初始化链路是否已经建立。</p>
+<h2>原始命令</h2>
+<pre><code class="language-bash">uname -a
+v4l2-ctl --list-devices
+v4l2-ctl -d /dev/video0 --all
+media-ctl -p
+dmesg | grep -Ei &#39;imx415|rkisp|csi|v4l2|media|camera&#39;</code></pre>
+<p>板端是 Buildroot 环境，检索日志使用 <code>grep</code>；本记录不假设板端安装了 <code>rg</code>。</p>
+<h2>原始输出</h2>
+<p>以下是当时保留下来的关键摘录，不是完整原始日志文件：</p>
+<pre><code class="language-text">Linux 4.19.232 aarch64
+rockchip-csi2-dphy ... probe successfully
+rkisp driver version: v01.08.00
+imx415 4-001a-1: driver version: 00.01.06
+Detected imx415 id 0000e0
+dphy0 matches m00_b_imx415 ... bus type 4
+Async subdev notifier completed
+set fmt: cur_mode: 3864x2192, hdr: 0
+set exposure(shr0) ...</code></pre>
+<p>当时记录的拓扑与查询状态：</p>
 <pre><code class="language-text">m00_b_imx415 4-001a-1
-    -&gt; rockchip-csi2-dphy0
-    -&gt; rkisp-csi-subdev
-    -&gt; rkisp-isp-subdev
-    -&gt; rkisp_mainpath (/dev/video0)</code></pre>
-<p>关键参数：</p>
-<ul><li>Sensor 挂在 I2C 总线 <code>4</code>，地址为 <code>0x1a</code>。</li><li>Sensor 输出 <code>SGBRG10_1X10</code>，原始尺寸 <code>3864x2192</code>。</li><li>CSI/ISP 当前裁剪为 <code>3840x2160</code>。</li><li>Media Graph 显示链路均为 <code>ENABLED</code>。</li><li>Sensor 到 CSI 的帧率标记为 <code>10000/300000</code>，即约 <code>30 fps</code>。</li><li>CSI/ISP 已将 RAW10 Bayer 数据转换为 <code>/dev/video0</code> 的 NV12 输出。</li></ul>
-<h2>你的 Day 1 技术结论</h2>
-<p>目前可以确认：</p>
-<p>1. IMX415 已被 Linux 驱动识别并注册为 V4L2 Sensor subdev。<br>2. IMX415 已经通过 MIPI CSI-2 D-PHY 接入 RK3568。<br>3. CSI、ISP 和主采集节点之间的 Media Controller 链路已经建立。<br>4. <code>/dev/video0</code> 不是 Sensor 原始节点，而是经过 RKISP 主路径输出的 V4L2 视频节点。<br>5. 当前板端已经具备从 RAW10 Sensor 数据到 NV12 用户态采集的完整链路证据。</p>
-<h2>需要纠正的操作</h2>
-<p>你输入的命令少了结尾的单引号：</p>
-<pre><code class="language-bash">dmesg | grep -Ei &#39;imx415|rkisp|csi|v4l2|media|camera&#39;</code></pre>
-<p>之前的命令因此进入了 Shell 的续行状态，后面输入的内容没有按预期执行，最后通过 <code>Ctrl+C</code> 退出。这不是板子故障，是命令输入问题。</p>
-<h2>Day 1 补充动作</h2>
-<p>只需要重新执行下面两条，并把完整输出发来：</p>
-<pre><code class="language-bash">dmesg | grep -Ei &#39;imx415|rkisp|csi|v4l2|media|camera&#39;
-v4l2-ctl -d /dev/video0 --list-formats-ext</code></pre>
-<p>补充完成后进入 Day 2：Sensor 上电、I2C、时钟、复位和寄存器初始化链路。</p>
-<h2>dmesg 补充分析</h2>
-<p>本次日志已补齐，Day 1 的日志证据通过。</p>
-<h3>已确认的正常链路</h3>
-<ul><li><code>rockchip-csi2-dphy ... probe successfully</code>：CSI-2 D-PHY 驱动初始化成功。</li><li><code>rkisp driver version: v01.08.00</code>：RKISP 驱动已经加载。</li><li><code>imx415 4-001a-1: driver version: 00.01.06</code>：IMX415 驱动实例在 I2C4、地址 <code>0x1a</code> 注册。</li><li><code>Detected imx415 id 0000e0</code>：成功读取到 Sensor ID，I2C 通信和基本识别成功。</li><li><code>dphy0 matches m00_b_imx415 ... bus type 4</code>：CSI-2 D-PHY 找到了 IMX415，并确认了总线类型。</li><li><code>Async subdev notifier completed</code>：Sensor、CSI 和 ISP 的异步子设备绑定完成。</li><li><code>set fmt: cur_mode: 3864x2192, hdr: 0</code>：当前使用 3864×2192、非 HDR 模式。</li><li><code>set exposure(shr0) ...</code>：驱动已经开始设置曝光寄存器，说明不仅完成 probe，还进入了工作配置阶段。</li></ul>
-<h3>需要理解但暂不判定为故障的提示</h3>
-<ul><li><code>Get hdr mode failed! no hdr default</code>：读取 HDR 模式失败后采用默认非 HDR 模式。当前 <code>hdr: 0</code> 且已有图像链路，因此暂不作为故障；面试时应说明 HDR 是可选模式，不等于 Sensor 没有被识别。</li><li><code>could not get sleep pinstate</code>：设备树中没有找到 sleep pinctrl 状态。当前系统仍能完成初始化，但说明设备树电源/引脚低功耗描述可能不完整。</li><li><code>Entity type ... was not initialized</code>：RKISP 旧内核/驱动组合中的 Media Entity 初始化提示。由于后续 Media Graph 已成功建立，当前先记录，不直接认定为阻塞问题。</li><li><code>max input:0x0@0fps</code>：RKISP 初始化早期尚未绑定输入 Sensor，后续异步绑定完成，不应单独据此判断无图像。</li></ul>
-<h3>需要放入 Day 2 的核查项</h3>
-<p>日志中三组供电属性没有在设备树节点中找到：</p>
-<pre><code class="language-text">dvdd-supply ... failed
-dovdd-supply ... failed
-avdd-supply ... failed
-using dummy regulator</code></pre>
-<p>这表示驱动没有从设备树获取对应的真实 regulator，而是使用了 dummy regulator。由于你的板子目前能够识别 Sensor 并出图，硬件供电大概率由模组或板级固定电源提供，但设备树的电源描述是否完整仍需核查。后续不能直接把它改成真实 regulator，必须先对照板卡原理图、Camera 模组手册和当前设备树确认。</p>
-<h2>面试表达练习</h2>
-<p>可以先这样表述本次实板结果：</p>
-<blockquote>我在 RK3568 上使用 IMX415 进行 Camera 链路验证。通过 Media Controller 可以看到 Sensor 挂在 I2C4、地址 0x1a，经 rockchip CSI-2 D-PHY、CSI 子设备和 RKISP ISP，最终连接到 rkisp_mainpath 的 <code>/dev/video0</code>。Sensor 侧输出 RAW10 Bayer，主路径输出 3840×2160 NV12，说明 Sensor、MIPI、CSI、ISP 和 V4L2 视频节点之间的链路已经建立。</blockquote>
-<p>这段话目前是“板端事实表达”，后续还要补充你对驱动代码、设备树和故障定位的理解。</p></article><footer class="footer"><a href="../notes.html">返回专项笔记导航</a> · <a href="../../index.html">返回驾驶舱首页</a></footer></main></div><script defer src="../../site.js?v=c8d4dec3dc"></script></body></html>
+  -&gt; rockchip-csi2-dphy0
+  -&gt; rkisp-csi-subdev
+  -&gt; rkisp-isp-subdev
+  -&gt; rkisp_mainpath (/dev/video0)
+
+Sensor source: SGBRG10_1X10 3864x2192
+ISP / crop query: 3840x2160
+/dev/video0 query: NV12, Video Capture Multiplanar, 3840x2160
+/dev/video7: rkisp-statistics
+/dev/video8: rkisp-input-params</code></pre>
+<p>节点映射已纠正：<code>/dev/video7</code> 是 statistics，<code>/dev/video8</code> 是 input-params；旧记录把两者都归为 statistics 的说法已被本记录 supersede。</p>
+<h2>可以证明</h2>
+<ul><li><code>EVID-20260728-CAMERA-DAY1</code> 可以证明本次环境中 IMX415 驱动实例完成读 ID，D-PHY、CSI、ISP 的异步绑定和 Media link 已建立。</li><li>查询时 Sensor 侧为 RAW10 Bayer，ISP / video node 处于不同的数据表示层；<code>/dev/video0</code> 查询到 NV12 多平面内存格式。</li><li><code>3840×2160</code> 是 2026-07-28 查询到的当时状态，不是跨启动、跨日期的永久默认值。</li><li>日志中的曝光设置说明驱动曾进入工作配置流程，但不单独等价于成功接收用户态帧。</li></ul>
+<h2>不能证明</h2>
+<ul><li>没有保留本次完整原始输出文件、抓帧文件及其哈希，因此不能仅凭本文证明 2026-07-28 实际抓到一帧正确图像。</li><li>不能证明正在运行的 DTB 文件名、DTB 哈希或对应 SDK commit。</li><li>不能把 <code>4.19.255</code> 当成本次运行内核；仓库当前没有可审计的原始输出把该 Media API 版本绑定到某次采集环境。</li><li>Media Graph 为 <code>ENABLED</code> 不等于 buffer 已成功排队、<code>STREAMON</code> 已完成或帧内容正确。</li><li><code>using dummy regulator</code> 不能反推出实际板级供电实现；仍需原理图与 DTS 源码核对。</li></ul>
+<h2>关联课程阶段</h2>
+<ul><li>主归属：<code>04</code> MIPI CSI-2 / D-PHY</li><li>交叉引用：<code>02</code> DTS 与设备发现、<code>03</code> IMX415 Sensor、<code>06</code> Media Controller、<code>07</code> RKISP</li><li>环境基线：环境基线/RK3568-IMX415当前基线</li><li>配套运行时属性：2026-07-28-直连板端读取IMX415配置</li></ul>
+<h2>状态</h2>
+<p><code>verified</code></p>
+<p>验证对象是“初始化和拓扑证据”；“2026-07-28 已完成带哈希抓帧”仍是待补项。</p></article><footer class="footer"><a href="../notes.html">返回专项笔记导航</a> · <a href="../../index.html">返回驾驶舱首页</a></footer></main></div><script defer src="../../generated/vault-data.js?v=410aa77861"></script><script defer src="../../site.js?v=410aa77861"></script></body></html>

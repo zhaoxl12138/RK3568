@@ -20,7 +20,7 @@ test('v4l2 subdev learning page covers registration and streaming', async () => 
   assert.match(html, /\/dev\/v4l-subdev3/iu);
   assert.match(html, /\/dev\/video0/iu);
   assert.match(html, /<svg\b/iu);
-  assert.match(html, /18-RK3568-Camera从DTS到videoX真实启动时序\.html/iu);
+  assert.match(html, /21-MediaController-Entity-Pad-Link\.html/iu);
   assert.doesNotMatch(html, /\uFFFD/u);
 });
 

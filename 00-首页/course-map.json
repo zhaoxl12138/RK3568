@@ -1,0 +1,101 @@
+{
+  "currentStage": "05",
+  "stages": [
+    {
+      "id": "00",
+      "maturity": "validated",
+      "title": "总览",
+      "objective": "先建立 IMX415、D-PHY、CSI、RKISP 与 /dev/videoX 的完整系统地图。",
+      "sourcePath": "01-课程主线/00-系统总览.md",
+      "path": "pages/system-map.html"
+    },
+    {
+      "id": "01",
+      "maturity": "validated",
+      "title": "Linux Driver Model",
+      "objective": "分清 bus、device、driver、Platform Driver、I2C Core 和 I2C Driver。",
+      "sourcePath": "01-课程主线/01-Linux-Driver-Model.md",
+      "path": "../../04-项目/15-Linux设备模型与总线分层.html"
+    },
+    {
+      "id": "02",
+      "maturity": "validated",
+      "title": "DTS 与设备发现",
+      "objective": "从原理图对到 DTS，并说明节点怎样变成运行时设备和 I2C client。",
+      "sourcePath": "01-课程主线/02-DTS与设备发现.md",
+      "path": "../../04-项目/20-DTS到运行时设备发现.html"
+    },
+    {
+      "id": "03",
+      "maturity": "validated",
+      "title": "IMX415 Sensor",
+      "objective": "讲清驱动注册、compatible 匹配、probe、上电、读 ID 与 V4L2 注册。",
+      "sourcePath": "01-课程主线/03-IMX415-Sensor-Bring-up.md",
+      "path": "../../04-项目/16-IMX415-三层驱动调用流程.html"
+    },
+    {
+      "id": "04",
+      "maturity": "validated",
+      "title": "MIPI CSI-2 / D-PHY",
+      "objective": "从 DTS endpoint 追到 D-PHY 和 Media Graph，解释 RAW 数据如何进入 SoC。",
+      "sourcePath": "01-课程主线/04-MIPI-CSI2-DPHY.md",
+      "path": "../../04-项目/17-DPHY-从DTS到MediaGraph.html"
+    },
+    {
+      "id": "05",
+      "maturity": "in-progress",
+      "title": "V4L2 Subdev",
+      "objective": "理解 Sensor 如何注册格式、controls、开流回调以及 Source Pad。",
+      "sourcePath": "01-课程主线/05-V4L2-Subdev.md",
+      "path": "../../04-项目/19-IMX415-v4l2-subdev注册与开流.html"
+    },
+    {
+      "id": "06",
+      "maturity": "published",
+      "title": "Media Controller",
+      "objective": "读懂 entity、pad、link 和 media-ctl 输出，并沿数据链逐节点验证。",
+      "sourcePath": "01-课程主线/06-Media-Controller.md",
+      "path": "../../04-项目/21-MediaController-Entity-Pad-Link.html"
+    },
+    {
+      "id": "07",
+      "maturity": "published",
+      "title": "RKISP",
+      "objective": "解释 RAW Bayer 如何进入 RKISP，并经 mainpath/selfpath 形成可取流节点。",
+      "sourcePath": "01-课程主线/07-RKISP.md",
+      "path": "../../04-项目/22-RKISP-从RAW到VideoNode.html"
+    },
+    {
+      "id": "08",
+      "maturity": "published",
+      "title": "V4L2 用户态取流",
+      "objective": "掌握格式协商、buffer queue、STREAMON 和 v4l2-ctl 抓帧验证。",
+      "sourcePath": "01-课程主线/08-V4L2用户态取流.md",
+      "path": "../../04-项目/23-V4L2-VB2用户态取流.html"
+    },
+    {
+      "id": "09",
+      "maturity": "placeholder",
+      "title": "GStreamer / OpenCV",
+      "objective": "把 V4L2 输出接入 GStreamer 和 OpenCV，并定位格式与转换问题。",
+      "sourcePath": null,
+      "path": "pages/notes/07-专项笔记--OpenCV--OpenCV读取Camera记录.html"
+    },
+    {
+      "id": "10",
+      "maturity": "placeholder",
+      "title": "RKNN / YOLO",
+      "objective": "理解 Camera 帧进入预处理、RKNN 推理和结果输出时的模块边界。",
+      "sourcePath": null,
+      "path": "pages/notes/07-专项笔记--系统--AI Camera系统数据流与模块边界.html"
+    },
+    {
+      "id": "11",
+      "maturity": "placeholder",
+      "title": "Camera Bring-up 排障",
+      "objective": "按供电、I2C、MIPI、Media、ISP、V4L2 分层定位新 Sensor 点亮故障。",
+      "sourcePath": null,
+      "path": "pages/notes/07-专项笔记--系统--AI Camera故障排查索引.html"
+    }
+  ]
+}

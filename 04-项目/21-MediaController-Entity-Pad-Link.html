@@ -1,0 +1,827 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <title>阶段 06 · Media Controller：Entity / Pad / Link</title>
+    <link rel="stylesheet" href="../00-首页/学习驾驶舱/site.css?v=410aa77861" />
+    <script
+      defer
+      src="../00-首页/学习驾驶舱/generated/vault-data.js?v=410aa77861"
+    ></script>
+    <script defer src="../00-首页/学习驾驶舱/site.js?v=410aa77861"></script>
+    <style>
+      :root {
+        --bg: #080c14;
+        --surface: #101722;
+        --border: rgba(255, 255, 255, 0.12);
+        --text: #c9d2dc;
+        --bright: #f1f6fa;
+        --purple: #9b7bff;
+        --cyan: #26c6da;
+        --orange: #ffa726;
+        --green: #66bb6a;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font:
+          15px/1.7 Inter,
+          "Noto Sans SC",
+          "Microsoft YaHei",
+          sans-serif;
+      }
+      code {
+        font-family: Consolas, monospace;
+        color: #dcecff;
+      }
+      .hero {
+        text-align: center;
+        padding: 52px 20px 32px;
+        border-bottom: 1px solid var(--border);
+        background: radial-gradient(
+          circle at 50% -25%,
+          rgba(155, 123, 255, 0.25),
+          transparent 48%
+        );
+      }
+      h1 {
+        margin: 0;
+        color: var(--bright);
+        font-size: clamp(1.9rem, 4vw, 2.8rem);
+      }
+      .sub {
+        max-width: 980px;
+        margin: 10px auto;
+        color: #aab9c6;
+      }
+      .links,
+      .legend,
+      .stage-nav {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+      .links a,
+      .stage-nav a {
+        color: #dcecff;
+        text-decoration: none;
+        padding: 7px 12px;
+        border: 1px solid rgba(155, 123, 255, 0.38);
+        border-radius: 999px;
+        background: rgba(155, 123, 255, 0.08);
+      }
+      main {
+        max-width: 1660px;
+        margin: auto;
+        padding: 30px 22px 68px;
+      }
+      .title {
+        margin: 34px 0 15px;
+        padding-left: 13px;
+        border-left: 3px solid var(--purple);
+        color: var(--bright);
+      }
+      .diagram {
+        padding: 14px;
+        border: 1px solid var(--border);
+        border-radius: 22px;
+        background:
+          linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+          linear-gradient(
+            90deg,
+            rgba(255, 255, 255, 0.018) 1px,
+            transparent 1px
+          ),
+          var(--surface);
+        background-size: 28px 28px;
+      }
+      .diagram svg {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+      .lane {
+        fill: rgba(255, 255, 255, 0.025);
+        stroke: rgba(255, 255, 255, 0.11);
+      }
+      .node {
+        fill: #19182c;
+        stroke: #765cc4;
+        stroke-width: 1.5;
+      }
+      .core {
+        fill: #102329;
+        stroke: #25828d;
+      }
+      .result {
+        fill: #17271c;
+        stroke: #4e9258;
+      }
+      .nt {
+        fill: #eef5fb;
+        font-size: 14px;
+        font-weight: 700;
+        text-anchor: middle;
+      }
+      .ns {
+        fill: #a5b5c3;
+        font-size: 11px;
+        text-anchor: middle;
+      }
+      .lt {
+        fill: #f1f6fa;
+        font-size: 19px;
+        font-weight: 700;
+        text-anchor: middle;
+      }
+      .ls {
+        fill: #91a2b1;
+        font-size: 11px;
+        text-anchor: middle;
+      }
+      .edge {
+        fill: none;
+        stroke: #8498aa;
+        stroke-width: 1.8;
+        marker-end: url(#a);
+      }
+      .dash {
+        fill: none;
+        stroke: #aa8be9;
+        stroke-width: 1.6;
+        stroke-dasharray: 7 5;
+        marker-end: url(#ad);
+      }
+      .legend {
+        justify-content: flex-start;
+        margin: 12px 2px;
+        color: #9eafbd;
+      }
+      .legend span {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+      .legend i {
+        width: 34px;
+        border-top: 2px solid #8498aa;
+      }
+      .legend .d {
+        border-top-style: dashed;
+        border-color: #aa8be9;
+      }
+      .diagram-heading {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 16px;
+        margin: 38px 0 10px;
+      }
+      .diagram-heading h3 {
+        margin: 0;
+        color: var(--bright);
+        font-size: 1.18rem;
+      }
+      .diagram-heading p {
+        margin: 0;
+        color: #8fa1af;
+        font-size: 0.92rem;
+      }
+      .reading-note {
+        margin: 12px 0 0;
+        padding: 13px 15px;
+        border-left: 3px solid var(--purple);
+        border-radius: 0 12px 12px 0;
+        background: rgba(155, 123, 255, 0.075);
+        color: #bdc9d4;
+      }
+      .reading-note strong {
+        color: #f0e9ff;
+      }
+      .evidence-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        margin-top: 14px;
+      }
+      .evidence-grid .card:first-child {
+        border-color: rgba(102, 187, 106, 0.42);
+      }
+      .evidence-grid .card:last-child {
+        border-color: rgba(255, 167, 38, 0.42);
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+      }
+      .card {
+        padding: 18px;
+        border: 1px solid var(--border);
+        border-radius: 17px;
+        background: rgba(255, 255, 255, 0.032);
+      }
+      .card h3 {
+        margin: 0 0 7px;
+        color: #edf5fb;
+      }
+      .card p {
+        margin: 0;
+        color: #aebdca;
+      }
+      .source {
+        margin-top: 14px;
+        padding: 15px;
+        border-left: 3px solid var(--cyan);
+        background: rgba(38, 198, 218, 0.055);
+      }
+      .stage-nav {
+        margin-top: 30px;
+        justify-content: space-between;
+      }
+      @media (max-width: 760px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+        .hero {
+          padding: 38px 14px 26px;
+        }
+        main {
+          padding: 22px 12px 50px;
+        }
+        .nt {
+          font-size: 11px;
+        }
+        .ns,
+        .ls {
+          font-size: 8px;
+        }
+        .lt {
+          font-size: 14px;
+        }
+        .stage-nav {
+          justify-content: center;
+        }
+        .diagram-heading {
+          display: block;
+        }
+        .diagram-heading p {
+          margin-top: 4px;
+        }
+        .evidence-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body class="site-nav-offset">
+    <a class="skip-link" href="#main-content">跳到主要内容</a>
+    <nav class="site-nav" data-site-nav aria-label="RK3568 Camera 课程导航"><a class="site-nav__brand" href="../00-首页/学习驾驶舱/index.html"><span>RK3568</span><strong>Camera 课程</strong></a><div class="site-nav__links"><a href="../00-首页/学习驾驶舱/index.html" data-nav-key="home">学习首页</a><a href="../00-首页/学习驾驶舱/pages/learning-route.html" data-nav-key="route">完整路线</a><a href="../00-首页/学习驾驶舱/pages/project.html" data-nav-key="project">项目</a></div><details class="site-nav__more course-menu"><summary>课程目录</summary><div class="site-nav__more-panel course-menu__grid"><a class="course-menu__item" href="../00-首页/学习驾驶舱/pages/system-map.html"><span>00</span><strong>总览</strong></a><a class="course-menu__item" href="15-Linux设备模型与总线分层.html"><span>01</span><strong>Linux Driver Model</strong></a><a class="course-menu__item" href="20-DTS到运行时设备发现.html"><span>02</span><strong>DTS 与设备发现</strong></a><a class="course-menu__item" href="16-IMX415-三层驱动调用流程.html"><span>03</span><strong>IMX415 Sensor</strong></a><a class="course-menu__item" href="17-DPHY-从DTS到MediaGraph.html"><span>04</span><strong>MIPI CSI-2 / D-PHY</strong></a><a class="course-menu__item" href="19-IMX415-v4l2-subdev注册与开流.html"><span>05</span><strong>V4L2 Subdev</strong></a><a class="course-menu__item" href="21-MediaController-Entity-Pad-Link.html"><span>06</span><strong>Media Controller</strong></a><a class="course-menu__item" href="22-RKISP-从RAW到VideoNode.html"><span>07</span><strong>RKISP</strong></a><a class="course-menu__item" href="23-V4L2-VB2用户态取流.html"><span>08</span><strong>V4L2 用户态取流</strong></a><a class="course-menu__item" href="../00-首页/学习驾驶舱/pages/notes/07-专项笔记--OpenCV--OpenCV读取Camera记录.html"><span>09</span><strong>GStreamer / OpenCV</strong></a><a class="course-menu__item" href="../00-首页/学习驾驶舱/pages/notes/07-专项笔记--系统--AI Camera系统数据流与模块边界.html"><span>10</span><strong>RKNN / YOLO</strong></a><a class="course-menu__item" href="../00-首页/学习驾驶舱/pages/notes/07-专项笔记--系统--AI Camera故障排查索引.html"><span>11</span><strong>Camera Bring-up 排障</strong></a></div></details><details class="site-nav__more reference-menu"><summary data-nav-key="reference" aria-current="page">资料与实验</summary><div class="site-nav__more-panel reference-menu__panel"><a href="../00-首页/学习驾驶舱/pages/evidence.html" data-nav-key="evidence">实验依据</a><a href="../00-首页/学习驾驶舱/pages/notes.html" data-nav-key="notes">专项笔记</a><a href="../00-首页/学习驾驶舱/pages/environment.html" data-nav-key="environment">开发环境</a><a href="../00-首页/学习驾驶舱/pages/phase0.html" data-nav-key="phase0">可视化参考</a><a href="../00-首页/学习驾驶舱/pages/archive.html" data-nav-key="archive">归档</a><a href="obsidian://open?vault=RK3568&amp;file=00-%E9%A6%96%E9%A1%B5%2F00-RK3568%E5%AD%A6%E4%B9%A0%E4%B8%BB%E5%85%A5%E5%8F%A3">在 Obsidian 中打开</a></div></details><div class="site-nav__tools"><a class="site-nav__stage course-status" href="../00-首页/学习驾驶舱/pages/learning-route.html#stage-05" title="当前学习阶段">当前 阶段 05 · V4L2 Subdev</a></div></nav>
+    <header class="hero">
+      <h1>Media Controller：把对象画成 Camera 拓扑</h1>
+      <p class="sub">
+        <code>media_device</code> 是总账本，<code>entity</code> 是模块，<code
+          >pad</code
+        >
+        是端口，<code>link</code> 是端口之间的连接。V4L2 Async
+        负责在对象注册顺序不确定时完成匹配与 <code>.bound()</code> 回调。
+      </p>
+      <nav class="links">
+        <a href="19-IMX415-v4l2-subdev注册与开流.html">← V4L2 Subdev</a
+        ><a
+          href="obsidian://open?vault=RK3568&amp;file=02-%E6%BA%90%E7%A0%81%E9%99%AA%E8%AF%BB%2F06-Media-Controller%2F00-%E6%BA%90%E7%A0%81%E9%99%AA%E8%AF%BB%E7%B4%A2%E5%BC%95"
+          >打开 02-源码陪读/06-Media-Controller/00-源码陪读索引</a
+        >
+      </nav>
+    </header>
+    <main id="main-content">
+      <h2 class="title">对象先各自注册，Async 匹配后才建立跨模块 Link</h2>
+      <section class="diagram">
+        <svg viewBox="0 0 1600 850" role="img" aria-labelledby="mt md">
+          <title id="mt">Media Controller 对象与异步绑定</title>
+          <desc id="md">
+            IMX415、D-PHY 和 RKISP 分支各自创建 entity 与 pad，异步框架匹配
+            endpoint 后回调 bound 建立 link，最后 media-ctl 查询拓扑。
+          </desc>
+          <defs>
+            <marker
+              id="a"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto"
+            >
+              <path d="M0 0L10 5L0 10z" fill="#8498aa" />
+            </marker>
+            <marker
+              id="ad"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto"
+            >
+              <path d="M0 0L10 5L0 10z" fill="#aa8be9" />
+            </marker>
+          </defs>
+          <rect class="lane" x="18" y="18" width="370" height="810" rx="22" />
+          <rect class="lane" x="408" y="18" width="370" height="810" rx="22" />
+          <rect class="lane" x="798" y="18" width="370" height="810" rx="22" />
+          <rect class="lane" x="1188" y="18" width="394" height="810" rx="22" />
+          <text class="lt" x="203" y="55">1 · 独立对象分支</text>
+          <text class="ls" x="203" y="76">注册顺序不固定</text>
+          <text class="lt" x="593" y="55">2 · Media Core</text>
+          <text class="ls" x="593" y="76">entity / pad / media_device</text>
+          <text class="lt" x="983" y="55">3 · Async 汇合</text>
+          <text class="ls" x="983" y="76">match → bound → link</text>
+          <text class="lt" x="1385" y="55">4 · 运行时证据</text>
+          <text class="ls" x="1385" y="76">media-ctl -p</text>
+          <rect class="node" x="58" y="126" width="290" height="88" rx="13" />
+          <text class="nt" x="203" y="158">imx415_probe()</text>
+          <text class="ns" x="203" y="182">drivers/media/i2c/imx415.c</text>
+          <text class="ns" x="203" y="200">Sensor subdev + Source pad</text>
+          <rect class="node" x="58" y="282" width="290" height="88" rx="13" />
+          <text class="nt" x="203" y="314">rockchip_csi2dphy_media_init()</text>
+          <text class="ns" x="203" y="338">drivers/phy/rockchip/...</text>
+          <text class="ns" x="203" y="356">D-PHY Sink / Source pads</text>
+          <rect class="node" x="58" y="438" width="290" height="88" rx="13" />
+          <text class="nt" x="203" y="470">rkisp_plat_probe()</text>
+          <text class="ns" x="203" y="494">
+            drivers/media/platform/rockchip/isp/dev.c
+          </text>
+          <text class="ns" x="203" y="512">Media Device + ISP entities</text>
+          <rect
+            class="node core"
+            x="448"
+            y="126"
+            width="290"
+            height="92"
+            rx="13"
+          />
+          <text class="nt" x="593" y="158">media_device_register()</text>
+          <text class="ns" x="593" y="182">注册 /dev/mediaX 总账本</text>
+          <text class="ns" x="593" y="200">RKISP 持有 media_device</text>
+          <rect
+            class="node core"
+            x="448"
+            y="302"
+            width="290"
+            height="92"
+            rx="13"
+          />
+          <text class="nt" x="593" y="334">media_entity_pads_init()</text>
+          <text class="ns" x="593" y="358">drivers/media/media-entity.c</text>
+          <text class="ns" x="593" y="376">给每个模块登记端口</text>
+          <path
+            class="edge"
+            d="M348 170H448M348 326H448M348 482C410 482 410 348 448 348"
+          />
+          <rect
+            class="node core"
+            x="448"
+            y="478"
+            width="290"
+            height="92"
+            rx="13"
+          />
+          <text class="nt" x="593" y="510">media_device_register_entity()</text>
+          <text class="ns" x="593" y="534">drivers/media/media-device.c</text>
+          <text class="ns" x="593" y="552">把 entity 纳入同一图</text>
+          <path class="edge" d="M593 394V478" />
+          <rect class="node" x="838" y="126" width="290" height="92" rx="13" />
+          <text class="nt" x="983" y="158">v4l2_async_notifier_register()</text>
+          <text class="ns" x="983" y="182">
+            drivers/media/v4l2-core/v4l2-async.c
+          </text>
+          <text class="ns" x="983" y="200">登记 waiting 条件，立即返回</text>
+          <path class="dash" d="M738 348C790 348 790 172 838 172" />
+          <rect class="node" x="838" y="302" width="290" height="92" rx="13" />
+          <text class="nt" x="983" y="334">v4l2_async_match_notify()</text>
+          <text class="ns" x="983" y="358">按 fwnode / endpoint 匹配</text>
+          <text class="ns" x="983" y="376">先注册谁都可以</text>
+          <path class="edge" d="M983 218V302" />
+          <rect class="node" x="838" y="478" width="290" height="92" rx="13" />
+          <text class="nt" x="983" y="510">notifier.ops-&gt;bound()</text>
+          <text class="ns" x="983" y="534">框架回调，不是阻塞等待</text>
+          <text class="ns" x="983" y="552">Rockchip 驱动创建跨实体 Link</text>
+          <path class="edge" d="M983 394V478" />
+          <rect
+            class="node result"
+            x="838"
+            y="650"
+            width="290"
+            height="92"
+            rx="13"
+          />
+          <text class="nt" x="983" y="682">media_create_pad_link()</text>
+          <text class="ns" x="983" y="706">Sensor Source → D-PHY Sink</text>
+          <text class="ns" x="983" y="724">ISP Source → mainpath Sink</text>
+          <path class="edge" d="M983 570V650" />
+          <rect
+            class="node result"
+            x="1228"
+            y="302"
+            width="314"
+            height="100"
+            rx="13"
+          />
+          <text class="nt" x="1385" y="334">media-ctl -p</text>
+          <text class="ns" x="1385" y="358">entity / pad / link / fmt</text>
+          <text class="ns" x="1385" y="378">[ENABLED] = 软件 Link 已启用</text>
+          <path class="edge" d="M1128 696C1210 696 1180 352 1228 352" />
+          <rect
+            class="node result"
+            x="1228"
+            y="514"
+            width="314"
+            height="100"
+            rx="13"
+          />
+          <text class="nt" x="1385" y="546">Entity 70: IMX415</text>
+          <text class="ns" x="1385" y="570">pad0 Source / RAW10</text>
+          <text class="ns" x="1385" y="590">→ D-PHY pad0 Sink [ENABLED]</text>
+          <path class="dash" d="M1128 706C1200 706 1190 564 1228 564" />
+        </svg>
+      </section>
+      <div class="legend">
+        <span><i></i>实线：直接调用 / 控制流</span
+        ><span><i class="d"></i>虚线：赋值 / 对象关联 / 数据依赖</span>
+      </div>
+      <div class="diagram-heading">
+        <h3>
+          图 2：不要跳步——从 DTS endpoint 到 D-PHY 的 <code>.bound()</code>
+        </h3>
+        <p>按箭头顺序搜函数；框架回调不等于驱动里的直接函数调用。</p>
+      </div>
+      <section class="diagram">
+        <svg viewBox="0 0 1600 610" role="img" aria-labelledby="at adetail">
+          <title id="at">DTS endpoint 到 V4L2 Async bound 的真实顺序</title>
+          <desc id="adetail">
+            D-PHY 驱动解析 port 端点，登记等待条件。Sensor subdev 注册后，V4L2
+            Async Core 比较 fwnode，匹配成功后回调 D-PHY 的 bound，最终创建
+            IMX415 到 D-PHY 的 Media Link。
+          </desc>
+          <defs>
+            <marker
+              id="a2"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto"
+            >
+              <path d="M0 0L10 5L0 10z" fill="#8498aa" />
+            </marker>
+            <marker
+              id="ad2"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto"
+            >
+              <path d="M0 0L10 5L0 10z" fill="#aa8be9" />
+            </marker>
+          </defs>
+          <rect class="lane" x="16" y="18" width="350" height="574" rx="20" />
+          <rect class="lane" x="390" y="18" width="370" height="574" rx="20" />
+          <rect class="lane" x="784" y="18" width="394" height="574" rx="20" />
+          <rect class="lane" x="1202" y="18" width="382" height="574" rx="20" />
+          <text class="lt" x="191" y="55">1 · 板级描述</text>
+          <text class="ls" x="191" y="76">DTS 说“谁和谁相连”</text>
+          <text class="lt" x="575" y="55">2 · D-PHY 初始化</text>
+          <text class="ls" x="575" y="76">把远端描述变成等待条件</text>
+          <text class="lt" x="981" y="55">3 · V4L2 Async Core</text>
+          <text class="ls" x="981" y="76">
+            框架比较真实 subdev 与 waiting 条件
+          </text>
+          <text class="lt" x="1393" y="55">4 · D-PHY 回调</text>
+          <text class="ls" x="1393" y="76">
+            驱动获得上游对象并创建软件 Link
+          </text>
+          <rect class="node" x="56" y="144" width="270" height="105" rx="13" />
+          <text class="nt" x="191" y="177">port@0 / mipi_in_ucam1</text>
+          <text class="ns" x="191" y="201">
+            remote-endpoint = &amp;imx415_out
+          </text>
+          <text class="ns" x="191" y="221">data-lanes = &lt;1 2 3 4&gt;</text>
+          <rect class="node" x="56" y="344" width="270" height="105" rx="13" />
+          <text class="nt" x="191" y="377">imx415_out</text>
+          <text class="ns" x="191" y="401">Sensor 的 Source endpoint</text>
+          <text class="ns" x="191" y="421">这是 DTS 引用，不是 Link</text>
+          <path
+            d="M191 249V344"
+            fill="none"
+            stroke="#aa8be9"
+            stroke-width="1.6"
+            stroke-dasharray="7 5"
+            marker-end="url(#ad2)"
+          />
+          <rect
+            class="node core"
+            x="440"
+            y="126"
+            width="270"
+            height="112"
+            rx="13"
+          />
+          <text class="nt" x="575" y="159">rockchip_csi2dphy_media_init()</text>
+          <text class="ns" x="575" y="184">phy-rockchip-csi2-dphy.c</text>
+          <text class="ns" x="575" y="205">probe 内的直接调用</text>
+          <rect
+            class="node core"
+            x="440"
+            y="330"
+            width="270"
+            height="124"
+            rx="13"
+          />
+          <text class="nt" x="575" y="363">
+            parse_fwnode_endpoints_by_port()
+          </text>
+          <text class="ns" x="575" y="388">解析 D-PHY 的 port@0</text>
+          <text class="ns" x="575" y="409">生成 asd：notifier.waiting</text>
+          <text class="ns" x="575" y="430">只描述“要等谁”，不创建 Link</text>
+          <path
+            d="M575 238V330"
+            fill="none"
+            stroke="#8498aa"
+            stroke-width="1.8"
+            marker-end="url(#a2)"
+          />
+          <path
+            d="M326 196C380 196 380 386 440 386"
+            fill="none"
+            stroke="#aa8be9"
+            stroke-width="1.6"
+            stroke-dasharray="7 5"
+            marker-end="url(#ad2)"
+          />
+          <rect class="node" x="834" y="126" width="294" height="112" rx="13" />
+          <text class="nt" x="981" y="159">
+            v4l2_async_subdev_notifier_register()
+          </text>
+          <text class="ns" x="981" y="184">登记 notifier，立即返回</text>
+          <text class="ns" x="981" y="205">不是阻塞等待 IMX415</text>
+          <rect class="node" x="834" y="330" width="294" height="124" rx="13" />
+          <text class="nt" x="981" y="363">v4l2_async_match_notify()</text>
+          <text class="ns" x="981" y="388">v4l2-async.c 的框架回调</text>
+          <text class="ns" x="981" y="409">fwnode 条件 ↔ imx415.subdev</text>
+          <text class="ns" x="981" y="430">
+            匹配后准备调用 notifier.ops-&gt;bound
+          </text>
+          <path
+            d="M710 392H834"
+            fill="none"
+            stroke="#8498aa"
+            stroke-width="1.8"
+            marker-end="url(#a2)"
+          />
+          <path
+            d="M981 238V330"
+            fill="none"
+            stroke="#8498aa"
+            stroke-width="1.8"
+            marker-end="url(#a2)"
+          />
+          <rect
+            class="node result"
+            x="1252"
+            y="126"
+            width="282"
+            height="112"
+            rx="13"
+          />
+          <text class="nt" x="1393" y="159">
+            rockchip_csi2_dphy_notifier_bound()
+          </text>
+          <text class="ns" x="1393" y="184">D-PHY 驱动的 .bound 回调</text>
+          <text class="ns" x="1393" y="205">
+            拿到 sensor 的 sd / lane / mbus
+          </text>
+          <rect
+            class="node result"
+            x="1252"
+            y="330"
+            width="282"
+            height="124"
+            rx="13"
+          />
+          <text class="nt" x="1393" y="363">media_create_pad_link()</text>
+          <text class="ns" x="1393" y="388">IMX415 pad0 Source</text>
+          <text class="ns" x="1393" y="409">→ D-PHY pad0 Sink</text>
+          <text class="ns" x="1393" y="430">此刻才真正加入 Media Graph</text>
+          <path
+            d="M1128 392H1252"
+            fill="none"
+            stroke="#8498aa"
+            stroke-width="1.8"
+            marker-end="url(#a2)"
+          />
+          <path
+            d="M1393 238V330"
+            fill="none"
+            stroke="#8498aa"
+            stroke-width="1.8"
+            marker-end="url(#a2)"
+          />
+        </svg>
+      </section>
+      <p class="reading-note">
+        <strong>怎样追代码：</strong>先在
+        <code>phy-rockchip-csi2-dphy.c</code> 搜
+        <code>rockchip_csi2dphy_media_init</code>，再搜
+        <code>v4l2_async_notifier_parse_fwnode_endpoints_by_port</code
+        >；随后跳到 <code>v4l2-async.c</code> 的
+        <code>v4l2_async_match_notify</code>。最后回到同一个 D-PHY 文件读
+        <code>rockchip_csi2_dphy_notifier_bound</code
+        >。实线是本函数直接走到下一步，虚线只是 DTS/fwnode 或对象关系。
+      </p>
+
+      <div class="diagram-heading">
+        <h3>图 3：图中有什么，以及 <code>[ENABLED]</code> 到底证明什么</h3>
+        <p>Media Link 是软件拓扑边；它不搬运像素，也不能替代电气验证。</p>
+      </div>
+      <section class="diagram">
+        <svg viewBox="0 0 1600 470" role="img" aria-labelledby="et edetail">
+          <title id="et">Entity Pad Link 与 media-ctl 证据边界</title>
+          <desc id="edetail">
+            IMX415、D-PHY 和 RKISP 都是 entity；每个 entity 有 sink 或 source
+            pad。media_create_pad_link 创建软件 link。media-ctl 中的 enabled
+            表示软件拓扑已选中，但不证明硬件数据能通过。
+          </desc>
+          <defs>
+            <marker
+              id="a3"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto"
+            >
+              <path d="M0 0L10 5L0 10z" fill="#64a66f" />
+            </marker>
+          </defs>
+          <rect class="lane" x="20" y="22" width="920" height="425" rx="20" />
+          <rect class="lane" x="970" y="22" width="610" height="425" rx="20" />
+          <text class="lt" x="480" y="62">
+            运行时 Media Graph：对象、端口、软件连接
+          </text>
+          <text class="ls" x="480" y="84">
+            entity 是模块；pad 是图中的方向端口；link 是两 pad 的关系
+          </text>
+          <text class="lt" x="1275" y="62">板端证据边界</text>
+          <text class="ls" x="1275" y="84">先分清软件图与真实数据</text>
+          <rect class="node" x="80" y="170" width="205" height="145" rx="13" />
+          <text class="nt" x="182" y="205">entity 70 · IMX415</text>
+          <text class="ns" x="182" y="231">v4l2_subdev / Sensor</text>
+          <text class="ns" x="182" y="255">pad0：Source</text>
+          <text class="ns" x="182" y="279">SGBRG10_1X10 RAW</text>
+          <rect
+            class="node core"
+            x="375"
+            y="170"
+            width="205"
+            height="145"
+            rx="13"
+          />
+          <text class="nt" x="477" y="205">entity 67 · D-PHY</text>
+          <text class="ns" x="477" y="231">v4l2_subdev</text>
+          <text class="ns" x="477" y="255">pad0：Sink / 接 Sensor</text>
+          <text class="ns" x="477" y="279">pad1：Source / 给 CSI</text>
+          <rect class="node" x="670" y="170" width="205" height="145" rx="13" />
+          <text class="nt" x="772" y="205">rkisp-csi-subdev</text>
+          <text class="ns" x="772" y="231">下游 entity</text>
+          <text class="ns" x="772" y="255">pad0：Sink</text>
+          <text class="ns" x="772" y="279">接收同一层 RAW 格式</text>
+          <path
+            d="M285 242H375"
+            fill="none"
+            stroke="#64a66f"
+            stroke-width="2.4"
+            marker-end="url(#a3)"
+          />
+          <text class="ns" x="330" y="224">Media Link</text>
+          <path
+            d="M580 242H670"
+            fill="none"
+            stroke="#64a66f"
+            stroke-width="2.4"
+            marker-end="url(#a3)"
+          />
+          <text class="ns" x="625" y="224">Media Link</text>
+          <text class="ns" x="480" y="370">
+            由 media_entity_pads_init() 登记端口；由 media_create_pad_link()
+            建立连接
+          </text>
+          <rect
+            class="node result"
+            x="1020"
+            y="132"
+            width="510"
+            height="112"
+            rx="13"
+          />
+          <text class="nt" x="1275" y="166">
+            media-ctl -p：→ &quot;rockchip-csi2-dphy0&quot;:0 [ENABLED]
+          </text>
+          <text class="ns" x="1275" y="192">
+            能证明：entity/pad/link 已登记，且这条软件 Link 被选中
+          </text>
+          <text class="ns" x="1275" y="214">
+            适合确认图的方向、格式和缺失连接
+          </text>
+          <rect
+            class="node isp"
+            x="1020"
+            y="290"
+            width="510"
+            height="112"
+            rx="13"
+          />
+          <text class="nt" x="1275" y="324">仍不能证明</text>
+          <text class="ns" x="1275" y="350">
+            供电 / xvclk / reset、MIPI Lane 电信号、Sensor 已开流、CSI
+            无错误、DMA 或用户态 DQBUF
+          </text>
+          <text class="ns" x="1275" y="372">
+            这些需要 dmesg、寄存器/示波器、STREAMON 与连续 DQBUF 继续验证
+          </text>
+        </svg>
+      </section>
+      <section class="evidence-grid">
+        <article class="card">
+          <h3>读到 <code>[ENABLED]</code> 的正确反应</h3>
+          <p>
+            “软件图已经把 IMX415 的输出端与 D-PHY
+            输入端连起来了；下一步该看开流、CSI 错误和 DQBUF。”
+          </p>
+        </article>
+        <article class="card">
+          <h3>不要把它说成</h3>
+          <p>
+            “MIPI 一定通了”或“已经有画面”。<code>[ENABLED]</code>
+            不是电平、不是帧，也不是用户态 buffer 证据。
+          </p>
+        </article>
+      </section>
+      <section class="grid">
+        <article class="card">
+          <h3>大白话</h3>
+          <p>
+            Media Controller 不搬运像素，它像“地铁线路图”：entity 是车站，pad
+            是站台，link 是线路。Async
+            是等车站都登记后再连线的事件回调机制，不会阻塞启动线程。
+          </p>
+        </article>
+        <article class="card">
+          <h3>证据边界</h3>
+          <p>
+            <code>media-ctl -p</code> 能证明软件对象、格式和 Link；不能证明 MIPI
+            Lane 上真有稳定电信号，也不能证明用户态已经收到完整帧。
+          </p>
+        </article>
+        <article class="card">
+          <h3>面试表达</h3>
+          <p>
+            各驱动独立注册 subdev/entity/pad；notifier 根据 endpoint fwnode
+            异步匹配，匹配后回调 <code>.bound()</code>，驱动再用
+            <code>media_create_pad_link()</code> 建图。
+          </p>
+        </article>
+      </section>
+      <div class="source">
+        <strong>Source Insight：</strong
+        ><code>drivers/media/media-device.c</code> 搜
+        <code>media_device_register_entity()</code>；<code
+          >drivers/media/media-entity.c</code
+        >
+        搜
+        <code>media_entity_pads_init()</code
+        >、<code>media_create_pad_link()</code>；<code
+          >drivers/media/v4l2-core/v4l2-async.c</code
+        >
+        搜 <code>v4l2_async_match_notify()</code>。
+      </div>
+      <nav class="stage-nav">
+        <a href="19-IMX415-v4l2-subdev注册与开流.html">← 阶段 05</a
+        ><a href="../00-首页/学习驾驶舱/pages/learning-route.html"
+          >返回完整路线</a
+        ><a href="22-RKISP-从RAW到VideoNode.html">阶段 07：RKISP →</a>
+      </nav>
+    </main>
+  </body>
+</html>

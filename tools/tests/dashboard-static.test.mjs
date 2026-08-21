@@ -31,7 +31,9 @@ function parseGeneratedAssignment(source) {
   const normalizedSource = source.replace(/\r\n/g, '\n');
   assert.ok(source.startsWith(prefix), 'generated data must use the expected global assignment');
   assert.ok(normalizedSource.endsWith(';\n'), 'generated assignment must end with a semicolon');
-  return JSON.parse(normalizedSource.slice(prefix.length, -2));
+  const context = { window: {} };
+  vm.runInNewContext(normalizedSource, context, { filename: generatedPath });
+  return context.window;
 }
 
 test('homepage loads classic deferred data and site scripts for file://', async () => {
@@ -68,9 +70,19 @@ test('app is classic-script syntax and avoids file protocol incompatible loading
 
 test('generated data syntax and course cockpit contracts are present', async () => {
   const { generated, html } = await dashboardSources();
-  const data = parseGeneratedAssignment(generated);
+  const globals = parseGeneratedAssignment(generated);
+  const data = globals.RK3568_VAULT_DATA;
+  const course = globals.RK3568_COURSE;
   assert.equal(typeof data.currentStage, 'string');
+  assert.equal(data.currentStage, '05');
   assert.ok(Array.isArray(data.currentTasks));
+  assert.equal(course.currentStage, '05');
+  assert.deepEqual(Array.from(course.stages, ({ id }) => id), [
+    '00', '01', '02', '03', '04', '05',
+    '06', '07', '08', '09', '10', '11',
+  ]);
+  assert.ok(course.stages.every(({ id }) => /^\d{2}$/u.test(id)));
+  assert.doesNotMatch(generated, /Camera驱动第2章-MIPI-DPHY与CSI2/u);
   assert.match(html, /Camera 驱动[\s\S]*学习驾驶舱/iu);
   assert.match(html, /现在学什么/iu);
   assert.match(html, /data-course-current/iu);

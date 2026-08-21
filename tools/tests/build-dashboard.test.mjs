@@ -5,6 +5,7 @@ import { access, mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promise
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import vm from 'node:vm';
 
 import {
   buildDashboardData,
@@ -227,7 +228,7 @@ test('buildDashboardData indexes evidence assets with stage labels and warns for
 
 test('buildDashboardData assigns evidenceStageKey across punctuation variants and warns for unknown formats', async () => {
   await Promise.all([
-    writeFixture('07-专项笔记/系统/Camera驱动分阶段验收标准.md', `
+    writeFixture('07-专项笔记/系统/Camera驱动能力验收矩阵.md', `
 ## 阶段总表
 | 阶段 | 要回答的问题 | 最小输出证据 | 通过标准 | 证据入口 |
 |---|---|---|---|---|
@@ -432,7 +433,7 @@ test('buildDashboardData sorts normalized evidence names and warnings determinis
   assert.deepEqual(first.warnings, second.warnings);
   assert.deepEqual(first.warnings.slice(0, 2), [
     'Missing optional task board: 06-任务/01-下一步任务看板.md',
-    'Missing optional acceptance table: 07-专项笔记/系统/Camera驱动分阶段验收标准.md',
+    'Missing optional acceptance table: 07-专项笔记/系统/Camera驱动能力验收矩阵.md',
   ]);
   assert.equal(new Set(first.warnings).size, first.warnings.length);
   assert.deepEqual(first.warnings.filter((warning) => warning.startsWith('Evidence has unknown stage:')), [
@@ -492,8 +493,8 @@ E:\\temp\\yolov5_result.jpg
 
 test('buildObsidianUrl separately encodes the Chinese vault and normalized file path', () => {
   assert.equal(
-    buildObsidianUrl('RK3568 学习库', '07-专项笔记\\系统\\Camera驱动分阶段验收标准.md'),
-    'obsidian://open?vault=RK3568%20%E5%AD%A6%E4%B9%A0%E5%BA%93&file=07-%E4%B8%93%E9%A1%B9%E7%AC%94%E8%AE%B0%2F%E7%B3%BB%E7%BB%9F%2FCamera%E9%A9%B1%E5%8A%A8%E5%88%86%E9%98%B6%E6%AE%B5%E9%AA%8C%E6%94%B6%E6%A0%87%E5%87%86',
+    buildObsidianUrl('RK3568 学习库', '07-专项笔记\\系统\\Camera驱动能力验收矩阵.md'),
+    'obsidian://open?vault=RK3568%20%E5%AD%A6%E4%B9%A0%E5%BA%93&file=07-%E4%B8%93%E9%A1%B9%E7%AC%94%E8%AE%B0%2F%E7%B3%BB%E7%BB%9F%2FCamera%E9%A9%B1%E5%8A%A8%E8%83%BD%E5%8A%9B%E9%AA%8C%E6%94%B6%E7%9F%A9%E9%98%B5',
   );
 });
 
@@ -505,7 +506,7 @@ test('buildDashboardData returns the dashboard shape and warns for missing optio
 ## 本轮唯一任务
 - [ ] 检查串口
 `),
-    writeFixture('07-专项笔记/系统/Camera驱动分阶段验收标准.md', `
+    writeFixture('07-专项笔记/系统/Camera驱动能力验收矩阵.md', `
 ## 阶段总表
 | 阶段 | 要回答的问题 | 最小输出证据 | 通过标准 | 证据入口 |
 |---|---|---|---|---|
@@ -528,9 +529,9 @@ test('buildDashboardData returns the dashboard shape and warns for missing optio
     [
       { name: 'taskBoard', filePath: '06-任务/01-下一步任务看板.md' },
       { name: 'activeRoute', filePath: '06-任务/Camera驱动求职第1周执行计划.md' },
-      { name: 'currentChapter', filePath: '06-任务/Camera驱动第1章-IMX415-Sensor与驱动.md' },
+      { name: 'currentChapter', filePath: '01-课程主线/03-IMX415-Sensor-Bring-up.md' },
       { name: 'dailyRecord', filePath: '05-实验与证据/2026-07-28-Camera驱动Day1验收.md' },
-      { name: 'acceptance', filePath: '07-专项笔记/系统/Camera驱动分阶段验收标准.md' },
+      { name: 'acceptance', filePath: '07-专项笔记/系统/Camera驱动能力验收矩阵.md' },
       { name: 'evidenceMoc', filePath: '05-实验与证据/2026-07-28-直连板端读取IMX415配置.md' },
       { name: 'outputMoc', filePath: '09-输出沉淀/00-输出沉淀入口.md' },
     ],
@@ -544,6 +545,36 @@ test('buildDashboardData returns the dashboard shape and warns for missing optio
 });
 
 test('writeDashboardData emits a valid pretty JSON assignment with the required prefix', async () => {
+  await Promise.all([
+    writeFixture('00-首页/course-map.json', JSON.stringify({
+      stages: [{
+        id: '04',
+        title: 'MIPI CSI-2 / D-PHY',
+        objective: '从 DTS endpoint 追到 D-PHY 和 Media Graph。',
+        sourcePath: '06-任务/04-MIPI-CSI2-DPHY.md',
+        path: '../../04-项目/17-DPHY-从DTS到MediaGraph.html',
+      }],
+    })),
+    writeFixture('00-首页/00-当前学习状态.md', [
+      '---',
+      'course-stage: "04"',
+      'learning-unit: dphy-from-dts-to-media-graph',
+      'week: 1',
+      'day: 3',
+      'competency-id: C02',
+      'updated: 2026-08-09',
+      '---',
+      '',
+      '# 当前学习状态',
+    ].join('\n')),
+    writeFixture('06-任务/01-下一步任务看板.md', [
+      '## 当前阶段',
+      '- 阶段：阶段 2：旧任务编号',
+      '## 本轮唯一任务',
+      '- [ ] 不得覆盖课程阶段',
+    ].join('\n')),
+    writeFixture('06-任务/04-MIPI-CSI2-DPHY.md', '# MIPI CSI-2 / D-PHY'),
+  ]);
   const outputFile = path.join(vaultDir, '00-首页/学习驾驶舱/generated/vault-data.js');
   const stalePage = path.join(
     vaultDir,
@@ -554,12 +585,25 @@ test('writeDashboardData emits a valid pretty JSON assignment with the required 
   await writeDashboardData(vaultDir, outputFile);
   const emitted = await readFile(outputFile, 'utf8');
   const prefix = 'window.RK3568_VAULT_DATA = ';
+  const context = { window: {} };
+  vm.runInNewContext(emitted, context, { filename: outputFile });
 
   assert.ok(emitted.startsWith(prefix));
-  assert.equal(emitted, `${prefix}${JSON.stringify(JSON.parse(emitted.slice(prefix.length, -2)), null, 2)};\n`);
-  assert.ok(JSON.parse(emitted.slice(prefix.length, -2)).quickLinks.every(
+  assert.deepEqual(JSON.parse(JSON.stringify(context.window.RK3568_COURSE)), {
+    currentStage: '04',
+    stages: [{
+      id: '04',
+      title: 'MIPI CSI-2 / D-PHY',
+      objective: '从 DTS endpoint 追到 D-PHY 和 Media Graph。',
+      sourcePath: '06-任务/04-MIPI-CSI2-DPHY.md',
+      path: '../../04-项目/17-DPHY-从DTS到MediaGraph.html',
+    }],
+  });
+  assert.equal(context.window.RK3568_VAULT_DATA.currentStage, '04');
+  assert.ok(context.window.RK3568_VAULT_DATA.quickLinks.every(
     ({ url }) => url.includes('vault=RK3568&'),
   ));
+  assert.doesNotMatch(emitted, /Camera驱动第2章-MIPI-DPHY与CSI2/u);
   await assert.rejects(access(stalePage));
 });
 
@@ -696,7 +740,7 @@ test('generated notes rebase source-relative links and resolve Obsidian image em
 
 test('buildDashboardData exposes generated web paths and warns for missing important notes', async () => {
   await writeFixture('06-任务/01-下一步任务看板.md', '## 当前阶段\n- 阶段：1 Buildroot\n\n## 本轮唯一任务\n- [ ] 验机');
-  await writeFixture('07-专项笔记/系统/Camera驱动分阶段验收标准.md', '## 阶段总表\n| 阶段 | 要回答的问题 | 最小输出证据 | 通过标准 | 证据入口 | 状态 |\n| --- | --- | --- | --- | --- | --- |\n| 1 Buildroot | Q | E | C | [[缺失笔记]] | 计划 |');
+  await writeFixture('07-专项笔记/系统/Camera驱动能力验收矩阵.md', '## 阶段总表\n| 阶段 | 要回答的问题 | 最小输出证据 | 通过标准 | 证据入口 | 状态 |\n| --- | --- | --- | --- | --- | --- |\n| 1 Buildroot | Q | E | C | [[缺失笔记]] | 计划 |');
   await writeFixture('05-实验与证据/00-Camera证据索引.md');
 
   const data = await buildDashboardData(vaultDir);

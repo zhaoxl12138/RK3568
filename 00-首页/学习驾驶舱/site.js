@@ -1,86 +1,9 @@
 (function () {
   'use strict';
 
-  var COURSE_CURRENT_STAGE = '04';
-  var COURSE_STAGES = [
-    {
-      id: '00',
-      title: '总览',
-      path: 'pages/system-map.html',
-      objective: '先建立 IMX415、D-PHY、CSI、RKISP 与 /dev/videoX 的完整系统地图。',
-    },
-    {
-      id: '01',
-      title: 'Linux Driver Model',
-      path: '../../04-项目/15-Linux设备模型与总线分层.html',
-      objective: '分清 bus、device、driver、Platform Driver、I2C Core 和 I2C Driver。',
-    },
-    {
-      id: '02',
-      title: 'DTS 与设备发现',
-      path: 'pages/notes/06-任务--IMX415-DTS 解读 -2026年7月31日.html',
-      objective: '从原理图对到 DTS，并说明节点怎样变成运行时设备和 I2C client。',
-    },
-    {
-      id: '03',
-      title: 'IMX415 Sensor',
-      path: '../../04-项目/16-IMX415-三层驱动调用流程.html',
-      objective: '讲清驱动注册、compatible 匹配、probe、上电、读 ID 与 V4L2 注册。',
-    },
-    {
-      id: '04',
-      title: 'MIPI CSI-2 / D-PHY',
-      path: '../../04-项目/17-DPHY-从DTS到MediaGraph.html',
-      objective: '从 DTS endpoint 追到 D-PHY 和 Media Graph，解释 RAW 数据如何进入 SoC。',
-    },
-    {
-      id: '05',
-      title: 'V4L2 Subdev',
-      path: '../../04-项目/19-IMX415-v4l2-subdev注册与开流.html',
-      objective: '理解 Sensor 如何注册格式、controls、开流回调以及 Source Pad。',
-    },
-    {
-      id: '06',
-      title: 'Media Controller',
-      path: 'pages/notes/05-实验与证据--2026-07-28-直连板端读取IMX415配置.html',
-      objective: '读懂 entity、pad、link 和 media-ctl 输出，并沿数据链逐节点验证。',
-    },
-    {
-      id: '07',
-      title: 'RKISP',
-      path: '../../04-项目/18-RK3568-Camera从DTS到videoX真实启动时序.html',
-      objective: '解释 RAW Bayer 如何进入 RKISP，并经 mainpath/selfpath 形成可取流节点。',
-    },
-    {
-      id: '08',
-      title: 'V4L2 用户态取流',
-      path: 'pages/notes/07-专项笔记--Camera-V4L2--V4L2命令行抓帧记录.html',
-      objective: '掌握格式协商、buffer queue、STREAMON 和 v4l2-ctl 抓帧验证。',
-    },
-    {
-      id: '09',
-      title: 'GStreamer / OpenCV',
-      path: 'pages/notes/07-专项笔记--OpenCV--OpenCV读取Camera记录.html',
-      objective: '把 V4L2 输出接入 GStreamer 和 OpenCV，并定位格式与转换问题。',
-    },
-    {
-      id: '10',
-      title: 'RKNN / YOLO',
-      path: 'pages/notes/07-专项笔记--系统--AI Camera系统数据流与模块边界.html',
-      objective: '理解 Camera 帧进入预处理、RKNN 推理和结果输出时的模块边界。',
-    },
-    {
-      id: '11',
-      title: 'Camera Bring-up 排障',
-      path: 'pages/notes/07-专项笔记--系统--AI Camera故障排查索引.html',
-      objective: '按供电、I2C、MIPI、Media、ISP、V4L2 分层定位新 Sensor 点亮故障。',
-    },
-  ];
-
-  window.RK3568_COURSE = {
-    currentStage: COURSE_CURRENT_STAGE,
-    stages: COURSE_STAGES,
-  };
+  var courseRuntime = window.RK3568_COURSE || { currentStage: '', stages: [] };
+  var courseCurrentStageId = courseRuntime.currentStage;
+  var courseStages = courseRuntime.stages;
 
   function cleanMarkdown(value) {
     return String(value || '')
@@ -110,10 +33,10 @@
 
   function currentCourseStage() {
     var i;
-    for (i = 0; i < COURSE_STAGES.length; i += 1) {
-      if (COURSE_STAGES[i].id === COURSE_CURRENT_STAGE) return COURSE_STAGES[i];
+    for (i = 0; i < courseStages.length; i += 1) {
+      if (courseStages[i].id === courseCurrentStageId) return courseStages[i];
     }
-    return COURSE_STAGES[0];
+    return courseStages[0];
   }
 
   function decodedPathname() {
@@ -133,19 +56,39 @@
   }
 
   function courseStageStatus(stage) {
-    var currentIndex = parseInt(COURSE_CURRENT_STAGE, 10);
+    var currentIndex = parseInt(courseCurrentStageId, 10);
     var stageIndex = parseInt(stage.id, 10);
-    if (stage.id === COURSE_CURRENT_STAGE) return 'is-current';
+    if (stage.id === courseCurrentStageId) return 'is-current';
     if (stageIndex < currentIndex) return 'is-complete';
     return 'is-planned';
+  }
+
+  function courseMaturityLabel(stage) {
+    var labels = {
+      placeholder: '草稿',
+      'in-progress': '学习中',
+      validated: '已验证',
+      published: '已发布',
+    };
+    return labels[stage.maturity] || '草稿';
+  }
+
+  function noteRole(note) {
+    var filePath = String(note.filePath || '');
+    if (filePath.indexOf('01-课程主线/') === 0) return '课程正文';
+    if (filePath.indexOf('02-源码陪读/') === 0) return '源码陪读';
+    if (filePath.indexOf('05-实验与证据/') === 0) return '实板证据';
+    if (filePath.indexOf('09-输出沉淀/') === 0) return '面试输出';
+    if (filePath.indexOf('06-任务/') === 0) return '执行与复盘';
+    return '专题参考';
   }
 
   function findCourseStageForPage(siteRoot, pageUrl) {
     var currentPath = decodedUrlPath(pageUrl || new URL(window.location.href));
     var i;
-    for (i = 0; i < COURSE_STAGES.length; i += 1) {
-      if (decodedUrlPath(new URL(COURSE_STAGES[i].path, siteRoot)) === currentPath) {
-        return { index: i, stage: COURSE_STAGES[i] };
+    for (i = 0; i < courseStages.length; i += 1) {
+      if (decodedUrlPath(new URL(courseStages[i].path, siteRoot)) === currentPath) {
+        return { index: i, stage: courseStages[i] };
       }
     }
     return null;
@@ -165,13 +108,16 @@
     var anchor = document.createElement('a');
     var number = document.createElement('span');
     var title = document.createElement('strong');
+    var maturity = document.createElement('small');
     var status = courseStageStatus(stage);
     anchor.className = 'course-menu__item ' + status;
     anchor.href = new URL(stage.path, siteRoot).href;
     number.textContent = stage.id;
     title.textContent = stage.title;
+    maturity.textContent = courseMaturityLabel(stage);
     anchor.appendChild(number);
     anchor.appendChild(title);
+    anchor.appendChild(maturity);
     if (viewedStage && viewedStage.id === stage.id) {
       anchor.classList.add('is-viewing');
       anchor.setAttribute('aria-current', 'step');
@@ -239,8 +185,8 @@
       courseSummary.textContent = '课程目录';
       courseMenu.appendChild(courseSummary);
       coursePanel.className = 'site-nav__more-panel course-menu__grid';
-      for (j = 0; j < COURSE_STAGES.length; j += 1) {
-        appendCourseMenuItem(coursePanel, COURSE_STAGES[j], siteRoot, viewedStage);
+      for (j = 0; j < courseStages.length; j += 1) {
+        appendCourseMenuItem(coursePanel, courseStages[j], siteRoot, viewedStage);
       }
       courseMenu.appendChild(coursePanel);
       navigation.appendChild(courseMenu);
@@ -284,7 +230,7 @@
     var count = document.querySelector('[data-note-count]');
     var siteRoot = getSiteRootUrl();
     var groups = {};
-    var groupOrder = [];
+    var groupOrder = ['课程正文', '源码陪读', '实板证据', '面试输出', '执行与复盘', '专题参考'];
     var rows = [];
     var i;
 
@@ -292,12 +238,10 @@
     for (i = 0; i < notes.length; i += 1) {
       var note = notes[i];
       if (!note || !note.webPath) continue;
-      var folder = String(note.folder || '其他').split('/')[0] || '其他';
-      if (!groups[folder]) {
-        groups[folder] = [];
-        groupOrder.push(folder);
-      }
-      groups[folder].push(note);
+      if (String(note.filePath || '').indexOf('08-附录/模板/') === 0) continue;
+      var role = noteRole(note);
+      if (!groups[role]) groups[role] = [];
+      groups[role].push(note);
     }
 
     if (!groupOrder.length) {
@@ -311,6 +255,7 @@
 
     for (i = 0; i < groupOrder.length; i += 1) {
       var groupName = groupOrder[i];
+      if (!groups[groupName] || !groups[groupName].length) continue;
       var group = document.createElement('section');
       var heading = document.createElement('h3');
       var list = document.createElement('div');
@@ -386,8 +331,8 @@
   function renderCourseProgress(container, viewedStage, siteRoot) {
     var i;
     container.textContent = '';
-    for (i = 0; i < COURSE_STAGES.length; i += 1) {
-      var stage = COURSE_STAGES[i];
+    for (i = 0; i < courseStages.length; i += 1) {
+      var stage = courseStages[i];
       var anchor = createCourseStageLink(stage, siteRoot, 'course-progress__step');
       anchor.classList.add(courseStageStatus(stage));
       anchor.setAttribute('title', stage.id + ' ' + stage.title);
@@ -455,7 +400,7 @@
     adjacent = document.createElement('div');
     adjacent.className = 'course-adjacent';
     if (pageInfo.index > 0) {
-      appendAdjacentLink(adjacent, COURSE_STAGES[pageInfo.index - 1], 'previous', siteRoot);
+      appendAdjacentLink(adjacent, courseStages[pageInfo.index - 1], 'previous', siteRoot);
     } else {
       adjacent.appendChild(document.createElement('span')).className = 'course-adjacent__spacer';
     }
@@ -464,8 +409,8 @@
     routeLink.href = new URL('pages/learning-route.html', siteRoot).href;
     routeLink.textContent = '返回完整学习路线';
     adjacent.appendChild(routeLink);
-    if (pageInfo.index < COURSE_STAGES.length - 1) {
-      appendAdjacentLink(adjacent, COURSE_STAGES[pageInfo.index + 1], 'next', siteRoot);
+    if (pageInfo.index < courseStages.length - 1) {
+      appendAdjacentLink(adjacent, courseStages[pageInfo.index + 1], 'next', siteRoot);
     } else {
       adjacent.appendChild(document.createElement('span')).className = 'course-adjacent__spacer';
     }
@@ -485,7 +430,7 @@
     footerInner = document.createElement('div');
     footerInner.className = 'course-footer-nav__inner';
     if (pageInfo.index > 0) {
-      appendAdjacentLink(footerInner, COURSE_STAGES[pageInfo.index - 1], 'previous', siteRoot);
+      appendAdjacentLink(footerInner, courseStages[pageInfo.index - 1], 'previous', siteRoot);
     } else {
       footerInner.appendChild(document.createElement('span')).className = 'course-adjacent__spacer';
     }
@@ -494,8 +439,8 @@
     routeLink.href = new URL('pages/learning-route.html', siteRoot).href;
     routeLink.textContent = '返回学习路线';
     footerInner.appendChild(routeLink);
-    if (pageInfo.index < COURSE_STAGES.length - 1) {
-      appendAdjacentLink(footerInner, COURSE_STAGES[pageInfo.index + 1], 'next', siteRoot);
+    if (pageInfo.index < courseStages.length - 1) {
+      appendAdjacentLink(footerInner, courseStages[pageInfo.index + 1], 'next', siteRoot);
     } else {
       footerInner.appendChild(document.createElement('span')).className = 'course-adjacent__spacer';
     }
@@ -511,8 +456,12 @@
     for (i = 0; i < containers.length; i += 1) {
       containers[i].textContent = '';
       containers[i].classList.add('course-route');
-      for (j = 0; j < COURSE_STAGES.length; j += 1) {
-        var stage = COURSE_STAGES[j];
+      var scope = document.createElement('p');
+      scope.className = 'course-route__scope';
+      scope.textContent = 'Camera 驱动核心：00–08 + 11；岗位加分扩展：09–10。';
+      containers[i].appendChild(scope);
+      for (j = 0; j < courseStages.length; j += 1) {
+        var stage = courseStages[j];
         var card = document.createElement('article');
         var header = document.createElement('div');
         var number = document.createElement('span');
@@ -527,7 +476,7 @@
         number.className = 'course-route__number';
         number.textContent = stage.id;
         state.className = 'course-route__state';
-        state.textContent = status === 'is-current' ? '当前' : (status === 'is-complete' ? '已完成' : '待学习');
+        state.textContent = (status === 'is-current' ? '当前 · ' : '') + courseMaturityLabel(stage);
         title.textContent = stage.title;
         objective.textContent = stage.objective;
         link.textContent = status === 'is-current' ? '从当前阶段继续 →' : '进入本阶段 →';

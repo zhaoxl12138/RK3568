@@ -1,18 +1,58 @@
 ---
-web-publish: false
-learning-status: in-progress
-chapter: 2
+id: course-04-mipi-csi2-dphy
+doc-type: course
+title: MIPI CSI-2 / D-PHY
+course-stage: "04"
+learning-status: understood
+evidence-status: verified
+publish-status: published
+updated: 2026-08-12
 ---
 
-# Camera 驱动第 2 章：MIPI D-PHY 与 CSI-2
+# MIPI CSI-2 / D-PHY
+
+> [!success] 阶段状态
+> 已完成 DTS、HW/逻辑 D-PHY probe、Subdev/Pad、Endpoint/Async 与 Media Link 主线验收。后续只在模拟面试或真实故障中按薄弱点回看，不再阻塞阶段 05。
+
+## 为什么学习
+Sensor ID 正常只说明控制面可用；还必须理解 RAW10 如何通过 Lane、D-PHY 和 CSI 接收链进入 RKISP。
+
+## 在整条链路中的位置
+`IMX415 Source Pad → D-PHY Sink/Source → rkisp-csi-subdev → rkisp-isp-subdev`。
+
+## 输入 / 输出 / 软件身份 / 硬件身份
+输入是四条 Data Lane 上的 CSI-2 串行包；输出是送往 RKISP 的 RAW 数据。D-PHY 是硬件物理层，其驱动使用 Platform Driver 并注册 V4L2 subdev/Media entity。
+
+## RK3568 当前对应
+`rockchip-csi2-dphy0` 的 pad0 接 IMX415，pad1 输出到 `rkisp-csi-subdev`。
+
+## DTS / 源码入口
+`imx415_out ↔ mipi_in_ucam1`、`csidphy_out ↔ isp0_in`；源码见 [[02-源码陪读/04-DPHY/00-源码陪读索引]]。
+
+## 实板验证
+`media-ctl -p` 显示 IMX415 到 D-PHY 的 link 为 `[ENABLED]`，格式为 `SGBRG10_1X10`。它不能单独证明每帧都无 CRC/ECC 错误。
+
+## 常见故障
+检查 lane 数/顺序、endpoint 双向引用、时钟速率、Sensor stream 状态和 D-PHY/CSI 错误日志。
+
+## 面试表达
+CSI-2 规定包和协议，D-PHY 负责差分电气传输；多 Lane 是多条并行工作的串行通道。
+
+## 验收题
+为什么四条 Data Lane 仍称串行传输？`[ENABLED]` 能证明什么、不能证明什么？
+
+## 下一阶段接口
+下一章进入 [[05-V4L2-Subdev]]；entity/pad/link 的系统化阅读在阶段 06 完成。
+
+### 学习记录与源码对照
 
 > 当前学习节点：`IMX415 RAW10 → MIPI D-PHY → CSI-2 Receiver`。
 >
 > 发布规则：本章通过全部验收前，只在 Obsidian 中学习和记录，不生成 HTML，也不加入 Phase0 框架图。
 >
-> 源码陪读：[[Camera驱动第2章-DPHY从DTS到MediaGraph源码陪读]]
+> 源码陪读：[[02-源码陪读/04-DPHY/00-源码陪读索引|D-PHY 从 DTS 到 Media Graph 源码陪读]]
 
-## 0. 当前学习位置
+#### 0. 当前学习位置
 
 ```text
 第 1 章：IMX415 Sensor 与驱动                 ✅ 已完成
@@ -32,7 +72,7 @@ IMX415 产生 RAW10 后，
 
 暂时不展开 RKISP 内部算法、VB2、OpenCV、RKNN、显示和推流。
 
-### 0.1 本章对应的岗位能力
+##### 0.1 本章对应的岗位能力
 
 从当前 Camera 驱动岗位要求反推，本章重点不是背 MIPI 名词，而是证明以下能力：
 
@@ -46,7 +86,7 @@ IMX415 产生 RAW10 后，
 
 本章暂不要求 C-PHY、SERDES、Camera HAL 和量产标定；这些属于完成当前五章后的岗位扩展。
 
-## 1. 一条主线
+#### 1. 一条主线
 
 ```text
 IMX415 输出 RAW10
@@ -65,9 +105,9 @@ CSI-2：协议层，负责收到的数据是什么意思
 RKISP：图像处理层，负责怎样加工 RAW 像素
 ```
 
-## 2. Lane、差分信号与四 Lane 串行传输
+#### 2. Lane、差分信号与四 Lane 串行传输
 
-### 2.1 什么是一条 Data Lane
+##### 2.1 什么是一条 Data Lane
 
 一条 MIPI Data Lane 不是一根线，而是一对差分线：
 
@@ -88,7 +128,7 @@ P/N 两根线组成一条 Lane
 Lane 是一个差分传输通道
 ```
 
-### 2.2 多根数据线为什么仍叫串行
+##### 2.2 多根数据线为什么仍叫串行
 
 单条 Lane 内的 bit 按时间顺序一个接一个传输，所以单 Lane 是串行链路。
 
@@ -113,7 +153,7 @@ Lane 3：B3 → B7 → ...
 
 每个字节进入某条 Lane 后，仍然会在这条 Lane 内按 bit 串行发送。四条 Lane 不是四幅图，也不是分别传输 R、G、B；它们共同运输同一帧 RAW10。
 
-### 2.3 Clock Lane 与 Data Lane
+##### 2.3 Clock Lane 与 Data Lane
 
 ```text
 Clock Lane：提供高速传输使用的源同步时钟
@@ -122,9 +162,9 @@ Data Lane：传输 CSI-2 数据包中的实际 bit
 
 IMX415 是发送端，RK3568 D-PHY 是接收端。接收端根据 Clock Lane 提供的节奏采样 Data Lane。
 
-## 3. 原理图：IMX415 到 RK3568
+#### 3. 原理图：IMX415 到 RK3568
 
-### 3.1 RK3568 主板 MIPI CSI 接口
+##### 3.1 RK3568 主板 MIPI CSI 接口
 
 原始位置：
 
@@ -136,9 +176,9 @@ E:\【正点原子】RK3568开发板资料（A盘）-基础资料
 第 4 页，右上角 MIPI CSI，连接器 J2
 ```
 
-![主板 MIPI CSI 接口](assets/主板-MIPI-CSI接口.png)
+![主板 MIPI CSI 接口](../05-实验与证据/assets/主板-MIPI-CSI接口.png)
 
-### 3.2 IMX415 模组接口
+##### 3.2 IMX415 模组接口
 
 原始位置：
 
@@ -150,9 +190,9 @@ E:\【正点原子】RK3568开发板资料（A盘）-基础资料
 第 2 页，J3 和右侧 IMX415
 ```
 
-![IMX415 Sensor 引脚](assets/IMX415-Sensor引脚.png)
+![IMX415 Sensor 引脚](../05-实验与证据/assets/IMX415-Sensor引脚.png)
 
-### 3.3 当前硬件的高速信号映射
+##### 3.3 当前硬件的高速信号映射
 
 | IMX415 模组网络 | RK3568 主板网络 | 含义 |
 | --- | --- | --- |
@@ -173,7 +213,7 @@ IMX415 CSI_Dx_P/N
 → RK3568 MIPI D-PHY
 ```
 
-## 4. DTS：`data-lanes` 与双向 endpoint
+#### 4. DTS：`data-lanes` 与双向 endpoint
 
 本节已完成第一轮 Lane、原理图与 endpoint 验收。`endpoint` 不是新硬件，而是 DTS 对两个媒体端口连接关系的声明；驱动和 Media Controller 框架会据此建立运行时的 entity、pad 与 link。
 
@@ -187,7 +227,7 @@ imx415_out
 ↔ isp0_in
 ```
 
-### 4.1 本轮验收：IMX415 endpoint 与 D-PHY 出口
+##### 4.1 本轮验收：IMX415 endpoint 与 D-PHY 出口
 
 我的回答：
 
@@ -201,7 +241,7 @@ imx415_out
 > 1. 正确。`imx415_out` 和 `mipi_in_ucam1` 通过双方的 `remote-endpoint` 互相指向；`data-lanes = <1 2 3 4>` 说明该连接使用四条 Data Lane。因此当前 IMX415 对应的 D-PHY 输入端点是 `mipi_in_ucam1`。
 > 2. 正确。`csidphy_out ↔ isp0_in` 表示 D-PHY 的数据出口接入 `rkisp_vir0` 的 ISP 输入。运行时该方向表现为 `rockchip-csi2-dphy0 → rkisp-csi-subdev → rkisp-isp-subdev`，而不是直接跳到 `/dev/video0`。
 
-## 5. 运行时：Media Graph 中的 D-PHY 与 CSI
+#### 5. 运行时：Media Graph 中的 D-PHY 与 CSI
 
 本节已用当前板端 `media-ctl -p` 验证。以下内容只记录已观察到的拓扑事实，并把“拓扑存在”与“真实帧已跑通”分开。
 
@@ -214,7 +254,7 @@ m00_b_imx415 4-001a-1
 → rkisp-isp-subdev
 ```
 
-### 5.1 当前板端的已验证链路
+##### 5.1 当前板端的已验证链路
 
 ```text
 m00_b_imx415 4-001a-1
@@ -235,7 +275,7 @@ m00_b_imx415 4-001a-1
 
 `Source` 是图像数据从该 pad 发出，`Sink` 是图像数据从该 pad 收入；这不是 I2C 的读写方向。
 
-### 5.2 逐行读 entity 70：IMX415 Sensor
+##### 5.2 逐行读 entity 70：IMX415 Sensor
 
 以后分析 `media-ctl -p`，不能只把这一段压缩成“Sensor 连接 D-PHY”。必须保留：
 
@@ -259,7 +299,7 @@ entity 是谁
                 -> "rockchip-csi2-dphy0":0 [ENABLED]
 ```
 
-#### 5.2.1 `entity 70: m00_b_imx415 4-001a-1`
+###### 5.2.1 `entity 70: m00_b_imx415 4-001a-1`
 
 | 字段 | 意义 |
 | --- | --- |
@@ -270,7 +310,7 @@ entity 是谁
 
 它对应的真实硬件是 IMX415，但在 Media Graph 中表示的是 IMX415 驱动注册出的 **V4L2 Sensor Subdev**。
 
-#### 5.2.2 `type V4L2 subdev subtype Sensor`
+###### 5.2.2 `type V4L2 subdev subtype Sensor`
 
 这说明它是 Camera 管线中的 Sensor 子设备，不是给应用程序直接读取图像的 Video Node。
 
@@ -286,7 +326,7 @@ Sensor subdev 负责的典型能力包括：
 
 它不是 `/dev/video0`，也不负责给应用排队图像缓冲区。
 
-#### 5.2.3 `/dev/v4l-subdev3`
+###### 5.2.3 `/dev/v4l-subdev3`
 
 ```text
 device node name /dev/v4l-subdev3
@@ -300,7 +340,7 @@ cat /dev/v4l-subdev3
 
 取得图片。应用抓帧使用的是 RKISP 注册的 `/dev/videoX` 节点。
 
-#### 5.2.4 `pad0: Source`
+###### 5.2.4 `pad0: Source`
 
 ```text
 pad0: Source
@@ -323,7 +363,7 @@ IMX415 entity
 
 `Source/Sink` 描述的是 **图像数据流方向**，不是 I2C 读写方向。
 
-#### 5.2.5 `fmt:SGBRG10_1X10/3864x2192`
+###### 5.2.5 `fmt:SGBRG10_1X10/3864x2192`
 
 | 字段 | 意义 |
 | --- | --- |
@@ -340,7 +380,7 @@ IMX415 entity
 不是 RGB
 ```
 
-#### 5.2.6 `@10000/300000`
+###### 5.2.6 `@10000/300000`
 
 这里是帧间隔的分数表达：
 
@@ -352,7 +392,7 @@ IMX415 entity
 
 它不是 MIPI link frequency。真正的 Lane 速率、`link_freq` 和 `pixel_rate` 需要结合 Sensor mode、V4L2 controls 与 D-PHY 开流代码继续确认。
 
-#### 5.2.7 `crop.bounds:(12,16)/3840x2160`
+###### 5.2.7 `crop.bounds:(12,16)/3840x2160`
 
 表示当前 pad 报告的有效图像窗口边界：
 
@@ -363,7 +403,7 @@ IMX415 entity
 
 也就是从完整的 `3864x2192` mode 中描述一个 4K 有效区域。这里先把它理解成有效窗口/裁剪边界，不把它简单等同于“ISP 已经执行裁剪”；真正在哪一级应用 crop，要继续结合各 entity 的 `crop` 与驱动实现判断。
 
-#### 5.2.8 `-> "rockchip-csi2-dphy0":0 [ENABLED]`
+###### 5.2.8 `-> "rockchip-csi2-dphy0":0 [ENABLED]`
 
 这是这一段最重要的 Media link：
 
@@ -396,11 +436,11 @@ CSI-2 包没有 CRC/ECC 错误
 应用已经收到有效图像帧
 ```
 
-#### 5.2.9 把整个 entity 用一句话读出来
+###### 5.2.9 把整个 entity 用一句话读出来
 
 > Linux 已将 IMX415 注册为一个 V4L2 Sensor Subdev。它有一个 `pad0 Source`，当前报告 `SGBRG10_1X10` RAW10、`3864x2192`、约 30 fps，并描述了 `(12,16)/3840x2160` 的有效窗口；该 Source pad 通过一条已启用的软件 Media link 连接到 `rockchip-csi2-dphy0` 的 `pad0 Sink`。
 
-### 5.3 逐节点对照
+##### 5.3 逐节点对照
 
 | 运行时节点 | 它在做什么 | 从输出得到的证据 |
 | --- | --- | --- |
@@ -410,7 +450,7 @@ CSI-2 包没有 CRC/ECC 错误
 | `rkisp-isp-subdev` | ISP 图像处理子设备 | pad0 收 `SGBRG10`；pad2 输出 `YUYV8/3840x2160` |
 | `rkisp_mainpath` | ISP 主输出视频节点 | 对应 `/dev/video0` |
 
-### 5.4 格式为何改变，以及当前证据的边界
+##### 5.4 格式为何改变，以及当前证据的边界
 
 ```text
 Sensor / D-PHY / rkisp-csi-subdev：仍是 SGBRG10 RAW
@@ -422,7 +462,7 @@ rkisp_mainpath (/dev/video0)：得到 YUYV8/3840x2160
 
 `[ENABLED]`、pad 和 format 证明拓扑已建立、格式已协商；**它们本身不等于实时帧一定正常**。真正证明出图还要有成功 `STREAMON`/抓帧及无 MIPI/CSI 错误等证据。
 
-## 6. 源码：D-PHY 与 CSI 驱动如何初始化
+#### 6. 源码：D-PHY 与 CSI 驱动如何初始化
 
 从现在起不再一次看整条链路，而是一个节点一个闭环：
 
@@ -458,7 +498,7 @@ kernel/drivers/media/platform/rockchip/isp/csi.c
 kernel/drivers/media/platform/rockchip/isp/csi.h
 ```
 
-## 7. 故障现象和排查顺序
+#### 7. 故障现象和排查顺序
 
 本节将在源码与运行时链路学习后填写。
 
@@ -474,7 +514,7 @@ kernel/drivers/media/platform/rockchip/isp/csi.h
 → v4l2-ctl 抓帧
 ```
 
-## 8. 面试表达
+#### 8. 面试表达
 
 本章最终表达不背固定长答案，统一使用下面的顺序：
 
@@ -487,23 +527,23 @@ kernel/drivers/media/platform/rockchip/isp/csi.h
 
 目标是在 60～90 秒内讲清楚，面试官追问后再展开细节。
 
-## 9. 章节验收
+#### 9. 章节验收
 
-### 9.1 第一轮岗位化验收：Lane、原理图与控制流/数据流
+##### 9.1 第一轮岗位化验收：Lane、原理图与控制流/数据流
 
-#### 问题 1｜概念解释
+###### 问题 1｜概念解释
 
 面试官问：“IMX415 使用 4 Lane MIPI CSI-2 是什么意思？既然有四条 Data Lane，为什么仍然叫串行传输？”
 
 我的回答：
 
-#### 问题 2｜当前项目证据
+###### 问题 2｜当前项目证据
 
 请结合本章两份原理图，用自己的话从 IMX415 引脚一直讲到 RK3568 D-PHY。还要指出哪些线负责控制 Sensor，哪些线负责运输图像。
 
 我的回答：
 
-#### 问题 3｜故障定位
+###### 问题 3｜故障定位
 
 板端日志已经出现：
 
@@ -515,7 +555,7 @@ Detected imx415 id 0000e0
 
 我的回答：
 
-#### 问题 4｜60～90 秒面试表达
+###### 问题 4｜60～90 秒面试表达
 
 假设面试官让你介绍当前板子的 MIPI 接入，请在一段回答中讲清：
 
@@ -529,7 +569,7 @@ D0P/D0N 为什么是一条 Lane
 
 我的回答：
 
-### 9.2 后续验收
+##### 9.2 后续验收
 
 - [ ] 能解释 `data-lanes = <1 2 3 4>`。
 - [ ] 能追踪 Sensor 与 D-PHY 的双向 endpoint。

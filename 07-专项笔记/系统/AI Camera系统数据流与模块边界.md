@@ -124,4 +124,4 @@ Camera 通常走 CSI 输入，Display 通常走 DSI 输出。二者共享 MIPI �
 - `通用原理`：模块边界和数据流分层。
 - `待验证`：更换 YOLOv8n、C++ pipeline、零拷贝和端到端延迟基线。
 
-关联：[[Camera驱动分阶段验收标准]]、[[AI Camera故障排查索引]]、[[Camera驱动求职第1周执行计划]]。
+关联：[[Camera驱动能力验收矩阵]]、[[AI Camera故障排查索引]]、[[Camera驱动求职第1周执行计划]]。

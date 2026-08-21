@@ -1,251 +1,49 @@
-可以。你这份 DTS 已经足够把 **RK3568 + IMX415 从设备声明到 Media Graph 建链**完整讲清楚了。
-
-先给你一个总判断：
-
-> 看 DTS 不要从第一行顺序读到最后一行。
-> 要围绕一个设备，按“设备在哪里 → 驱动怎么匹配 → 硬件资源是什么 → 数据连到哪里 → 下游模块是否启用”这条线追踪。
-
-你现在只研究 IMX415，就先忽略显示、网卡、PCIe、蓝牙、风扇等绝大部分内容。
-
+---
+id: course-02-dts-device-discovery
+doc-type: course
+title: DTS 与设备发现
+course-stage: "02"
+learning-status: review-needed
+evidence-status: verified
+publish-status: published
+updated: 2026-08-10
 ---
 
-# 一、DTS 本质上是什么
+# DTS 与设备发现
 
-DTS 是 **Device Tree Source，设备树源码**。
+## 为什么学习
+把原理图上的 I2C、时钟、GPIO 和 MIPI 连接翻译成 Linux 能创建和匹配设备的描述。
 
-它不负责实现驱动算法，而是告诉 Linux：
+## 在整条链路中的位置
+`原理图 → DTS → platform_device / i2c_client → driver match → probe`。
 
-```text
-板子上有什么硬件
-硬件挂在哪条总线上
-使用什么地址
-时钟、GPIO、电源是什么
-设备之间如何连接
-哪些控制器需要启用
-应该由哪个驱动匹配
-```
+## 输入 / 输出 / 软件身份 / 硬件身份
+输入是板级连接和芯片资源；输出是运行时设备节点、I2C client 与 endpoint 关系。DTS 是硬件描述，不是驱动代码。
 
-对于你的 IMX415，可以先概括成：
+## RK3568 当前对应
+IMX415 位于 I2C4、地址 `0x1a`，`imx415_out` 与 `mipi_in_ucam1` 双向引用。
 
-```text
-DTS 描述板级连接
-Sensor Driver 控制 IMX415
-DPHY/CSI/ISP 驱动控制 RK3568 内部硬件
-V4L2/Media Controller 把它们组织成 Camera 链路
-```
+## DTS / 源码入口
+板级 DTSI：`rk3568-atk-evb1-ddr4-v10.dtsi`；通用语法见 [[DTS基础语法]]。
 
----
+## 实板验证
+运行时节点 `/sys/firmware/devicetree/base/i2c@fe5d0000/imx415@1a` 存在，`compatible=sony,imx415`、`reg=0x1a`。
 
-# 二、先看文件头：这份 DTS 从哪里继承东西
+## 常见故障
+节点未合入最终 DTB、`status` 未启用、I2C 地址/总线错误、endpoint 单端或 lane 配置错误。
 
-开头：
+## 面试表达
+DTS 同时描述控制面和数据面：I2C 父子关系创建 Sensor 设备，endpoint 描述图像数据连接。
 
-```dts
-/dts-v1/;
+## 验收题
+为什么 IMX415 节点写在 `&i2c4` 下，但图像数据不经过 I2C？
 
-#include <dt-bindings/gpio/gpio.h>
-#include <dt-bindings/pinctrl/rockchip.h>
-#include <dt-bindings/display/media-bus-format.h>
-#include "rk3568.dtsi"
-#include "rk3568-evb.dtsi"
-```
+## 下一阶段接口
+下一章进入 [[03-IMX415-Sensor-Bring-up]]，看驱动如何消费这些资源并完成 probe。
 
-你要这样理解。
+### 学习记录与源码对照
 
-## 1. `/dts-v1/;`
-
-说明这是 DTS version 1 格式。
-
-不用深入，它类似文件格式声明。
-
-## 2. `#include`
-
-这份板级 DTS 没有重新定义整个 RK3568，而是包含了：
-
-```text
-rk3568.dtsi
-    RK3568 SoC 内部硬件模块的基础定义
-
-rk3568-evb.dtsi
-    RK3568 EVB 板的一些公共配置
-
-当前这个 DTS
-    对具体正点原子板卡做启用、关闭和修改
-```
-
-因此你看到：
-
-```dts
-&rkisp {
-    status = "okay";
-};
-```
-
-不是在这里创建 `rkisp`，而是在修改其他 `.dtsi` 中已经定义好的 `rkisp` 节点。
-
-关系类似：
-
-```text
-rk3568.dtsi：
-先定义“RK3568 有一个 ISP”
-
-当前板级 DTS：
-再声明“这块板要启用这个 ISP”
-```
-
----
-
-# 三、看懂 DTS 最重要的四种语法
-
-## 1. 普通节点
-
-例如：
-
-```dts
-imx415: imx415@1a {
-    ...
-};
-```
-
-它表示定义一个设备节点。
-
-拆开：
-
-```text
-imx415:
-    label，标签，供其他节点使用 &imx415 引用
-
-imx415@1a
-    节点名称和 unit address
-
-@1a
-    这里对应 I2C 地址 0x1a
-```
-
-注意：
-
-```text
-imx415: 是标签
-imx415@1a 是节点名
-```
-
-两者可以相同，也可以不同。
-
----
-
-## 2. `&xxx`
-
-例如：
-
-```dts
-&i2c4 {
-    status = "okay";
-};
-```
-
-这里的 `&i2c4` 表示：
-
-> 引用其他 `.dtsi` 中已经有标签 `i2c4:` 的节点，然后补充或修改它。
-
-所以：
-
-```dts
-&i2c4 {
-    imx415: imx415@1a {
-        ...
-    };
-};
-```
-
-意思是：
-
-```text
-在 RK3568 的 I2C4 控制器下面
-挂载一个地址为 0x1a 的 IMX415
-```
-
----
-
-## 3. `<&xxx ...>`
-
-例如：
-
-```dts
-clocks = <&cru CLK_CIF_OUT>;
-```
-
-表示引用另一个设备或控制器。
-
-这里：
-
-```text
-&cru
-    引用 RK3568 的 Clock & Reset Unit
-
-CLK_CIF_OUT
-    使用其中一个 Camera/CIF 输出时钟
-```
-
-再如：
-
-```dts
-reset-gpios = <&gpio3 RK_PB6 GPIO_ACTIVE_LOW>;
-```
-
-拆解：
-
-```text
-&gpio3
-    GPIO bank 3
-
-RK_PB6
-    B 组第 6 号引脚
-
-GPIO_ACTIVE_LOW
-    低电平表示有效
-```
-
----
-
-## 4. `status`
-
-常见：
-
-```dts
-status = "okay";
-status = "disabled";
-```
-
-含义：
-
-```text
-okay
-    设备启用，内核可以为它创建 platform/I2C 设备并匹配驱动
-
-disabled
-    设备禁用，正常情况下不会参与初始化
-```
-
-但要注意：
-
-> `status = "okay"` 只代表“允许初始化”，不代表驱动一定 probe 成功，更不代表一定出图。
-
-还需要：
-
-```text
-驱动存在
-compatible 匹配
-供电正确
-时钟正确
-GPIO正确
-I2C通信成功
-endpoint正确
-MIPI配置正确
-```
-
----
-
-# 四、从 IMX415 节点开始读
+### 四、从 IMX415 节点开始读
 
 你这份 DTS 里，IMX415 位于：
 
@@ -291,7 +89,7 @@ m00_b_imx415 4-001a-1
 
 ---
 
-# 五、逐项看 IMX415 的属性
+### 五、逐项看 IMX415 的属性
 
 原始节点是：
 
@@ -313,7 +111,7 @@ imx415: imx415@1a {
 
 我们按驱动 Bring-up 的顺序看。
 
-## 1. `compatible`
+#### 1. `compatible`
 
 ```dts
 compatible = "sony,imx415";
@@ -348,7 +146,7 @@ compatible 决定“这个节点交给哪个驱动”
 
 ---
 
-## 2. `reg`
+#### 2. `reg`
 
 ```dts
 reg = <0x1a>;
@@ -364,7 +162,7 @@ IMX415 I2C 地址 = 0x1a
 
 ---
 
-## 3. `clocks` 和 `clock-names`
+#### 3. `clocks` 和 `clock-names`
 
 ```dts
 clocks = <&cru CLK_CIF_OUT>;
@@ -397,7 +195,7 @@ Sensor 没有正确的 XVCLK，通常连 I2C chip ID 都可能读取失败，或
 
 ---
 
-## 4. `power-domains`
+#### 4. `power-domains`
 
 ```dts
 power-domains = <&power RK3568_PD_VI>;
@@ -413,7 +211,7 @@ RK3568 的 VI/Camera 硬件模块需要进入上电状态
 
 ---
 
-## 5. `pinctrl`
+#### 5. `pinctrl`
 
 ```dts
 pinctrl-names = "rockchip,camera_default";
@@ -430,7 +228,7 @@ CIF Camera clock 功能
 
 ---
 
-## 6. `reset-gpios`
+#### 6. `reset-gpios`
 
 ```dts
 reset-gpios = <&gpio3 RK_PB6 GPIO_ACTIVE_LOW>;
@@ -454,7 +252,7 @@ Reset 引脚在 GPIO3_B6
 
 ---
 
-## 7. `power-gpios`
+#### 7. `power-gpios`
 
 ```dts
 power-gpios = <&gpio4 RK_PB4 GPIO_ACTIVE_HIGH>;
@@ -480,7 +278,7 @@ DTS 属性能否生效
 
 ---
 
-# 六、Rockchip Camera 模组属性
+### 六、Rockchip Camera 模组属性
 
 你这里还有：
 
@@ -513,7 +311,7 @@ camera-module-lens-name
 
 ---
 
-# 七、最关键：IMX415 的 `port/endpoint`
+### 七、最关键：IMX415 的 `port/endpoint`
 
 IMX415 节点最后是：
 
@@ -528,13 +326,13 @@ port {
 
 这部分描述的不是 I2C 控制，而是图像数据链路。
 
-## 1. `port`
+#### 1. `port`
 
 ```text
 该设备的逻辑媒体端口
 ```
 
-## 2. `imx415_out: endpoint`
+#### 2. `imx415_out: endpoint`
 
 这是 Sensor 的输出端点：
 
@@ -544,7 +342,7 @@ IMX415 图像数据从这里向外流
 
 `imx415_out` 是 label，可以被另一端引用。
 
-## 3. `remote-endpoint`
+#### 3. `remote-endpoint`
 
 ```dts
 remote-endpoint = <&mipi_in_ucam1>;
@@ -558,7 +356,7 @@ IMX415 输出端
 mipi_in_ucam1 输入端
 ```
 
-## 4. `data-lanes`
+#### 4. `data-lanes`
 
 ```dts
 data-lanes = <1 2 3 4>;
@@ -583,7 +381,7 @@ IMX415 通过 4 Lane MIPI CSI-2 输出 RAW 数据
 
 ---
 
-# 八、沿着 `remote-endpoint` 找到 D-PHY
+### 八、沿着 `remote-endpoint` 找到 D-PHY
 
 现在看到：
 
@@ -628,7 +426,7 @@ mipi_in_ucam1:
 
 这里非常关键。
 
-## D-PHY 输入端
+#### D-PHY 输入端
 
 ```dts
 mipi_in_ucam1: endpoint@2 {
@@ -663,7 +461,7 @@ IMX415 → D-PHY
 
 ---
 
-# 九、`port@0` 和 `port@1` 怎么看
+### 九、`port@0` 和 `port@1` 怎么看
 
 在 `csi2_dphy0` 下：
 
@@ -717,7 +515,7 @@ isp0_in
 
 ---
 
-# 十、继续追踪到 ISP
+### 十、继续追踪到 ISP
 
 根据：
 
@@ -777,7 +575,7 @@ imx415_out
 
 更准确地分成两张图。
 
-### Endpoint 配对关系
+##### Endpoint 配对关系
 
 ```text
 imx415_out ↔ mipi_in_ucam1
@@ -785,7 +583,7 @@ imx415_out ↔ mipi_in_ucam1
 csidphy_out ↔ isp0_in
 ```
 
-### 图像数据方向
+##### 图像数据方向
 
 ```text
 IMX415
@@ -795,7 +593,7 @@ IMX415
 
 ---
 
-# 十一、为什么还要启用这些节点
+### 十一、为什么还要启用这些节点
 
 文件中还有：
 
@@ -857,7 +655,7 @@ ISP virtual pipeline okay
 
 ---
 
-# 十二、DTS 怎么变成你看到的 Media Graph
+### 十二、DTS 怎么变成你看到的 Media Graph
 
 DTS 中的关系：
 
@@ -907,7 +705,7 @@ Media Controller 展示最终拓扑
 
 ---
 
-# 十三、这份 DTS 有一个值得重点检查的问题
+### 十三、这份 DTS 有一个值得重点检查的问题
 
 在 `&i2c4` 下，你同时启用了：
 
@@ -991,11 +789,11 @@ imx415: imx415@1a {
 
 ---
 
-# 十四、你以后看 Camera DTS 的固定顺序
+### 十四、你以后看 Camera DTS 的固定顺序
 
 以后拿到任何 Sensor DTS，都按这张检查表看。
 
-## 第一步：找总线节点
+#### 第一步：找总线节点
 
 ```dts
 &i2c4 {
@@ -1007,7 +805,7 @@ imx415: imx415@1a {
 Sensor 挂在哪条 I2C 总线上？
 ```
 
-## 第二步：找设备节点
+#### 第二步：找设备节点
 
 ```dts
 imx415@1a
@@ -1020,7 +818,7 @@ I2C 地址是什么？
 status 是否 okay？
 ```
 
-## 第三步：找驱动匹配
+#### 第三步：找驱动匹配
 
 ```dts
 compatible = "sony,imx415";
@@ -1032,7 +830,7 @@ compatible = "sony,imx415";
 会匹配哪个驱动？
 ```
 
-## 第四步：看硬件资源
+#### 第四步：看硬件资源
 
 ```text
 clock
@@ -1048,7 +846,7 @@ pinctrl
 Sensor 如何上电、退出复位、获得时钟？
 ```
 
-## 第五步：看 MIPI 输出
+#### 第五步：看 MIPI 输出
 
 ```dts
 imx415_out: endpoint {
@@ -1063,7 +861,7 @@ Sensor 输出接哪里？
 使用几条 Lane？
 ```
 
-## 第六步：跟踪 `remote-endpoint`
+#### 第六步：跟踪 `remote-endpoint`
 
 ```text
 imx415_out
@@ -1078,7 +876,7 @@ imx415_out
 图像数据进入哪个 D-PHY 和 ISP？
 ```
 
-## 第七步：检查下游模块
+#### 第七步：检查下游模块
 
 ```text
 csi2_dphy_hw
@@ -1096,7 +894,7 @@ rkisp_vir0
 
 ---
 
-# 十五、根据当前 DTS，你先回答这 8 道题
+### 十五、根据当前 DTS，你先回答这 8 道题
 
 不用查资料，直接基于这份 DTS 回答：
 

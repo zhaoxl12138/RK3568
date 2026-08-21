@@ -1,142 +1,24 @@
 window.RK3568_VAULT_DATA = {
-  "currentStage": "阶段 2：MIPI D-PHY 与 CSI-2",
+  "currentStage": "05",
   "currentTasks": [
     {
       "completed": false,
-      "text": "完成 [[Camera驱动第2章-MIPI-DPHY与CSI2]] 中的 Lane、差分信号、D-PHY 与 CSI-2 基础学习"
+      "text": "完成 [[02-源码陪读/05-V4L2-Subdev/01-生命周期|驱动注册与 Subdev 组装]] 第一轮问答"
     },
     {
       "completed": false,
-      "text": "在板端 `media-ctl -p` 输出中指出 Sensor、D-PHY、CSI subdev 和 RKISP 对应的 entity、pad、link"
+      "text": "指出 `imx415_i2c_driver`、`imx415_subdev_ops`、`imx415_ctrl_ops` 分别交给哪个框架"
     },
     {
       "completed": false,
-      "text": "用面试语言回答“Sensor ID 正常但没有图像，下一步为什么查 MIPI 链路”"
+      "text": "从 `v4l2_i2c_subdev_init()` 追到 `sd->ops = ops`，并说明挂接函数表不等于执行函数"
+    },
+    {
+      "completed": false,
+      "text": "从用户态 `STREAMON` 口述到 `imx415_s_stream()` 与 `__imx415_start_stream()`"
     }
   ],
-  "stages": [
-    {
-      "id": "0",
-      "stageKey": "stage-0",
-      "normalizedLabel": "阶段 0 原理图与 DTS",
-      "label": "0 原理图与 DTS",
-      "question": "Sensor 的供电、I2C、MCLK、RESET、PDN 和 MIPI Lane 怎样映射进 DTS",
-      "minimumEvidence": "原理图位置、实际 DTS 路径和节点逐行解释",
-      "criteria": "能从一个新模组的原理图列出必须确认的 DTS 资源",
-      "evidenceEntry": "[[Camera驱动第1章-IMX415-Sensor与驱动]]",
-      "status": "planned"
-    },
-    {
-      "id": "1",
-      "stageKey": "stage-1",
-      "normalizedLabel": "阶段 1 Sensor 驱动与 probe",
-      "label": "1 Sensor 驱动与 probe",
-      "question": "DTS 节点怎样变成 I2C client，并调用 `imx415_probe()`",
-      "minimumEvidence": "`4-001a-1`、driver 绑定、Sensor ID 日志和函数调用链",
-      "criteria": "能解释驱动注册与设备创建为何可以先后并行、最终在哪里匹配",
-      "evidenceEntry": "[[Camera驱动第1章-IMX415-Sensor与驱动]]",
-      "status": "planned"
-    },
-    {
-      "id": "2",
-      "stageKey": "stage-2",
-      "normalizedLabel": "阶段 2 MIPI D-PHY 与 CSI-2",
-      "label": "2 MIPI D-PHY 与 CSI-2",
-      "question": "RAW10 怎样通过差分 Lane 进入 SoC",
-      "minimumEvidence": "endpoint、Lane 配置、D-PHY entity 和 CSI entity",
-      "criteria": "能区分 D-PHY 物理层、CSI-2 协议层与 I2C 控制通道",
-      "evidenceEntry": "[[Camera驱动第2章-MIPI-DPHY与CSI2]]",
-      "status": "current"
-    },
-    {
-      "id": "3",
-      "stageKey": "stage-3",
-      "normalizedLabel": "阶段 3 endpoint 与 Media Graph",
-      "label": "3 endpoint 与 Media Graph",
-      "question": "两端 endpoint 怎样形成 entity、pad、link",
-      "minimumEvidence": "`media-ctl -p` 完整拓扑",
-      "criteria": "能从 Sensor 沿 ENABLED link 追到 RKISP，并解释 Sink/Source pad",
-      "evidenceEntry": "[[2026-07-28-直连板端读取IMX415配置]]",
-      "status": "planned"
-    },
-    {
-      "id": "4",
-      "stageKey": "stage-4",
-      "normalizedLabel": "阶段 4 RKISP",
-      "label": "4 RKISP",
-      "question": "RKISP 接收什么、处理什么、输出什么",
-      "minimumEvidence": "ISP sink/source 格式与 crop 信息",
-      "criteria": "能解释 RAW Bayer 进入 ISP 后为何可以得到 YUV/NV12",
-      "evidenceEntry": "[[AI Camera系统数据流与模块边界]]",
-      "status": "planned"
-    },
-    {
-      "id": "5",
-      "stageKey": "stage-5",
-      "normalizedLabel": "阶段 5 V4L2、VB2 与 `/dev/video0`",
-      "label": "5 V4L2、VB2 与 `/dev/video0`",
-      "question": "video 节点怎样创建，应用怎样取得帧",
-      "minimumEvidence": "`v4l2-ctl --all`、格式列表和成功抓帧",
-      "criteria": "能解释 video_device、vb2 queue、multiplanar 和缓冲区流转",
-      "evidenceEntry": "[[V4L2命令行抓帧记录]]",
-      "status": "planned"
-    },
-    {
-      "id": "6",
-      "stageKey": "stage-6",
-      "normalizedLabel": "阶段 6 controls 与 stream",
-      "label": "6 controls 与 stream",
-      "question": "曝光、增益、格式和开流怎样进入 Sensor 寄存器",
-      "minimumEvidence": "control 输出、`set fmt`、`set exposure` 或寄存器日志",
-      "criteria": "能说清 probe 成功与真正 stream on 的区别",
-      "evidenceEntry": "[[Camera驱动第1章-IMX415-Sensor与驱动]]",
-      "status": "planned"
-    },
-    {
-      "id": "7",
-      "stageKey": "stage-7",
-      "normalizedLabel": "阶段 7 分层故障定位",
-      "label": "7 分层故障定位",
-      "question": "有节点无图、无节点、Sensor ID 失败、帧异常分别从哪里查",
-      "minimumEvidence": "一份按层次排列的排查记录",
-      "criteria": "能根据现象选择电源/I2C/MIPI/ISP/V4L2 中的第一检查点",
-      "evidenceEntry": "[[AI Camera故障排查索引]]",
-      "status": "planned"
-    },
-    {
-      "id": "8",
-      "stageKey": "stage-8",
-      "normalizedLabel": "阶段 8 新 Sensor 移植",
-      "label": "8 新 Sensor 移植",
-      "question": "换一颗 Sensor 时要改哪些硬件、DTS、驱动和 mode 表",
-      "minimumEvidence": "移植清单与最小改动范围",
-      "criteria": "能说明哪些来自数据手册，哪些来自板级原理图，哪些必须实测",
-      "evidenceEntry": "[[IMX415驱动调试与最小demo路线]]",
-      "status": "planned"
-    },
-    {
-      "id": "9",
-      "stageKey": "stage-9",
-      "normalizedLabel": "阶段 9 实板证据包",
-      "label": "9 实板证据包",
-      "question": "如何证明这条链路确实在自己的板子上工作",
-      "minimumEvidence": "DTS、I2C、probe、Media Graph、格式和抓帧证据",
-      "criteria": "任一结论都能回到当前板卡的原始输出",
-      "evidenceEntry": "[[2026-07-28-Camera驱动Day1验收]]",
-      "status": "planned"
-    },
-    {
-      "id": "10",
-      "stageKey": "stage-10",
-      "normalizedLabel": "阶段 10 面试复述",
-      "label": "10 面试复述",
-      "question": "怎样在 3～5 分钟讲清 Camera 驱动初始化和出图链路",
-      "minimumEvidence": "口述稿、追问回答和一次模拟面试",
-      "criteria": "不看笔记讲清主线，能回答至少三个故障追问",
-      "evidenceEntry": "[[Camera驱动求职第1周执行计划]]",
-      "status": "planned"
-    }
-  ],
+  "stages": [],
   "domains": [
     {
       "name": "Camera",
@@ -163,7 +45,56 @@ window.RK3568_VAULT_DATA = {
       "webPath": "pages/notes/07-专项笔记--系统--AI Camera系统数据流与模块边界.html"
     }
   ],
-  "evidence": [],
+  "evidence": [
+    {
+      "id": "EVID-20260728-CAMERA-DAY1",
+      "name": "Camera 驱动 Day 1 板端验收",
+      "type": "record",
+      "mediaType": "text/markdown",
+      "assetPath": "",
+      "vaultPath": "",
+      "attachments": [],
+      "sourcePath": "05-实验与证据/2026-07-28-Camera驱动Day1验收.md",
+      "sourceUrl": "obsidian://open?vault=RK3568&file=05-%E5%AE%9E%E9%AA%8C%E4%B8%8E%E8%AF%81%E6%8D%AE%2F2026-07-28-Camera%E9%A9%B1%E5%8A%A8Day1%E9%AA%8C%E6%94%B6",
+      "stageLabel": "阶段 4",
+      "evidenceStageKey": "stage-4",
+      "status": "verified",
+      "environment": {
+        "collectedAt": "2026-07-28 (具体时分未记录)",
+        "board": "ATK-DLRK3568 + IMX415",
+        "system": "Buildroot (release string 未保留)",
+        "kernel": "4.19.232",
+        "sdkCommit": "未记录",
+        "dtb": "运行中 DTB 文件名与哈希未记录",
+        "deviceIp": "192.168.0.230",
+        "rawOutputFile": "无独立原始文件；关键输出摘录保存在本文"
+      }
+    },
+    {
+      "id": "EVID-20260728-IMX415-RUNTIME",
+      "name": "直连板端读取 IMX415 运行时配置",
+      "type": "record",
+      "mediaType": "text/markdown",
+      "assetPath": "",
+      "vaultPath": "",
+      "attachments": [],
+      "sourcePath": "05-实验与证据/2026-07-28-直连板端读取IMX415配置.md",
+      "sourceUrl": "obsidian://open?vault=RK3568&file=05-%E5%AE%9E%E9%AA%8C%E4%B8%8E%E8%AF%81%E6%8D%AE%2F2026-07-28-%E7%9B%B4%E8%BF%9E%E6%9D%BF%E7%AB%AF%E8%AF%BB%E5%8F%96IMX415%E9%85%8D%E7%BD%AE",
+      "stageLabel": "阶段 2",
+      "evidenceStageKey": "stage-2",
+      "status": "verified",
+      "environment": {
+        "collectedAt": "2026-07-28 (具体时分未记录)",
+        "board": "ATK-DLRK3568 + IMX415",
+        "system": "Buildroot (release string 未保留)",
+        "kernel": "4.19.232",
+        "sdkCommit": "未记录",
+        "dtb": "运行中 DTB 文件名与哈希未记录",
+        "deviceIp": "192.168.0.230",
+        "rawOutputFile": "无独立原始文件；关键输出摘录保存在本文"
+      }
+    }
+  ],
   "quickLinks": [
     {
       "name": "taskBoard",
@@ -179,9 +110,9 @@ window.RK3568_VAULT_DATA = {
     },
     {
       "name": "currentChapter",
-      "filePath": "06-任务/Camera驱动第1章-IMX415-Sensor与驱动.md",
-      "url": "obsidian://open?vault=RK3568&file=06-%E4%BB%BB%E5%8A%A1%2FCamera%E9%A9%B1%E5%8A%A8%E7%AC%AC1%E7%AB%A0-IMX415-Sensor%E4%B8%8E%E9%A9%B1%E5%8A%A8",
-      "webPath": "pages/notes/06-任务--Camera驱动第1章-IMX415-Sensor与驱动.html"
+      "filePath": "01-课程主线/03-IMX415-Sensor-Bring-up.md",
+      "url": "obsidian://open?vault=RK3568&file=01-%E8%AF%BE%E7%A8%8B%E4%B8%BB%E7%BA%BF%2F03-IMX415-Sensor-Bring-up",
+      "webPath": "pages/notes/01-课程主线--03-IMX415-Sensor-Bring-up.html"
     },
     {
       "name": "dailyRecord",
@@ -191,9 +122,9 @@ window.RK3568_VAULT_DATA = {
     },
     {
       "name": "acceptance",
-      "filePath": "07-专项笔记/系统/Camera驱动分阶段验收标准.md",
-      "url": "obsidian://open?vault=RK3568&file=07-%E4%B8%93%E9%A1%B9%E7%AC%94%E8%AE%B0%2F%E7%B3%BB%E7%BB%9F%2FCamera%E9%A9%B1%E5%8A%A8%E5%88%86%E9%98%B6%E6%AE%B5%E9%AA%8C%E6%94%B6%E6%A0%87%E5%87%86",
-      "webPath": "pages/notes/07-专项笔记--系统--Camera驱动分阶段验收标准.html"
+      "filePath": "07-专项笔记/系统/Camera驱动能力验收矩阵.md",
+      "url": "obsidian://open?vault=RK3568&file=07-%E4%B8%93%E9%A1%B9%E7%AC%94%E8%AE%B0%2F%E7%B3%BB%E7%BB%9F%2FCamera%E9%A9%B1%E5%8A%A8%E8%83%BD%E5%8A%9B%E9%AA%8C%E6%94%B6%E7%9F%A9%E9%98%B5",
+      "webPath": "pages/notes/07-专项笔记--系统--Camera驱动能力验收矩阵.html"
     },
     {
       "name": "evidenceMoc",
@@ -209,6 +140,90 @@ window.RK3568_VAULT_DATA = {
     }
   ],
   "notes": [
+    {
+      "title": "00-系统总览",
+      "folder": "01-课程主线",
+      "filePath": "01-课程主线/00-系统总览.md",
+      "webPath": "pages/notes/01-课程主线--00-系统总览.html",
+      "url": "obsidian://open?vault=RK3568&file=01-%E8%AF%BE%E7%A8%8B%E4%B8%BB%E7%BA%BF%2F00-%E7%B3%BB%E7%BB%9F%E6%80%BB%E8%A7%88"
+    },
+    {
+      "title": "01-Linux-Driver-Model",
+      "folder": "01-课程主线",
+      "filePath": "01-课程主线/01-Linux-Driver-Model.md",
+      "webPath": "pages/notes/01-课程主线--01-Linux-Driver-Model.html",
+      "url": "obsidian://open?vault=RK3568&file=01-%E8%AF%BE%E7%A8%8B%E4%B8%BB%E7%BA%BF%2F01-Linux-Driver-Model"
+    },
+    {
+      "title": "02-DTS与设备发现",
+      "folder": "01-课程主线",
+      "filePath": "01-课程主线/02-DTS与设备发现.md",
+      "webPath": "pages/notes/01-课程主线--02-DTS与设备发现.html",
+      "url": "obsidian://open?vault=RK3568&file=01-%E8%AF%BE%E7%A8%8B%E4%B8%BB%E7%BA%BF%2F02-DTS%E4%B8%8E%E8%AE%BE%E5%A4%87%E5%8F%91%E7%8E%B0"
+    },
+    {
+      "title": "03-IMX415-Sensor-Bring-up",
+      "folder": "01-课程主线",
+      "filePath": "01-课程主线/03-IMX415-Sensor-Bring-up.md",
+      "webPath": "pages/notes/01-课程主线--03-IMX415-Sensor-Bring-up.html",
+      "url": "obsidian://open?vault=RK3568&file=01-%E8%AF%BE%E7%A8%8B%E4%B8%BB%E7%BA%BF%2F03-IMX415-Sensor-Bring-up"
+    },
+    {
+      "title": "04-MIPI-CSI2-DPHY",
+      "folder": "01-课程主线",
+      "filePath": "01-课程主线/04-MIPI-CSI2-DPHY.md",
+      "webPath": "pages/notes/01-课程主线--04-MIPI-CSI2-DPHY.html",
+      "url": "obsidian://open?vault=RK3568&file=01-%E8%AF%BE%E7%A8%8B%E4%B8%BB%E7%BA%BF%2F04-MIPI-CSI2-DPHY"
+    },
+    {
+      "title": "05-V4L2-Subdev",
+      "folder": "01-课程主线",
+      "filePath": "01-课程主线/05-V4L2-Subdev.md",
+      "webPath": "pages/notes/01-课程主线--05-V4L2-Subdev.html",
+      "url": "obsidian://open?vault=RK3568&file=01-%E8%AF%BE%E7%A8%8B%E4%B8%BB%E7%BA%BF%2F05-V4L2-Subdev"
+    },
+    {
+      "title": "06-Media-Controller",
+      "folder": "01-课程主线",
+      "filePath": "01-课程主线/06-Media-Controller.md",
+      "webPath": "pages/notes/01-课程主线--06-Media-Controller.html",
+      "url": "obsidian://open?vault=RK3568&file=01-%E8%AF%BE%E7%A8%8B%E4%B8%BB%E7%BA%BF%2F06-Media-Controller"
+    },
+    {
+      "title": "07-RKISP",
+      "folder": "01-课程主线",
+      "filePath": "01-课程主线/07-RKISP.md",
+      "webPath": "pages/notes/01-课程主线--07-RKISP.html",
+      "url": "obsidian://open?vault=RK3568&file=01-%E8%AF%BE%E7%A8%8B%E4%B8%BB%E7%BA%BF%2F07-RKISP"
+    },
+    {
+      "title": "08-V4L2用户态取流",
+      "folder": "01-课程主线",
+      "filePath": "01-课程主线/08-V4L2用户态取流.md",
+      "webPath": "pages/notes/01-课程主线--08-V4L2用户态取流.html",
+      "url": "obsidian://open?vault=RK3568&file=01-%E8%AF%BE%E7%A8%8B%E4%B8%BB%E7%BA%BF%2F08-V4L2%E7%94%A8%E6%88%B7%E6%80%81%E5%8F%96%E6%B5%81"
+    },
+    {
+      "title": "09-GStreamer-OpenCV",
+      "folder": "01-课程主线",
+      "filePath": "01-课程主线/09-GStreamer-OpenCV.md",
+      "webPath": "pages/notes/01-课程主线--09-GStreamer-OpenCV.html",
+      "url": "obsidian://open?vault=RK3568&file=01-%E8%AF%BE%E7%A8%8B%E4%B8%BB%E7%BA%BF%2F09-GStreamer-OpenCV"
+    },
+    {
+      "title": "10-RKNN-YOLO",
+      "folder": "01-课程主线",
+      "filePath": "01-课程主线/10-RKNN-YOLO.md",
+      "webPath": "pages/notes/01-课程主线--10-RKNN-YOLO.html",
+      "url": "obsidian://open?vault=RK3568&file=01-%E8%AF%BE%E7%A8%8B%E4%B8%BB%E7%BA%BF%2F10-RKNN-YOLO"
+    },
+    {
+      "title": "11-Camera-Bring-up排障",
+      "folder": "01-课程主线",
+      "filePath": "01-课程主线/11-Camera-Bring-up排障.md",
+      "webPath": "pages/notes/01-课程主线--11-Camera-Bring-up排障.html",
+      "url": "obsidian://open?vault=RK3568&file=01-%E8%AF%BE%E7%A8%8B%E4%B8%BB%E7%BA%BF%2F11-Camera-Bring-up%E6%8E%92%E9%9A%9C"
+    },
     {
       "title": "00-Camera证据索引",
       "folder": "05-实验与证据",
@@ -231,6 +246,20 @@ window.RK3568_VAULT_DATA = {
       "url": "obsidian://open?vault=RK3568&file=05-%E5%AE%9E%E9%AA%8C%E4%B8%8E%E8%AF%81%E6%8D%AE%2F2026-07-28-%E7%9B%B4%E8%BF%9E%E6%9D%BF%E7%AB%AF%E8%AF%BB%E5%8F%96IMX415%E9%85%8D%E7%BD%AE"
     },
     {
+      "title": "manifest",
+      "folder": "05-实验与证据/assets",
+      "filePath": "05-实验与证据/assets/manifest.md",
+      "webPath": "pages/notes/05-实验与证据--assets--manifest.html",
+      "url": "obsidian://open?vault=RK3568&file=05-%E5%AE%9E%E9%AA%8C%E4%B8%8E%E8%AF%81%E6%8D%AE%2Fassets%2Fmanifest"
+    },
+    {
+      "title": "RK3568-IMX415当前基线",
+      "folder": "05-实验与证据/环境基线",
+      "filePath": "05-实验与证据/环境基线/RK3568-IMX415当前基线.md",
+      "webPath": "pages/notes/05-实验与证据--环境基线--RK3568-IMX415当前基线.html",
+      "url": "obsidian://open?vault=RK3568&file=05-%E5%AE%9E%E9%AA%8C%E4%B8%8E%E8%AF%81%E6%8D%AE%2F%E7%8E%AF%E5%A2%83%E5%9F%BA%E7%BA%BF%2FRK3568-IMX415%E5%BD%93%E5%89%8D%E5%9F%BA%E7%BA%BF"
+    },
+    {
       "title": "01-下一步任务看板",
       "folder": "06-任务",
       "filePath": "06-任务/01-下一步任务看板.md",
@@ -243,20 +272,6 @@ window.RK3568_VAULT_DATA = {
       "filePath": "06-任务/Camera驱动求职第1周执行计划.md",
       "webPath": "pages/notes/06-任务--Camera驱动求职第1周执行计划.html",
       "url": "obsidian://open?vault=RK3568&file=06-%E4%BB%BB%E5%8A%A1%2FCamera%E9%A9%B1%E5%8A%A8%E6%B1%82%E8%81%8C%E7%AC%AC1%E5%91%A8%E6%89%A7%E8%A1%8C%E8%AE%A1%E5%88%92"
-    },
-    {
-      "title": "Camera驱动第1章-IMX415-Sensor与驱动",
-      "folder": "06-任务",
-      "filePath": "06-任务/Camera驱动第1章-IMX415-Sensor与驱动.md",
-      "webPath": "pages/notes/06-任务--Camera驱动第1章-IMX415-Sensor与驱动.html",
-      "url": "obsidian://open?vault=RK3568&file=06-%E4%BB%BB%E5%8A%A1%2FCamera%E9%A9%B1%E5%8A%A8%E7%AC%AC1%E7%AB%A0-IMX415-Sensor%E4%B8%8E%E9%A9%B1%E5%8A%A8"
-    },
-    {
-      "title": "IMX415-DTS 解读 -2026年7月31日",
-      "folder": "06-任务",
-      "filePath": "06-任务/IMX415-DTS 解读 -2026年7月31日.md",
-      "webPath": "pages/notes/06-任务--IMX415-DTS 解读 -2026年7月31日.html",
-      "url": "obsidian://open?vault=RK3568&file=06-%E4%BB%BB%E5%8A%A1%2FIMX415-DTS%20%E8%A7%A3%E8%AF%BB%20-2026%E5%B9%B47%E6%9C%8831%E6%97%A5"
     },
     {
       "title": "00-专项笔记入口",
@@ -308,11 +323,11 @@ window.RK3568_VAULT_DATA = {
       "url": "obsidian://open?vault=RK3568&file=07-%E4%B8%93%E9%A1%B9%E7%AC%94%E8%AE%B0%2F%E7%B3%BB%E7%BB%9F%2FAI%20Camera%E7%B3%BB%E7%BB%9F%E6%95%B0%E6%8D%AE%E6%B5%81%E4%B8%8E%E6%A8%A1%E5%9D%97%E8%BE%B9%E7%95%8C"
     },
     {
-      "title": "Camera驱动分阶段验收标准",
+      "title": "Camera驱动能力验收矩阵",
       "folder": "07-专项笔记/系统",
-      "filePath": "07-专项笔记/系统/Camera驱动分阶段验收标准.md",
-      "webPath": "pages/notes/07-专项笔记--系统--Camera驱动分阶段验收标准.html",
-      "url": "obsidian://open?vault=RK3568&file=07-%E4%B8%93%E9%A1%B9%E7%AC%94%E8%AE%B0%2F%E7%B3%BB%E7%BB%9F%2FCamera%E9%A9%B1%E5%8A%A8%E5%88%86%E9%98%B6%E6%AE%B5%E9%AA%8C%E6%94%B6%E6%A0%87%E5%87%86"
+      "filePath": "07-专项笔记/系统/Camera驱动能力验收矩阵.md",
+      "webPath": "pages/notes/07-专项笔记--系统--Camera驱动能力验收矩阵.html",
+      "url": "obsidian://open?vault=RK3568&file=07-%E4%B8%93%E9%A1%B9%E7%AC%94%E8%AE%B0%2F%E7%B3%BB%E7%BB%9F%2FCamera%E9%A9%B1%E5%8A%A8%E8%83%BD%E5%8A%9B%E9%AA%8C%E6%94%B6%E7%9F%A9%E9%98%B5"
     },
     {
       "title": "00-附录入口",
@@ -327,6 +342,13 @@ window.RK3568_VAULT_DATA = {
       "filePath": "08-附录/Skills/drawing-technical-flowcharts/SKILL.md",
       "webPath": "pages/notes/08-附录--Skills--drawing-technical-flowcharts--SKILL.html",
       "url": "obsidian://open?vault=RK3568&file=08-%E9%99%84%E5%BD%95%2FSkills%2Fdrawing-technical-flowcharts%2FSKILL"
+    },
+    {
+      "title": "DTS基础语法",
+      "folder": "08-附录/参考",
+      "filePath": "08-附录/参考/DTS基础语法.md",
+      "webPath": "pages/notes/08-附录--参考--DTS基础语法.html",
+      "url": "obsidian://open?vault=RK3568&file=08-%E9%99%84%E5%BD%95%2F%E5%8F%82%E8%80%83%2FDTS%E5%9F%BA%E7%A1%80%E8%AF%AD%E6%B3%95"
     },
     {
       "title": "Drawing 2026-06-02 09.30.23.excalidraw",
@@ -357,6 +379,13 @@ window.RK3568_VAULT_DATA = {
       "url": "obsidian://open?vault=RK3568&file=08-%E9%99%84%E5%BD%95%2F%E5%9B%BE%E6%BA%90%2FExcalidraw%2FDrawing%202026-06-02%2009.46.38.excalidraw"
     },
     {
+      "title": "课程正文模板",
+      "folder": "08-附录/模板",
+      "filePath": "08-附录/模板/课程正文模板.md",
+      "webPath": "pages/notes/08-附录--模板--课程正文模板.html",
+      "url": "obsidian://open?vault=RK3568&file=08-%E9%99%84%E5%BD%95%2F%E6%A8%A1%E6%9D%BF%2F%E8%AF%BE%E7%A8%8B%E6%AD%A3%E6%96%87%E6%A8%A1%E6%9D%BF"
+    },
+    {
       "title": "01-A盘基础资料目录解读",
       "folder": "08-附录/资料包",
       "filePath": "08-附录/资料包/01-A盘基础资料目录解读.md",
@@ -385,6 +414,13 @@ window.RK3568_VAULT_DATA = {
       "url": "obsidian://open?vault=RK3568&file=09-%E8%BE%93%E5%87%BA%E6%B2%89%E6%B7%80%2F00-%E8%BE%93%E5%87%BA%E6%B2%89%E6%B7%80%E5%85%A5%E5%8F%A3"
     },
     {
+      "title": "00-项目三分钟讲解",
+      "folder": "09-输出沉淀",
+      "filePath": "09-输出沉淀/00-项目三分钟讲解.md",
+      "webPath": "pages/notes/09-输出沉淀--00-项目三分钟讲解.html",
+      "url": "obsidian://open?vault=RK3568&file=09-%E8%BE%93%E5%87%BA%E6%B2%89%E6%B7%80%2F00-%E9%A1%B9%E7%9B%AE%E4%B8%89%E5%88%86%E9%92%9F%E8%AE%B2%E8%A7%A3"
+    },
+    {
       "title": "04-V4L2专题-什么是dev-video0",
       "folder": "09-输出沉淀",
       "filePath": "09-输出沉淀/04-V4L2专题-什么是dev-video0.md",
@@ -393,4 +429,105 @@ window.RK3568_VAULT_DATA = {
     }
   ],
   "warnings": []
+};
+window.RK3568_COURSE = {
+  "currentStage": "05",
+  "stages": [
+    {
+      "id": "00",
+      "maturity": "validated",
+      "title": "总览",
+      "objective": "先建立 IMX415、D-PHY、CSI、RKISP 与 /dev/videoX 的完整系统地图。",
+      "sourcePath": "01-课程主线/00-系统总览.md",
+      "path": "pages/system-map.html"
+    },
+    {
+      "id": "01",
+      "maturity": "validated",
+      "title": "Linux Driver Model",
+      "objective": "分清 bus、device、driver、Platform Driver、I2C Core 和 I2C Driver。",
+      "sourcePath": "01-课程主线/01-Linux-Driver-Model.md",
+      "path": "../../04-项目/15-Linux设备模型与总线分层.html"
+    },
+    {
+      "id": "02",
+      "maturity": "validated",
+      "title": "DTS 与设备发现",
+      "objective": "从原理图对到 DTS，并说明节点怎样变成运行时设备和 I2C client。",
+      "sourcePath": "01-课程主线/02-DTS与设备发现.md",
+      "path": "../../04-项目/20-DTS到运行时设备发现.html"
+    },
+    {
+      "id": "03",
+      "maturity": "validated",
+      "title": "IMX415 Sensor",
+      "objective": "讲清驱动注册、compatible 匹配、probe、上电、读 ID 与 V4L2 注册。",
+      "sourcePath": "01-课程主线/03-IMX415-Sensor-Bring-up.md",
+      "path": "../../04-项目/16-IMX415-三层驱动调用流程.html"
+    },
+    {
+      "id": "04",
+      "maturity": "validated",
+      "title": "MIPI CSI-2 / D-PHY",
+      "objective": "从 DTS endpoint 追到 D-PHY 和 Media Graph，解释 RAW 数据如何进入 SoC。",
+      "sourcePath": "01-课程主线/04-MIPI-CSI2-DPHY.md",
+      "path": "../../04-项目/17-DPHY-从DTS到MediaGraph.html"
+    },
+    {
+      "id": "05",
+      "maturity": "in-progress",
+      "title": "V4L2 Subdev",
+      "objective": "理解 Sensor 如何注册格式、controls、开流回调以及 Source Pad。",
+      "sourcePath": "01-课程主线/05-V4L2-Subdev.md",
+      "path": "../../04-项目/19-IMX415-v4l2-subdev注册与开流.html"
+    },
+    {
+      "id": "06",
+      "maturity": "published",
+      "title": "Media Controller",
+      "objective": "读懂 entity、pad、link 和 media-ctl 输出，并沿数据链逐节点验证。",
+      "sourcePath": "01-课程主线/06-Media-Controller.md",
+      "path": "../../04-项目/21-MediaController-Entity-Pad-Link.html"
+    },
+    {
+      "id": "07",
+      "maturity": "published",
+      "title": "RKISP",
+      "objective": "解释 RAW Bayer 如何进入 RKISP，并经 mainpath/selfpath 形成可取流节点。",
+      "sourcePath": "01-课程主线/07-RKISP.md",
+      "path": "../../04-项目/22-RKISP-从RAW到VideoNode.html"
+    },
+    {
+      "id": "08",
+      "maturity": "published",
+      "title": "V4L2 用户态取流",
+      "objective": "掌握格式协商、buffer queue、STREAMON 和 v4l2-ctl 抓帧验证。",
+      "sourcePath": "01-课程主线/08-V4L2用户态取流.md",
+      "path": "../../04-项目/23-V4L2-VB2用户态取流.html"
+    },
+    {
+      "id": "09",
+      "maturity": "placeholder",
+      "title": "GStreamer / OpenCV",
+      "objective": "把 V4L2 输出接入 GStreamer 和 OpenCV，并定位格式与转换问题。",
+      "sourcePath": null,
+      "path": "pages/notes/07-专项笔记--OpenCV--OpenCV读取Camera记录.html"
+    },
+    {
+      "id": "10",
+      "maturity": "placeholder",
+      "title": "RKNN / YOLO",
+      "objective": "理解 Camera 帧进入预处理、RKNN 推理和结果输出时的模块边界。",
+      "sourcePath": null,
+      "path": "pages/notes/07-专项笔记--系统--AI Camera系统数据流与模块边界.html"
+    },
+    {
+      "id": "11",
+      "maturity": "placeholder",
+      "title": "Camera Bring-up 排障",
+      "objective": "按供电、I2C、MIPI、Media、ISP、V4L2 分层定位新 Sensor 点亮故障。",
+      "sourcePath": null,
+      "path": "pages/notes/07-专项笔记--系统--AI Camera故障排查索引.html"
+    }
+  ]
 };

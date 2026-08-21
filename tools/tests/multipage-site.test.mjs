@@ -126,8 +126,8 @@ test('shared runtime builds one course-focused global navigation', () => {
   for (const label of ['学习首页', '完整路线', '项目', '课程目录', '资料与实验', '可视化参考', '专项笔记']) {
     assert.match(siteJs, new RegExp(label, 'u'), `shared navigation missing ${label}`);
   }
-  assert.match(siteJs, /COURSE_STAGES/u);
-  assert.match(siteJs, /COURSE_CURRENT_STAGE/u);
+  assert.match(siteJs, /courseStages/u);
+  assert.match(siteJs, /courseCurrentStageId/u);
   assert.match(siteJs, /aria-current/u);
   assert.match(siteJs, /site-nav__stage/u);
   assert.match(siteJs, /site-nav__more/u);
@@ -217,7 +217,8 @@ test('learning route current marker is sourced from the shared course contract',
   const siteJs = fs.readFileSync(path.join(siteRoot, 'site.js'), 'utf8');
 
   assert.match(html, /data-course-route/iu);
-  assert.match(siteJs, /COURSE_CURRENT_STAGE\s*=\s*['"]04['"]/u);
+  assert.match(siteJs, /window\.RK3568_COURSE/u);
+  assert.doesNotMatch(siteJs, /COURSE_CURRENT_STAGE/u);
   assert.match(siteJs, /querySelectorAll\(["']\[data-course-route\]["']\)/u);
   assert.match(siteJs, /courseStageStatus\s*\(/u);
   assert.match(siteJs, /is-current/u);
@@ -246,7 +247,7 @@ test('Task 4 pages expose the shared shell and page-specific content contracts',
   }
 
   const project = readHtml(task4Pages[0]);
-  for (const textValue of ['RK3568 + IMX415 Camera 驱动学习', '10-Phase0-可视化总入口.html', '13-Phase0-Camera配置全流程.html', '14-Phase0-驱动层全链路框架图.html', '16-IMX415-三层驱动调用流程.html', '06-任务--Camera驱动第1章-IMX415-Sensor与驱动.html']) {
+  for (const textValue of ['RK3568 + IMX415 Bring-up 项目档案', '项目目标', '硬件与软件基线', '实板证据', '关键故障', '可复现步骤', '面试与简历表达', '参考可视化', '13-Phase0-Camera配置全流程.html', '14-Phase0-驱动层全链路框架图.html', '16-IMX415-三层驱动调用流程.html']) {
     assert.match(project, new RegExp(textValue.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&'), 'u'), `project missing ${textValue}`);
   }
   assert.doesNotMatch(project, /Python MVP|YOLOv8n/iu);
@@ -264,7 +265,7 @@ test('Task 4 pages expose the shared shell and page-specific content contracts',
   assert.doesNotMatch(environment, /03-环境--/u);
 
   const notes = readHtml(task4Pages[3]);
-  for (const textValue of ['Sensor', 'MIPI', 'RKISP', 'V4L2', 'Debug', '06-任务--Camera驱动第1章-IMX415-Sensor与驱动.html', '07-专项笔记--Camera-V4L2--V4L2命令行抓帧记录.html', '07-专项笔记--系统--Camera驱动分阶段验收标准.html', 'learning-route.html']) assert.match(notes, new RegExp(textValue.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&'), 'u'));
+  for (const textValue of ['Sensor', 'MIPI', 'RKISP', 'V4L2', 'Debug', '01-课程主线--03-IMX415-Sensor-Bring-up.html', '07-专项笔记--Camera-V4L2--V4L2命令行抓帧记录.html', '07-专项笔记--系统--Camera驱动能力验收矩阵.html', 'learning-route.html']) assert.match(notes, new RegExp(textValue.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&'), 'u'));
   assert.match(notes, /data-note-directory/u);
   assert.match(notes, /data-note-search/u);
   const siteJs = fs.readFileSync(path.join(siteRoot, 'site.js'), 'utf8');
@@ -319,14 +320,14 @@ test('evidence page exposes the shared current-learning-state contract and zero-
 
 test('learning route presents the shared 00-11 Camera course', () => {
   const html = readHtml(path.join(siteRoot, 'pages', 'learning-route.html'));
-  const siteJs = fs.readFileSync(path.join(siteRoot, 'site.js'), 'utf8');
+  const courseData = fs.readFileSync(path.join(siteRoot, 'generated', 'vault-data.js'), 'utf8');
   assert.match(html, /00–11 主线/iu);
   assert.match(html, /data-course-route/iu);
   for (const stage of ['00', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11']) {
-    assert.match(siteJs, new RegExp(`id:\\s*['"]${stage}['"]`, 'u'));
+    assert.match(courseData, new RegExp(`"id":\\s*"${stage}"`, 'u'));
   }
   for (const topic of ['DTS', 'Sensor', 'D-PHY', 'Media Controller', 'RKISP', 'V4L2', 'OpenCV', 'RKNN', 'Bring-up']) {
-    assert.match(siteJs, new RegExp(topic, 'iu'));
+    assert.match(courseData, new RegExp(topic, 'iu'));
   }
 });
 
@@ -441,7 +442,7 @@ test('shared resources satisfy the site contract', () => {
   assert.match(css, /\.site-nav\s*\{[^}]*position:\s*fixed/isu);
   assert.match(js, /window\.RK3568_VAULT_DATA/iu);
   assert.match(js, /window\.RK3568_COURSE/iu);
-  assert.match(js, /COURSE_CURRENT_STAGE/iu);
+  assert.match(js, /courseCurrentStageId/iu);
   assert.match(js, /data\.currentTasks/iu);
   assert.match(js, /data\.evidence/iu);
   assert.doesNotMatch(js, /(?:^|\n)\s*(?:import|export)\b/iu);
@@ -515,8 +516,9 @@ test('Phase0 visualization pages expose the shared shell and fixed learning sequ
   ];
   const navigationTargets = [
     '../00-首页/学习驾驶舱/index.html',
-    '10-Phase0-可视化总入口.html',
-    '../00-首页/学习驾驶舱/pages/notes/06-任务--01-下一步任务看板.html',
+    '../00-首页/学习驾驶舱/pages/learning-route.html',
+    '../00-首页/学习驾驶舱/pages/project.html',
+    '../00-首页/学习驾驶舱/pages/phase0.html',
   ];
 
   phase0Pages.forEach((filePath, index) => {
@@ -580,14 +582,15 @@ test('course shell exposes the shared current-learning-state contract', () => {
   assert.doesNotMatch(appJs, /data-course-(?:current|objective|next)/u);
 });
 
-test('dashboard starts from course stage 04', () => {
+test('dashboard starts from the current course stage', () => {
   const homepage = readHtml(path.join(siteRoot, 'index.html'));
   const route = readHtml(path.join(siteRoot, 'pages', 'learning-route.html'));
 
   assert.match(homepage, /data-course-next/iu);
   assert.match(route, /data-course-route/iu);
   const siteJs = fs.readFileSync(path.join(siteRoot, 'site.js'), 'utf8');
-  assert.match(siteJs, /COURSE_CURRENT_STAGE\s*=\s*['"]04['"]/u);
+  assert.match(siteJs, /window\.RK3568_COURSE/u);
+  assert.doesNotMatch(siteJs, /COURSE_CURRENT_STAGE/u);
   assert.match(siteJs, /currentCourseStage\s*\(/u);
   assert.match(siteJs, /data-course-next/u);
 });
@@ -609,7 +612,7 @@ test('learning route delegates all stage cards to the shared course renderer', (
   const html = readHtml(path.join(siteRoot, 'pages', 'learning-route.html'));
   const siteJs = fs.readFileSync(path.join(siteRoot, 'site.js'), 'utf8');
   assert.equal((html.match(/data-course-route/giu) || []).length, 1);
-  assert.match(siteJs, /COURSE_STAGES\.length/u);
+  assert.match(siteJs, /courseStages\.length/u);
   assert.match(siteJs, /course-route__card/u);
   assert.match(siteJs, /进入本阶段/u);
 });

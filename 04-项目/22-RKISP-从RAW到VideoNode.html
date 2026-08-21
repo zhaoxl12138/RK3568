@@ -1,0 +1,1759 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <title>阶段 07 · RKISP：从 RAW 到 Video Node</title>
+    <link rel="stylesheet" href="../00-首页/学习驾驶舱/site.css?v=410aa77861" />
+    <script
+      defer
+      src="../00-首页/学习驾驶舱/generated/vault-data.js?v=410aa77861"
+    ></script>
+    <script defer src="../00-首页/学习驾驶舱/site.js?v=410aa77861"></script>
+    <style>
+      :root {
+        --bg: #080c14;
+        --surface: #101722;
+        --border: rgba(255, 255, 255, 0.12);
+        --text: #c9d2dc;
+        --bright: #f1f6fa;
+        --cyan: #26c6da;
+        --purple: #9b7bff;
+        --orange: #ffa726;
+        --green: #66bb6a;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font:
+          15px/1.7 Inter,
+          "Noto Sans SC",
+          "Microsoft YaHei",
+          sans-serif;
+      }
+      code {
+        font-family: Consolas, monospace;
+        color: #dcecff;
+      }
+      .hero {
+        text-align: center;
+        padding: 52px 20px 32px;
+        border-bottom: 1px solid var(--border);
+        background: radial-gradient(
+          circle at 50% -25%,
+          rgba(255, 167, 38, 0.22),
+          transparent 48%
+        );
+      }
+      h1 {
+        margin: 0;
+        color: var(--bright);
+        font-size: clamp(1.9rem, 4vw, 2.8rem);
+      }
+      .sub {
+        max-width: 980px;
+        margin: 10px auto;
+        color: #aab9c6;
+      }
+      .links,
+      .legend,
+      .stage-nav {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+      .links a,
+      .stage-nav a {
+        color: #dcecff;
+        text-decoration: none;
+        padding: 7px 12px;
+        border: 1px solid rgba(255, 167, 38, 0.35);
+        border-radius: 999px;
+        background: rgba(255, 167, 38, 0.07);
+      }
+      main {
+        max-width: 1660px;
+        margin: auto;
+        padding: 30px 22px 68px;
+      }
+      .title {
+        margin: 34px 0 15px;
+        padding-left: 13px;
+        border-left: 3px solid var(--orange);
+        color: var(--bright);
+      }
+      .diagram {
+        padding: 14px;
+        border: 1px solid var(--border);
+        border-radius: 22px;
+        background:
+          linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+          linear-gradient(
+            90deg,
+            rgba(255, 255, 255, 0.018) 1px,
+            transparent 1px
+          ),
+          var(--surface);
+        background-size: 28px 28px;
+      }
+      .diagram svg {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+      .lane {
+        fill: rgba(255, 255, 255, 0.025);
+        stroke: rgba(255, 255, 255, 0.11);
+      }
+      .node {
+        fill: #14242a;
+        stroke: #288d98;
+        stroke-width: 1.5;
+      }
+      .isp {
+        fill: #291e11;
+        stroke: #a56a20;
+      }
+      .video {
+        fill: #17271c;
+        stroke: #4e9258;
+      }
+      .relation {
+        fill: #211b35;
+        stroke: #765cc4;
+      }
+      .nt {
+        fill: #eef5fb;
+        font-size: 14px;
+        font-weight: 700;
+        text-anchor: middle;
+      }
+      .ns {
+        fill: #a5b5c3;
+        font-size: 11px;
+        text-anchor: middle;
+      }
+      .lt {
+        fill: #f1f6fa;
+        font-size: 19px;
+        font-weight: 700;
+        text-anchor: middle;
+      }
+      .ls {
+        fill: #91a2b1;
+        font-size: 11px;
+        text-anchor: middle;
+      }
+      .edge {
+        fill: none;
+        stroke: #8498aa;
+        stroke-width: 1.8;
+        marker-end: url(#a);
+      }
+      .dash {
+        fill: none;
+        stroke: #aa8be9;
+        stroke-width: 1.6;
+        stroke-dasharray: 7 5;
+        marker-end: url(#ad);
+      }
+      .data {
+        fill: none;
+        stroke: #64a66f;
+        stroke-width: 2;
+        marker-end: url(#ag);
+      }
+      .legend {
+        justify-content: flex-start;
+        margin: 12px 2px;
+        color: #9eafbd;
+      }
+      .legend span {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+      .legend i {
+        width: 34px;
+        border-top: 2px solid #8498aa;
+      }
+      .legend .d {
+        border-top-style: dashed;
+        border-color: #aa8be9;
+      }
+      .legend .g {
+        border-color: #64a66f;
+      }
+      .diagram-heading {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 16px;
+        margin: 38px 0 10px;
+      }
+      .diagram-heading h3 {
+        margin: 0;
+        color: var(--bright);
+        font-size: 1.18rem;
+      }
+      .diagram-heading p {
+        margin: 0;
+        color: #8fa1af;
+        font-size: 0.92rem;
+      }
+      .reading-note {
+        margin: 12px 0 0;
+        padding: 13px 15px;
+        border-left: 3px solid var(--orange);
+        border-radius: 0 12px 12px 0;
+        background: rgba(255, 167, 38, 0.07);
+        color: #bdc9d4;
+      }
+      .reading-note strong {
+        color: #fff0dc;
+      }
+      .map-nav {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 10px;
+        margin: 0 0 26px;
+      }
+      .map-nav a {
+        display: block;
+        min-height: 74px;
+        padding: 12px 13px;
+        border: 1px solid rgba(255, 167, 38, 0.25);
+        border-radius: 14px;
+        background: rgba(255, 167, 38, 0.055);
+        color: #dcecff;
+        text-decoration: none;
+      }
+      .map-nav a:hover,
+      .map-nav a:focus-visible {
+        border-color: rgba(255, 167, 38, 0.72);
+        background: rgba(255, 167, 38, 0.12);
+      }
+      .map-nav b {
+        display: block;
+        color: var(--orange);
+        font-size: 0.78rem;
+        letter-spacing: 0.04em;
+      }
+      .map-nav span {
+        display: block;
+        margin-top: 3px;
+        font-size: 0.9rem;
+        line-height: 1.4;
+      }
+      [id^="rkisp-"] {
+        scroll-margin-top: 92px;
+      }
+      .evidence-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+        margin-top: 14px;
+      }
+      .evidence-grid .card:nth-child(1) {
+        border-color: rgba(38, 198, 218, 0.4);
+      }
+      .evidence-grid .card:nth-child(2) {
+        border-color: rgba(255, 167, 38, 0.42);
+      }
+      .evidence-grid .card:nth-child(3) {
+        border-color: rgba(102, 187, 106, 0.42);
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+      }
+      .card {
+        padding: 18px;
+        border: 1px solid var(--border);
+        border-radius: 17px;
+        background: rgba(255, 255, 255, 0.032);
+      }
+      .card h3 {
+        margin: 0 0 7px;
+        color: #edf5fb;
+      }
+      .card p {
+        margin: 0;
+        color: #aebdca;
+      }
+      .source {
+        margin-top: 14px;
+        padding: 15px;
+        border-left: 3px solid var(--cyan);
+        background: rgba(38, 198, 218, 0.055);
+      }
+      .stage-nav {
+        margin-top: 30px;
+        justify-content: space-between;
+      }
+      @media (max-width: 760px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+        .hero {
+          padding: 38px 14px 26px;
+        }
+        main {
+          padding: 22px 12px 50px;
+        }
+        .nt {
+          font-size: 11px;
+        }
+        .ns,
+        .ls {
+          font-size: 8px;
+        }
+        .lt {
+          font-size: 14px;
+        }
+        .stage-nav {
+          justify-content: center;
+        }
+        .diagram-heading {
+          display: block;
+        }
+        .diagram-heading p {
+          margin-top: 4px;
+        }
+        .evidence-grid {
+          grid-template-columns: 1fr;
+        }
+        .map-nav {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body class="site-nav-offset">
+    <a class="skip-link" href="#main-content">跳到主要内容</a>
+    <nav class="site-nav" data-site-nav aria-label="RK3568 Camera 课程导航"><a class="site-nav__brand" href="../00-首页/学习驾驶舱/index.html"><span>RK3568</span><strong>Camera 课程</strong></a><div class="site-nav__links"><a href="../00-首页/学习驾驶舱/index.html" data-nav-key="home">学习首页</a><a href="../00-首页/学习驾驶舱/pages/learning-route.html" data-nav-key="route">完整路线</a><a href="../00-首页/学习驾驶舱/pages/project.html" data-nav-key="project">项目</a></div><details class="site-nav__more course-menu"><summary>课程目录</summary><div class="site-nav__more-panel course-menu__grid"><a class="course-menu__item" href="../00-首页/学习驾驶舱/pages/system-map.html"><span>00</span><strong>总览</strong></a><a class="course-menu__item" href="15-Linux设备模型与总线分层.html"><span>01</span><strong>Linux Driver Model</strong></a><a class="course-menu__item" href="20-DTS到运行时设备发现.html"><span>02</span><strong>DTS 与设备发现</strong></a><a class="course-menu__item" href="16-IMX415-三层驱动调用流程.html"><span>03</span><strong>IMX415 Sensor</strong></a><a class="course-menu__item" href="17-DPHY-从DTS到MediaGraph.html"><span>04</span><strong>MIPI CSI-2 / D-PHY</strong></a><a class="course-menu__item" href="19-IMX415-v4l2-subdev注册与开流.html"><span>05</span><strong>V4L2 Subdev</strong></a><a class="course-menu__item" href="21-MediaController-Entity-Pad-Link.html"><span>06</span><strong>Media Controller</strong></a><a class="course-menu__item" href="22-RKISP-从RAW到VideoNode.html"><span>07</span><strong>RKISP</strong></a><a class="course-menu__item" href="23-V4L2-VB2用户态取流.html"><span>08</span><strong>V4L2 用户态取流</strong></a><a class="course-menu__item" href="../00-首页/学习驾驶舱/pages/notes/07-专项笔记--OpenCV--OpenCV读取Camera记录.html"><span>09</span><strong>GStreamer / OpenCV</strong></a><a class="course-menu__item" href="../00-首页/学习驾驶舱/pages/notes/07-专项笔记--系统--AI Camera系统数据流与模块边界.html"><span>10</span><strong>RKNN / YOLO</strong></a><a class="course-menu__item" href="../00-首页/学习驾驶舱/pages/notes/07-专项笔记--系统--AI Camera故障排查索引.html"><span>11</span><strong>Camera Bring-up 排障</strong></a></div></details><details class="site-nav__more reference-menu"><summary data-nav-key="reference" aria-current="page">资料与实验</summary><div class="site-nav__more-panel reference-menu__panel"><a href="../00-首页/学习驾驶舱/pages/evidence.html" data-nav-key="evidence">实验依据</a><a href="../00-首页/学习驾驶舱/pages/notes.html" data-nav-key="notes">专项笔记</a><a href="../00-首页/学习驾驶舱/pages/environment.html" data-nav-key="environment">开发环境</a><a href="../00-首页/学习驾驶舱/pages/phase0.html" data-nav-key="phase0">可视化参考</a><a href="../00-首页/学习驾驶舱/pages/archive.html" data-nav-key="archive">归档</a><a href="obsidian://open?vault=RK3568&amp;file=00-%E9%A6%96%E9%A1%B5%2F00-RK3568%E5%AD%A6%E4%B9%A0%E4%B8%BB%E5%85%A5%E5%8F%A3">在 Obsidian 中打开</a></div></details><div class="site-nav__tools"><a class="site-nav__stage course-status" href="../00-首页/学习驾驶舱/pages/learning-route.html#stage-05" title="当前学习阶段">当前 阶段 05 · V4L2 Subdev</a></div></nav>
+    <header class="hero">
+      <h1>RKISP：共享硬件、逻辑实例与 Video Node</h1>
+      <p class="sub">
+        RKISP 是 RK3568 内部的 ISP 硬件及其 Linux 驱动，不是第三方用户态库。HW
+        probe 集中管理寄存器、IRQ、时钟；逻辑 probe 组装 CSI/ISP/stream
+        对象，最后把 mainpath 注册成 <code>/dev/video0</code>。
+      </p>
+      <nav class="links">
+        <a href="21-MediaController-Entity-Pad-Link.html">← Media Controller</a
+        ><a
+          href="obsidian://open?vault=RK3568&amp;file=02-%E6%BA%90%E7%A0%81%E9%99%AA%E8%AF%BB%2F07-RKISP%2F00-%E6%BA%90%E7%A0%81%E9%99%AA%E8%AF%BB%E7%B4%A2%E5%BC%95"
+          >打开 02-源码陪读/07-RKISP/00-源码陪读索引</a
+        >
+      </nav>
+    </header>
+    <main id="main-content">
+      <nav class="map-nav" aria-label="第 07 章五张流程图阅读顺序">
+        <a href="#rkisp-overview"
+          ><b>图 1 · 总览</b><span>从 probe 到 Video Node</span></a
+        >
+        <a href="#rkisp-lifecycle"
+          ><b>图 2 · 生命周期</b><span>双 Platform probe 与对象桥</span></a
+        >
+        <a href="#rkisp-data-path"
+          ><b>图 3 · 数据路径</b><span>RAW、ISP、NV12 与节点证据</span></a
+        >
+        <a href="#rkisp-async-links"
+          ><b>图 4 · Async 建链</b><span>D-PHY 怎样进入 RKISP</span></a
+        >
+        <a href="#rkisp-streaming"
+          ><b>图 5 · 开流闭环</b><span>STREAMON、IRQ、DMA、DQBUF</span></a
+        >
+      </nav>
+      <h2 class="title" id="rkisp-overview">
+        两条初始化分支汇合，再串行注册 ISP 与采集节点
+      </h2>
+      <section class="diagram">
+        <svg viewBox="0 0 1600 1220" role="img" aria-labelledby="rt rd">
+          <title id="rt">RKISP 两条初始化分支及其汇合过程</title>
+          <desc id="rd">
+            rkisp_hw_drv_init 先注册共享硬件 driver 和逻辑 ISP driver，Platform
+            总线框架分别匹配两个 platform device 并独立回调两个 probe。逻辑
+            probe 通过 rockchip hw 引用取得 HW probe
+            保存的对象，随后串行注册内部 subdev 和 video node。
+          </desc>
+          <defs>
+            <marker
+              id="a"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto"
+            >
+              <path d="M0 0L10 5L0 10z" fill="#8498aa" />
+            </marker>
+            <marker
+              id="ad"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto"
+            >
+              <path d="M0 0L10 5L0 10z" fill="#aa8be9" />
+            </marker>
+            <marker
+              id="ag"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto"
+            >
+              <path d="M0 0L10 5L0 10z" fill="#64a66f" />
+            </marker>
+          </defs>
+
+          <rect class="lane" x="18" y="18" width="286" height="1178" rx="22" />
+          <rect class="lane" x="320" y="18" width="286" height="1178" rx="22" />
+          <rect class="lane" x="622" y="18" width="286" height="1178" rx="22" />
+          <rect class="lane" x="924" y="18" width="310" height="1178" rx="22" />
+          <rect
+            class="lane"
+            x="1250"
+            y="18"
+            width="332"
+            height="1178"
+            rx="22"
+          />
+
+          <text class="lt" x="161" y="55">1 · 共同入口</text>
+          <text class="ls" x="161" y="76">只负责发布两个 Platform Driver</text>
+          <text class="lt" x="463" y="55">2 · 分支 A：共享 HW</text>
+          <text class="ls" x="463" y="76">物理寄存器、IRQ、时钟和内存操作</text>
+          <text class="lt" x="765" y="55">3 · 分支 B：逻辑 Camera</text>
+          <text class="ls" x="765" y="76">V4L2 / Media 管线实例</text>
+          <text class="lt" x="1079" y="55">4 · 对象汇合</text>
+          <text class="ls" x="1079" y="76">逻辑对象取得共享 HW 指针</text>
+          <text class="lt" x="1416" y="55">5 · 串行注册</text>
+          <text class="ls" x="1416" y="76">内部模块与应用取帧节点</text>
+
+          <g id="overview-common-entry">
+            <rect
+              class="node isp"
+              x="45"
+              y="118"
+              width="232"
+              height="112"
+              rx="13"
+            />
+            <text class="nt" x="161" y="151">
+              共同入口：rkisp_hw_drv_init()
+            </text>
+            <text class="ns" x="161" y="176">drivers/.../isp/hw.c</text>
+            <text class="ns" x="161" y="198">
+              module_init() 在内核/模块初始化时进入
+            </text>
+            <text class="ns" x="161" y="216">这里不直接调用任何 probe</text>
+
+            <rect
+              class="node"
+              x="45"
+              y="318"
+              width="232"
+              height="112"
+              rx="13"
+            />
+            <text class="nt" x="161" y="351">注册共享 HW driver</text>
+            <text class="ns" x="161" y="376">platform_driver_register(</text>
+            <text class="ns" x="161" y="395">&amp;rkisp_hw_drv)</text>
+            <text class="ns" x="161" y="414">
+              发布 match / probe / PM 回调表
+            </text>
+
+            <rect
+              class="node isp"
+              x="45"
+              y="548"
+              width="232"
+              height="112"
+              rx="13"
+            />
+            <text class="nt" x="161" y="581">注册逻辑 ISP driver</text>
+            <text class="ns" x="161" y="606">platform_driver_register(</text>
+            <text class="ns" x="161" y="625">&amp;rkisp_plat_drv)</text>
+            <text class="ns" x="161" y="644">
+              发布另一套 match / probe 回调表
+            </text>
+          </g>
+          <path class="edge" d="M161 230V318" />
+          <path class="edge" d="M161 430V548" />
+
+          <g id="overview-branch-hw">
+            <rect
+              class="node relation"
+              x="347"
+              y="288"
+              width="232"
+              height="130"
+              rx="13"
+            />
+            <text class="nt" x="463" y="321">HW DTS / platform_device</text>
+            <text class="ns" x="463" y="346">compatible：</text>
+            <text class="ns" x="463" y="365">rockchip,rk3568-rkisp</text>
+            <text class="ns" x="463" y="388">描述共享 ISP 硬件资源</text>
+            <text class="ns" x="463" y="405">不是 Camera 输出节点</text>
+
+            <rect
+              class="node relation"
+              x="347"
+              y="488"
+              width="232"
+              height="112"
+              rx="13"
+            />
+            <text class="nt" x="463" y="521">Platform 总线框架匹配</text>
+            <text class="ns" x="463" y="546">rkisp_hw_of_match</text>
+            <text class="ns" x="463" y="566">compatible 相等后准备绑定</text>
+            <text class="ns" x="463" y="584">随后由框架回调 .probe</text>
+
+            <rect
+              class="node"
+              x="347"
+              y="670"
+              width="232"
+              height="120"
+              rx="13"
+            />
+            <text class="nt" x="463" y="703">rkisp_hw_probe(pdev)</text>
+            <text class="ns" x="463" y="728">
+              映射寄存器、IRQ、clock、reset
+            </text>
+            <text class="ns" x="463" y="749">建立 mem_ops / runtime PM</text>
+            <text class="ns" x="463" y="770">创建共享硬件对象</text>
+
+            <rect
+              class="node relation"
+              x="347"
+              y="870"
+              width="232"
+              height="120"
+              rx="13"
+            />
+            <text class="nt" x="463" y="903">struct rkisp_hw_dev</text>
+            <text class="ns" x="463" y="928">
+              dev_set_drvdata(pdev, hw_dev)
+            </text>
+            <text class="ns" x="463" y="949">把指针保存在 HW device 上</text>
+            <text class="ns" x="463" y="970">供逻辑分支稍后取回</text>
+          </g>
+
+          <g id="overview-branch-logic">
+            <rect
+              class="node relation"
+              x="649"
+              y="288"
+              width="232"
+              height="130"
+              rx="13"
+            />
+            <text class="nt" x="765" y="321">逻辑 DTS / platform_device</text>
+            <text class="ns" x="765" y="346">rkisp-vir0</text>
+            <text class="ns" x="765" y="365">
+              compatible：rockchip,rkisp-vir
+            </text>
+            <text class="ns" x="765" y="388">rockchip,hw 指向共享 HW 节点</text>
+            <text class="ns" x="765" y="405">描述一条逻辑 Camera 管线</text>
+
+            <rect
+              class="node relation"
+              x="649"
+              y="488"
+              width="232"
+              height="112"
+              rx="13"
+            />
+            <text class="nt" x="765" y="521">Platform 总线框架匹配</text>
+            <text class="ns" x="765" y="546">rkisp_plat_of_match</text>
+            <text class="ns" x="765" y="566">compatible 相等后准备绑定</text>
+            <text class="ns" x="765" y="584">随后由框架回调 .probe</text>
+
+            <rect
+              class="node isp"
+              x="649"
+              y="670"
+              width="232"
+              height="120"
+              rx="13"
+            />
+            <text class="nt" x="765" y="703">rkisp_plat_probe(pdev)</text>
+            <text class="ns" x="765" y="728">创建 struct rkisp_device</text>
+            <text class="ns" x="765" y="749">准备 media_dev / v4l2_dev</text>
+            <text class="ns" x="765" y="770">准备 notifier 与内部管线状态</text>
+
+            <rect
+              class="node relation"
+              x="649"
+              y="870"
+              width="232"
+              height="120"
+              rx="13"
+            />
+            <text class="nt" x="765" y="903">struct rkisp_device</text>
+            <text class="ns" x="765" y="928">一条逻辑 Camera 实例</text>
+            <text class="ns" x="765" y="949">不重新拥有寄存器和 IRQ</text>
+            <text class="ns" x="765" y="970">直接调用 rkisp_attach_hw()</text>
+          </g>
+
+          <path class="edge" d="M277 374H347" />
+          <path class="edge" d="M277 604H649" />
+          <path class="edge" d="M463 418V488" />
+          <path class="edge" d="M463 600V670" />
+          <path class="edge" d="M463 790V870" />
+          <path class="edge" d="M765 418V488" />
+          <path class="edge" d="M765 600V670" />
+          <path class="edge" d="M765 790V870" />
+
+          <rect
+            class="node relation"
+            x="951"
+            y="670"
+            width="256"
+            height="162"
+            rx="13"
+          />
+          <text class="nt" x="1079" y="703">rkisp_attach_hw(isp_dev)</text>
+          <text class="ns" x="1079" y="728">1. 解析 rockchip,hw phandle</text>
+          <text class="ns" x="1079" y="749">2. 找到 HW platform_device</text>
+          <text class="ns" x="1079" y="770">
+            3. platform_get_drvdata(hw_pdev)
+          </text>
+          <text class="ns" x="1079" y="791">
+            4. isp_dev-&gt;hw_dev = hw_dev
+          </text>
+          <text class="ns" x="1079" y="812">
+            只关联同一对象，不复制硬件资源
+          </text>
+          <path class="dash" d="M579 930C770 930 780 751 951 751" />
+          <path class="edge" d="M881 930C920 930 910 751 951 751" />
+
+          <rect
+            class="node isp"
+            x="951"
+            y="908"
+            width="256"
+            height="112"
+            rx="13"
+          />
+          <text class="nt" x="1079" y="941">
+            rkisp_register_platform_subdevs()
+          </text>
+          <text class="ns" x="1079" y="966">从这里开始回到单条串行主线</text>
+          <text class="ns" x="1079" y="986">注册 CSI / ISP / stream 对象</text>
+          <text class="ns" x="1079" y="1004">并建立 RKISP 内部固定 links</text>
+          <path class="edge" d="M1079 832V908" />
+
+          <rect
+            class="node isp"
+            x="951"
+            y="1070"
+            width="256"
+            height="92"
+            rx="13"
+          />
+          <text class="nt" x="1079" y="1102">内部对象注册顺序（直接调用）</text>
+          <text class="ns" x="1079" y="1127">
+            ISP subdev → CSI subdev → bridge
+          </text>
+          <text class="ns" x="1079" y="1147">
+            → stream vdevs → notifier；外部 D-PHY link 仍等 Async complete
+          </text>
+          <path class="edge" d="M1079 1020V1070" />
+
+          <rect
+            class="node video"
+            x="1278"
+            y="678"
+            width="276"
+            height="112"
+            rx="13"
+          />
+          <text class="nt" x="1416" y="711">rkisp_register_stream_vdevs()</text>
+          <text class="ns" x="1416" y="736">
+            capture.c：mainpath / selfpath
+          </text>
+          <text class="ns" x="1416" y="756">
+            绑定 file_ops / ioctl_ops / VB2
+          </text>
+          <text class="ns" x="1416" y="774">这里只建立用户态采集能力</text>
+
+          <rect
+            class="node video"
+            x="1278"
+            y="870"
+            width="276"
+            height="112"
+            rx="13"
+          />
+          <text class="nt" x="1416" y="903">video_register_device()</text>
+          <text class="ns" x="1416" y="928">注册 VFL_TYPE_GRABBER</text>
+          <text class="ns" x="1416" y="948">分配 /dev/videoX</text>
+          <text class="ns" x="1416" y="966">节点存在不等于已经收到一帧</text>
+
+          <rect
+            class="node video"
+            x="1278"
+            y="1070"
+            width="276"
+            height="92"
+            rx="13"
+          />
+          <text class="nt" x="1416" y="1102">rkisp_mainpath → /dev/video0</text>
+          <text class="ns" x="1416" y="1127">Video Capture Multiplanar</text>
+          <text class="ns" x="1416" y="1147">
+            可输出 NV12 / YUV；取帧还需 STREAMON
+          </text>
+          <path class="edge" d="M1207 964C1245 964 1240 734 1278 734" />
+          <path class="edge" d="M1416 790V870" />
+          <path class="edge" d="M1416 982V1070" />
+
+          <rect
+            class="node relation"
+            x="341"
+            y="1065"
+            width="548"
+            height="98"
+            rx="13"
+          />
+          <text class="nt" x="615" y="1098">
+            Platform 总线框架分别匹配两个 platform_device
+          </text>
+          <text class="ns" x="615" y="1124">
+            两个 probe 是独立框架回调，不是相互调用
+          </text>
+          <text class="ns" x="615" y="1146">
+            “先注册 HW driver”不等于“HW probe 直接调用逻辑 probe”
+          </text>
+        </svg>
+      </section>
+      <div class="legend">
+        <span><i></i>实线：直接调用 / 控制流</span
+        ><span><i class="d"></i>虚线：赋值 / 对象关联 / 数据依赖</span
+        ><span><i class="g"></i>绿色实线：开流后的图像数据方向</span>
+      </div>
+      <section class="grid" aria-label="两条 RKISP 初始化分支的白话说明">
+        <article class="card">
+          <h3>分支 A：共享 HW 资源初始化</h3>
+          <p>
+            <code>platform_driver_register(&amp;rkisp_hw_drv)</code>
+            发布回调表；匹配后 <code>rkisp_hw_probe()</code> 面向真正的 ISP
+            硬件，集中取得寄存器、IRQ、时钟、复位和内存操作，最后留下一个
+            <code>struct rkisp_hw_dev</code>。它解决的是“硬件资源由谁管理”。
+          </p>
+        </article>
+        <article class="card">
+          <h3>分支 B：逻辑 Camera 管线初始化</h3>
+          <p>
+            <code>platform_driver_register(&amp;rkisp_plat_drv)</code>
+            发布另一张回调表；匹配后 <code>rkisp_plat_probe()</code> 创建
+            <code>struct rkisp_device</code>，负责 V4L2、Media、CSI、ISP subdev
+            和采集流。它解决的是“一条 Camera 管线如何组织”。
+          </p>
+        </article>
+        <article class="card">
+          <h3>汇合以后仍不能证明已经出图</h3>
+          <p>
+            两个对象在 <code>rkisp_attach_hw()</code> 汇合后，才能注册内部对象和
+            Video Node；但
+            <strong>/dev/videoX 可能先于 Async complete 出现</strong>，
+            还不能证明 D-PHY、Sensor 与帧数据已经全部到达。
+          </p>
+        </article>
+      </section>
+      <div class="diagram-heading" id="rkisp-lifecycle">
+        <h3>图 2：两个 Platform Driver 不是父子调用，靠对象桥在逻辑层汇合</h3>
+        <p>
+          先分清“注册 driver”“Platform Core 回调
+          probe”“驱动里直接调用”三种箭头。
+        </p>
+      </div>
+      <section class="diagram">
+        <svg viewBox="0 0 1600 650" role="img" aria-labelledby="bt bd">
+          <title id="bt">RKISP HW 与逻辑 Platform probe 的对象桥</title>
+          <desc id="bd">
+            RKISP 初始化函数注册硬件和逻辑两个 Platform Driver，Platform Core
+            分别依据 DTS compatible 回调两个 probe。逻辑 probe 根据 rockchip hw
+            phandle 取得硬件 probe 保存的 drvdata，并把指针保存到逻辑实例。
+          </desc>
+          <defs>
+            <marker
+              id="a2"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto"
+            >
+              <path d="M0 0L10 5L0 10z" fill="#8498aa" />
+            </marker>
+            <marker
+              id="ad2"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto"
+            >
+              <path d="M0 0L10 5L0 10z" fill="#aa8be9" />
+            </marker>
+          </defs>
+          <rect class="lane" x="16" y="18" width="330" height="615" rx="20" />
+          <rect class="lane" x="370" y="18" width="360" height="615" rx="20" />
+          <rect class="lane" x="754" y="18" width="380" height="615" rx="20" />
+          <rect class="lane" x="1158" y="18" width="426" height="615" rx="20" />
+          <text class="lt" x="181" y="55">1 · 驱动发布</text>
+          <text class="ls" x="181" y="76">
+            只是把两个 driver 交给 Platform 总线
+          </text>
+          <text class="lt" x="550" y="55">2 · DTS + Platform Core</text>
+          <text class="ls" x="550" y="76">
+            分别匹配，分别回调；顺序不应被假定
+          </text>
+          <text class="lt" x="944" y="55">3 · 两个 probe 的职责</text>
+          <text class="ls" x="944" y="76">
+            共享硬件对象与逻辑 Camera 对象独立创建
+          </text>
+          <text class="lt" x="1371" y="55">4 · 对象桥 / 汇合</text>
+          <text class="ls" x="1371" y="76">
+            逻辑实例保留 HW 指针，不复制资源
+          </text>
+          <rect
+            class="node isp"
+            x="55"
+            y="155"
+            width="250"
+            height="116"
+            rx="13"
+          />
+          <text class="nt" x="180" y="188">rkisp_hw_drv_init()</text>
+          <text class="ns" x="180" y="213">isp/hw.c</text>
+          <text class="ns" x="180" y="234">platform_driver_register(HW)</text>
+          <text class="ns" x="180" y="253">
+            platform_driver_register(logic)
+          </text>
+          <rect
+            class="node relation"
+            x="420"
+            y="128"
+            width="260"
+            height="122"
+            rx="13"
+          />
+          <text class="nt" x="550" y="161">HW DTS 节点</text>
+          <text class="ns" x="550" y="187">
+            compatible: rockchip,rk3568-rkisp
+          </text>
+          <text class="ns" x="550" y="209">
+            Platform Core → rkisp_hw_probe()
+          </text>
+          <text class="ns" x="550" y="230">框架回调，不是 init 直接调用</text>
+          <rect
+            class="node relation"
+            x="420"
+            y="354"
+            width="260"
+            height="122"
+            rx="13"
+          />
+          <text class="nt" x="550" y="387">逻辑 DTS 节点 rkisp-vir0</text>
+          <text class="ns" x="550" y="413">
+            compatible: rockchip,rkisp-vir
+          </text>
+          <text class="ns" x="550" y="435">
+            Platform Core → rkisp_plat_probe()
+          </text>
+          <text class="ns" x="550" y="456">也是独立框架回调</text>
+          <path
+            d="M305 210H420M305 210C350 210 350 415 420 415"
+            fill="none"
+            stroke="#8498aa"
+            stroke-width="1.8"
+            marker-end="url(#a2)"
+          />
+          <rect class="node" x="804" y="128" width="280" height="122" rx="13" />
+          <text class="nt" x="944" y="161">rkisp_hw_probe()</text>
+          <text class="ns" x="944" y="187">
+            hw.c：寄存器 / IRQ / clock / reset
+          </text>
+          <text class="ns" x="944" y="209">创建 struct rkisp_hw_dev</text>
+          <text class="ns" x="944" y="230">dev_set_drvdata(dev, hw_dev)</text>
+          <rect
+            class="node isp"
+            x="804"
+            y="354"
+            width="280"
+            height="122"
+            rx="13"
+          />
+          <text class="nt" x="944" y="387">rkisp_plat_probe()</text>
+          <text class="ns" x="944" y="413">
+            dev.c：创建 struct rkisp_device
+          </text>
+          <text class="ns" x="944" y="435">
+            media_dev / v4l2_dev / notifier
+          </text>
+          <text class="ns" x="944" y="456">直接调用 rkisp_attach_hw()</text>
+          <path
+            d="M680 189H804M680 415H804"
+            fill="none"
+            stroke="#8498aa"
+            stroke-width="1.8"
+            marker-end="url(#a2)"
+          />
+          <rect
+            class="node relation"
+            x="1208"
+            y="128"
+            width="326"
+            height="122"
+            rx="13"
+          />
+          <text class="nt" x="1371" y="161">HW 的 drvdata</text>
+          <text class="ns" x="1371" y="187">
+            pdev.dev.driver_data → rkisp_hw_dev *
+          </text>
+          <text class="ns" x="1371" y="209">HW probe 已保存的同一个对象</text>
+          <text class="ns" x="1371" y="230">不是再次 probe，也不是拷贝</text>
+          <rect
+            class="node isp"
+            x="1208"
+            y="354"
+            width="326"
+            height="144"
+            rx="13"
+          />
+          <text class="nt" x="1371" y="387">rkisp_attach_hw()</text>
+          <text class="ns" x="1371" y="413">
+            common.c：读 rockchip,hw phandle
+          </text>
+          <text class="ns" x="1371" y="435">platform_get_drvdata(hw_pdev)</text>
+          <text class="ns" x="1371" y="456">isp_dev-&gt;hw_dev = hw_dev</text>
+          <text class="ns" x="1371" y="477">逻辑对象从此可以操作共享 HW</text>
+          <path
+            d="M1084 189H1208"
+            fill="none"
+            stroke="#aa8be9"
+            stroke-width="1.6"
+            stroke-dasharray="7 5"
+            marker-end="url(#ad2)"
+          />
+          <path
+            d="M1084 415H1208"
+            fill="none"
+            stroke="#8498aa"
+            stroke-width="1.8"
+            marker-end="url(#a2)"
+          />
+          <path
+            d="M1371 250V354"
+            fill="none"
+            stroke="#aa8be9"
+            stroke-width="1.6"
+            stroke-dasharray="7 5"
+            marker-end="url(#ad2)"
+          />
+          <text class="ns" x="1371" y="568">
+            虚线：对象指针关系；没有 HW probe → logic probe 的直接调用边
+          </text>
+        </svg>
+      </section>
+      <p class="reading-note">
+        <strong>怎样按图追代码：</strong>先在 <code>hw.c</code> 搜
+        <code>rkisp_hw_drv_init</code>，确认它连续注册两个
+        <code>platform_driver</code>。接着分别读 <code>rkisp_hw_probe</code> 与
+        <code>rkisp_plat_probe</code>；只在后者里追
+        <code>rkisp_attach_hw</code>，再跳 <code>common.c</code> 看
+        <code>rockchip,hw</code>、<code>platform_get_drvdata</code>
+        如何拿到同一个 <code>rkisp_hw_dev</code>。 两个 probe 都是 Platform Core
+        的独立回调，<strong>不是 HW probe 直接调用逻辑 probe</strong>。
+      </p>
+
+      <div class="diagram-heading" id="rkisp-data-path">
+        <h3>
+          图 3：内部子设备到 <code>/dev/videoX</code>，以及三层格式与取帧证据
+        </h3>
+        <p>
+          上半图是对象/数据方向；下半图是“节点存在、开流、拿帧”三种不同证据。
+        </p>
+      </div>
+      <section class="diagram">
+        <svg viewBox="0 0 1600 580" role="img" aria-labelledby="dt dd">
+          <title id="dt">RKISP 数据路径、格式层与 video node 证据</title>
+          <desc id="dd">
+            D-PHY 的 RAW10 进入 RKISP CSI subdev，进入 ISP subdev 后产生 YUYV
+            媒体总线格式，再由 mainpath 作为 NV12 等内存格式通过 Video Node
+            暴露给应用。节点注册、开流返回和 DQBUF 帧是逐级增强的证据。
+          </desc>
+          <defs>
+            <marker
+              id="a3"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto"
+            >
+              <path d="M0 0L10 5L0 10z" fill="#64a66f" />
+            </marker>
+          </defs>
+          <rect class="lane" x="18" y="20" width="1040" height="536" rx="20" />
+          <rect class="lane" x="1084" y="20" width="498" height="536" rx="20" />
+          <text class="lt" x="538" y="59">
+            RKISP 内部管线：数据向右走，控制函数按对象注册
+          </text>
+          <text class="ls" x="538" y="81">
+            绿色箭头是开流后的像素路径；格式名称不在同一个 API 层
+          </text>
+          <text class="lt" x="1333" y="59">用户态证据阶梯</text>
+          <text class="ls" x="1333" y="81">出现节点 ≠ 已经有有效帧</text>
+          <rect class="node" x="58" y="158" width="188" height="140" rx="13" />
+          <text class="nt" x="152" y="192">D-PHY 输出</text>
+          <text class="ns" x="152" y="217">Media bus 格式</text>
+          <text class="ns" x="152" y="240">SGBRG10_1X10</text>
+          <text class="ns" x="152" y="263">RAW10 Bayer</text>
+          <rect
+            class="node isp"
+            x="310"
+            y="158"
+            width="188"
+            height="140"
+            rx="13"
+          />
+          <text class="nt" x="404" y="192">rkisp-csi-subdev</text>
+          <text class="ns" x="404" y="217">csi.c</text>
+          <text class="ns" x="404" y="240">CSI 接收 / RAW 路径</text>
+          <text class="ns" x="404" y="263">Sink → Source</text>
+          <rect
+            class="node isp"
+            x="562"
+            y="158"
+            width="188"
+            height="140"
+            rx="13"
+          />
+          <text class="nt" x="656" y="192">rkisp-isp-subdev</text>
+          <text class="ns" x="656" y="217">rkisp.c</text>
+          <text class="ns" x="656" y="240">ISP 处理后的总线格式</text>
+          <text class="ns" x="656" y="263">YUYV8_2X8</text>
+          <rect
+            class="node video"
+            x="814"
+            y="158"
+            width="188"
+            height="140"
+            rx="13"
+          />
+          <text class="nt" x="908" y="192">rkisp_mainpath</text>
+          <text class="ns" x="908" y="217">capture.c / capture_v21.c</text>
+          <text class="ns" x="908" y="240">struct rkisp_stream</text>
+          <text class="ns" x="908" y="263">VB2 buffer 队列</text>
+          <path
+            d="M246 228H310M498 228H562M750 228H814"
+            fill="none"
+            stroke="#64a66f"
+            stroke-width="2.4"
+            marker-end="url(#a3)"
+          />
+          <rect
+            class="node video"
+            x="310"
+            y="366"
+            width="420"
+            height="116"
+            rx="13"
+          />
+          <text class="nt" x="520" y="400">
+            rkisp_register_stream_vdev() → video_register_device()
+          </text>
+          <text class="ns" x="520" y="425">
+            把 mainpath 的 video_device 注册为 VFL_TYPE_GRABBER
+          </text>
+          <text class="ns" x="520" y="447">
+            内核分配 /dev/videoX；编号不是驱动可保证的常量
+          </text>
+          <rect
+            class="node video"
+            x="814"
+            y="366"
+            width="188"
+            height="116"
+            rx="13"
+          />
+          <text class="nt" x="908" y="400">/dev/video0</text>
+          <text class="ns" x="908" y="425">应用 V4L2 取帧入口</text>
+          <text class="ns" x="908" y="447">常见内存格式：NV12</text>
+          <path
+            d="M908 298V366"
+            fill="none"
+            stroke="#8498aa"
+            stroke-width="1.8"
+            marker-end="url(#a3)"
+          />
+          <path
+            d="M730 424H814"
+            fill="none"
+            stroke="#8498aa"
+            stroke-width="1.8"
+            marker-end="url(#a3)"
+          />
+          <rect
+            class="node relation"
+            x="1132"
+            y="130"
+            width="402"
+            height="98"
+            rx="13"
+          />
+          <text class="nt" x="1333" y="163">1 · /dev/videoX 出现</text>
+          <text class="ns" x="1333" y="188">
+            能证明：video_register_device() 成功
+          </text>
+          <text class="ns" x="1333" y="209">
+            不能证明：RAW 已到 ISP 或 buffer 有帧
+          </text>
+          <rect
+            class="node isp"
+            x="1132"
+            y="258"
+            width="402"
+            height="98"
+            rx="13"
+          />
+          <text class="nt" x="1333" y="291">2 · VIDIOC_STREAMON 返回 0</text>
+          <text class="ns" x="1333" y="316">能证明：开流调用链未立即报错</text>
+          <text class="ns" x="1333" y="337">仍不能保证下一帧一定会抵达</text>
+          <rect
+            class="node result"
+            x="1132"
+            y="386"
+            width="402"
+            height="112"
+            rx="13"
+          />
+          <text class="nt" x="1333" y="419">3 · 连续 VIDIOC_DQBUF</text>
+          <text class="ns" x="1333" y="444">
+            能证明：用户态 buffer 正在回收有效帧
+          </text>
+          <text class="ns" x="1333" y="465">
+            再结合帧号/图像内容判断完整出图
+          </text>
+        </svg>
+      </section>
+      <section class="evidence-grid">
+        <article class="card">
+          <h3>RAW：<code>SGBRG10_1X10</code></h3>
+          <p>
+            Sensor/D-PHY/CSI subdev 使用的 Media Bus RAW10 格式，不是应用 buffer
+            的 FourCC。
+          </p>
+        </article>
+        <article class="card">
+          <h3>处理中：<code>YUYV8_2X8</code></h3>
+          <p>
+            ISP source pad 的媒体总线格式，表达 ISP 内部模块间协商出的数据格式。
+          </p>
+        </article>
+        <article class="card">
+          <h3>内存：<code>NV12</code></h3>
+          <p>
+            <code>/dev/videoX</code> 给应用的像素内存格式；它来自 Video Node/VB2
+            层，与 RAW10 不是同一层。
+          </p>
+        </article>
+      </section>
+
+      <div class="diagram-heading" id="rkisp-async-links">
+        <h3>图 4：外部 D-PHY 怎样通过 Async 汇合到 RKISP</h3>
+        <p>
+          <code>.bound()</code> 收集单个对象；<code>.complete()</code>
+          才进入整图建链。
+        </p>
+      </div>
+      <section class="diagram">
+        <svg
+          viewBox="0 0 1600 730"
+          role="img"
+          aria-labelledby="async-title async-desc"
+        >
+          <title id="async-title">RKISP Async 匹配与 Media Link 建立流程</title>
+          <desc id="async-desc">
+            D-PHY 和 RKISP 各自完成注册。RKISP notifier 解析 endpoint
+            生成等待条件，V4L2 Async 匹配真实 D-PHY subdev 后先回调 bound
+            收集对象，全部目标到齐后回调 complete，RKISP 再创建外部 D-PHY 到内部
+            CSI 和 ISP 的 Media Link。
+          </desc>
+          <defs>
+            <marker
+              id="a4"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto"
+            >
+              <path d="M0 0L10 5L0 10z" fill="#8498aa" />
+            </marker>
+            <marker
+              id="ad4"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto"
+            >
+              <path d="M0 0L10 5L0 10z" fill="#aa8be9" />
+            </marker>
+            <marker
+              id="ag4"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto"
+            >
+              <path d="M0 0L10 5L0 10z" fill="#64a66f" />
+            </marker>
+          </defs>
+
+          <rect class="lane" x="18" y="18" width="370" height="690" rx="22" />
+          <rect class="lane" x="408" y="18" width="370" height="690" rx="22" />
+          <rect class="lane" x="798" y="18" width="370" height="690" rx="22" />
+          <rect class="lane" x="1188" y="18" width="394" height="690" rx="22" />
+
+          <text class="lt" x="203" y="55">1 · 外部 D-PHY</text>
+          <text class="ls" x="203" y="76">独立 probe，先成为真实 subdev</text>
+          <text class="lt" x="593" y="55">2 · RKISP notifier</text>
+          <text class="ls" x="593" y="76">从 endpoint 生成等待条件</text>
+          <text class="lt" x="983" y="55">3 · V4L2 Async Core</text>
+          <text class="ls" x="983" y="76">比较 fwnode，按事件回调</text>
+          <text class="lt" x="1385" y="55">4 · RKISP 汇合</text>
+          <text class="ls" x="1385" y="76">收集对象后建立内部/外部 Link</text>
+
+          <rect class="node" x="58" y="128" width="290" height="108" rx="13" />
+          <text class="nt" x="203" y="160">rockchip_csi2_dphy_probe()</text>
+          <text class="ns" x="203" y="184">phy-rockchip-csi2-dphy.c</text>
+          <text class="ns" x="203" y="205">创建 dphy-&gt;sd、pads[2]</text>
+          <rect class="node" x="58" y="314" width="290" height="108" rx="13" />
+          <text class="nt" x="203" y="346">v4l2_async_register_subdev()</text>
+          <text class="ns" x="203" y="370">注册真实 dphy-&gt;sd</text>
+          <text class="ns" x="203" y="391">此时还不知道 RKISP 是否已就绪</text>
+          <path
+            d="M203 236V314"
+            fill="none"
+            stroke="#8498aa"
+            stroke-width="1.8"
+            marker-end="url(#a4)"
+          />
+
+          <rect
+            class="node isp"
+            x="448"
+            y="128"
+            width="290"
+            height="108"
+            rx="13"
+          />
+          <text class="nt" x="593" y="160">isp_subdev_notifier()</text>
+          <text class="ns" x="593" y="184">isp/dev.c</text>
+          <text class="ns" x="593" y="205">解析 RKISP 的 endpoint/fwnode</text>
+          <rect
+            class="node relation"
+            x="448"
+            y="314"
+            width="290"
+            height="108"
+            rx="13"
+          />
+          <text class="nt" x="593" y="346">notifier.waiting</text>
+          <text class="ns" x="593" y="370">保存“要等哪个远端 subdev”</text>
+          <text class="ns" x="593" y="391">是匹配描述，不是 D-PHY 对象</text>
+          <rect
+            class="node isp"
+            x="448"
+            y="500"
+            width="290"
+            height="108"
+            rx="13"
+          />
+          <text class="nt" x="593" y="532">v4l2_async_notifier_register()</text>
+          <text class="ns" x="593" y="556">注册 notifier 并立即返回</text>
+          <text class="ns" x="593" y="577">不会阻塞等待外部驱动</text>
+          <path
+            d="M593 236V314M593 422V500"
+            fill="none"
+            stroke="#8498aa"
+            stroke-width="1.8"
+            marker-end="url(#a4)"
+          />
+
+          <rect
+            class="node relation"
+            x="838"
+            y="128"
+            width="290"
+            height="108"
+            rx="13"
+          />
+          <text class="nt" x="983" y="160">v4l2_async_match_notify()</text>
+          <text class="ns" x="983" y="184">v4l2-async.c：fwnode 匹配</text>
+          <text class="ns" x="983" y="205">真实 dphy.sd ↔ waiting asd</text>
+          <rect class="node" x="838" y="314" width="290" height="108" rx="13" />
+          <text class="nt" x="983" y="346">notifier.ops-&gt;bound()</text>
+          <text class="ns" x="983" y="370">每匹配一个 subdev 回调一次</text>
+          <text class="ns" x="983" y="391">移动 waiting → done</text>
+          <rect
+            class="node result"
+            x="838"
+            y="500"
+            width="290"
+            height="108"
+            rx="13"
+          />
+          <text class="nt" x="983" y="532">notifier.ops-&gt;complete()</text>
+          <text class="ns" x="983" y="556">全部 waiting 清空后回调</text>
+          <text class="ns" x="983" y="577">表示本 notifier 的目标到齐</text>
+          <path
+            d="M738 368C790 368 780 182 838 182"
+            fill="none"
+            stroke="#aa8be9"
+            stroke-width="1.6"
+            stroke-dasharray="7 5"
+            marker-end="url(#ad4)"
+          />
+          <path
+            d="M348 368C650 368 650 182 838 182"
+            fill="none"
+            stroke="#aa8be9"
+            stroke-width="1.6"
+            stroke-dasharray="7 5"
+            marker-end="url(#ad4)"
+          />
+          <path
+            d="M983 236V314M983 422V500"
+            fill="none"
+            stroke="#8498aa"
+            stroke-width="1.8"
+            marker-end="url(#a4)"
+          />
+
+          <rect
+            class="node isp"
+            x="1228"
+            y="128"
+            width="314"
+            height="108"
+            rx="13"
+          />
+          <text class="nt" x="1385" y="160">subdev_notifier_bound()</text>
+          <text class="ns" x="1385" y="184">bound：收集一个外部 subdev</text>
+          <text class="ns" x="1385" y="205">保存到 dev-&gt;sensors[]</text>
+          <rect
+            class="node isp"
+            x="1228"
+            y="314"
+            width="314"
+            height="108"
+            rx="13"
+          />
+          <text class="nt" x="1385" y="346">subdev_notifier_complete()</text>
+          <text class="ns" x="1385" y="370">complete：所有目标到齐</text>
+          <text class="ns" x="1385" y="391">直接调用 rkisp_create_links()</text>
+          <rect
+            class="node video"
+            x="1228"
+            y="500"
+            width="314"
+            height="108"
+            rx="13"
+          />
+          <text class="nt" x="1385" y="532">rkisp_create_links()</text>
+          <text class="ns" x="1385" y="556">D-PHY Source → CSI Sink</text>
+          <text class="ns" x="1385" y="577">CSI Source → ISP Sink</text>
+          <path
+            d="M1128 368H1228M1128 554C1180 554 1170 368 1228 368"
+            fill="none"
+            stroke="#8498aa"
+            stroke-width="1.8"
+            marker-end="url(#a4)"
+          />
+          <path
+            d="M1385 422V500"
+            fill="none"
+            stroke="#8498aa"
+            stroke-width="1.8"
+            marker-end="url(#a4)"
+          />
+
+          <text class="ns" x="284" y="642">D-PHY Source Pad</text>
+          <path
+            d="M348 655H742"
+            fill="none"
+            stroke="#64a66f"
+            stroke-width="2.2"
+            marker-end="url(#ag4)"
+          />
+          <text class="ns" x="835" y="642">RKISP CSI Sink Pad</text>
+          <path
+            d="M928 655H1168"
+            fill="none"
+            stroke="#64a66f"
+            stroke-width="2.2"
+            marker-end="url(#ag4)"
+          />
+          <text class="ns" x="1280" y="642">RKISP ISP Sink Pad</text>
+          <text class="ns" x="790" y="681">
+            绿色：Media Link 建成后的像素方向；不是对 rkisp_create_links() 的函数调用
+          </text>
+        </svg>
+      </section>
+      <p class="reading-note">
+        <strong>Source Insight 顺序：</strong
+        ><code>dev.c → isp_subdev_notifier</code>，再读
+        <code>subdev_notifier_bound</code> 和
+        <code>subdev_notifier_complete</code>；进入
+        <code>v4l2-async.c → v4l2_async_match_notify</code>
+        看框架怎样回调，最后回到
+        <code>dev.c → rkisp_create_links</code>。<strong>证据边界：</strong
+        ><code>Async subdev notifier completed</code> 和完整 Media Graph
+        能证明软件对象已经汇合、Link 已建立，不能证明 D-PHY 已收到有效包或 ISP
+        已产生帧。
+      </p>
+
+      <div class="diagram-heading" id="rkisp-streaming">
+        <h3>
+          图 5：从 <code>VIDIOC_STREAMON</code> 反向启动，到 IRQ/DMA 把帧送回
+          <code>DQBUF</code>
+        </h3>
+        <p>
+          上半部分是控制流向硬件走；下半部分是像素和 buffer 完成事件返回应用。
+        </p>
+      </div>
+      <section class="diagram">
+        <svg
+          viewBox="0 0 1600 980"
+          role="img"
+          aria-labelledby="stream-title stream-desc"
+        >
+          <title id="stream-title">RKISP 开流调用和帧返回闭环</title>
+          <desc id="stream-desc">
+            应用发出 VIDIOC_STREAMON，V4L2 ioctl 函数表把请求交给 VB2；VB2 在
+            buffer 条件满足时回调 RKISP start_streaming。RKISP 配置 capture 与
+            DMA，并通过 pipeline set_stream 调用 ISP、CSI、D-PHY、Sensor 的
+            s_stream。真实帧随后由 ISP MI 和 DMA 写入 buffer，IRQ 中调用
+            vb2_buffer_done，用户才能 DQBUF。
+          </desc>
+          <defs>
+            <marker
+              id="a5"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto"
+            >
+              <path d="M0 0L10 5L0 10z" fill="#8498aa" />
+            </marker>
+            <marker
+              id="ad5"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto"
+            >
+              <path d="M0 0L10 5L0 10z" fill="#aa8be9" />
+            </marker>
+            <marker
+              id="ag5"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto"
+            >
+              <path d="M0 0L10 5L0 10z" fill="#64a66f" />
+            </marker>
+          </defs>
+
+          <rect class="lane" x="18" y="18" width="294" height="950" rx="22" />
+          <rect class="lane" x="330" y="18" width="294" height="950" rx="22" />
+          <rect class="lane" x="642" y="18" width="294" height="950" rx="22" />
+          <rect class="lane" x="954" y="18" width="294" height="950" rx="22" />
+          <rect class="lane" x="1266" y="18" width="316" height="950" rx="22" />
+          <text class="lt" x="165" y="55">1 · 应用</text>
+          <text class="ls" x="165" y="76">fd 与 ioctl ABI</text>
+          <text class="lt" x="477" y="55">2 · V4L2 Core</text>
+          <text class="ls" x="477" y="76">video_device 函数表分发</text>
+          <text class="lt" x="789" y="55">3 · VB2</text>
+          <text class="ls" x="789" y="76">通用 buffer 状态机</text>
+          <text class="lt" x="1101" y="55">4 · RKISP Capture</text>
+          <text class="ls" x="1101" y="76">stream、MI、DMA 与 pipeline</text>
+          <text class="lt" x="1424" y="55">5 · 上游 Subdev</text>
+          <text class="ls" x="1424" y="76">ISP / CSI / D-PHY / IMX415</text>
+
+          <text class="nt" x="800" y="112">
+            控制流（实线）：串行顺序：先准备本地采集，再启动上游
+          </text>
+          <rect class="node" x="55" y="145" width="220" height="108" rx="13" />
+          <text class="nt" x="165" y="178">ioctl(fd, VIDIOC_STREAMON)</text>
+          <text class="ns" x="165" y="203">应用只认识 /dev/videoX</text>
+          <text class="ns" x="165" y="224">不会直接调用 RKISP 函数</text>
+          <rect
+            class="node relation"
+            x="367"
+            y="145"
+            width="220"
+            height="108"
+            rx="13"
+          />
+          <text class="nt" x="477" y="178">video_ioctl2()</text>
+          <text class="ns" x="477" y="203">从 rkisp_v4l2_ioctl_ops 取处理函数</text>
+          <text class="ns" x="477" y="224">.vidioc_streamon → vb2_ioctl_streamon()</text>
+          <rect
+            class="node relation"
+            x="679"
+            y="145"
+            width="220"
+            height="108"
+            rx="13"
+          />
+          <text class="nt" x="789" y="178">vb2_ioctl_streamon()</text>
+          <text class="ns" x="789" y="203">→ vb2_streamon() → vb2_core_streamon()</text>
+          <text class="ns" x="789" y="224">条件满足后进入 vb2_start_streaming()</text>
+          <rect
+            class="node isp"
+            x="991"
+            y="128"
+            width="220"
+            height="142"
+            rx="13"
+          />
+          <text class="nt" x="1101" y="161">rkisp_start_streaming()</text>
+          <text class="ns" x="1101" y="185">q-&gt;ops = rkisp_vb2_ops</text>
+          <text class="ns" x="1101" y="207">.start_streaming 的框架回调</text>
+          <text class="ns" x="1101" y="229">先 pipe.open()：时钟 / 电源域</text>
+          <text class="ns" x="1101" y="249">再进入本地 Capture 准备</text>
+          <rect
+            class="node isp"
+            id="stream-upstream-start"
+            x="1314"
+            y="330"
+            width="220"
+            height="142"
+            rx="13"
+          />
+          <text class="nt" x="1424" y="363">rkisp_pipeline_set_stream()</text>
+          <text class="ns" x="1424" y="388">pipe.set_stream(true) 的真实实现</text>
+          <text class="ns" x="1424" y="409">先 ISP，再遍历 p-&gt;subdevs</text>
+          <text class="ns" x="1424" y="430">控制调用方向：ISP → 上游</text>
+          <path
+            d="M275 199H367M587 199H679M899 199H991"
+            fill="none"
+            stroke="#8498aa"
+            stroke-width="1.8"
+            marker-end="url(#a5)"
+          />
+
+          <rect
+            class="node video"
+            id="stream-local-ready"
+            x="991"
+            y="330"
+            width="220"
+            height="118"
+            rx="13"
+          />
+          <text class="nt" x="1101" y="363">rkisp_stream_start()</text>
+          <text class="ns" x="1101" y="388">先配置 MI / resize / DMA</text>
+          <text class="ns" x="1101" y="409">让 queued buffer 可被硬件写入</text>
+          <text class="ns" x="1101" y="430">返回后才执行 pipe.set_stream(true)</text>
+          <rect
+            class="node"
+            x="1314"
+            y="482"
+            width="220"
+            height="118"
+            rx="13"
+          />
+          <text class="nt" x="1424" y="515">各模块 s_stream(1)</text>
+          <text class="ns" x="1424" y="540">先 ISP，再 CSI / D-PHY / Sensor</text>
+          <text class="ns" x="1424" y="561">IMX415 最终退出 Standby</text>
+          <text class="ns" x="1424" y="582">开始发送 RAW 帧</text>
+          <path
+            d="M1101 270V330M1211 389H1314M1424 448V482"
+            fill="none"
+            stroke="#8498aa"
+            stroke-width="1.8"
+            marker-end="url(#a5)"
+          />
+
+          <text class="nt" x="800" y="640">
+            帧与 buffer 完成：真实数据从右向左返回用户态
+          </text>
+          <rect
+            class="node"
+            x="1314"
+            y="678"
+            width="220"
+            height="118"
+            rx="13"
+          />
+          <text class="nt" x="1424" y="711">Sensor → D-PHY → CSI → ISP</text>
+          <text class="ns" x="1424" y="736">RAW 到达，ISP 完成处理</text>
+          <text class="ns" x="1424" y="757">没有真实帧就不会完成 buffer</text>
+          <text class="ns" x="1424" y="778">数据面证据从这里开始</text>
+          <rect
+            class="node isp"
+            x="991"
+            y="678"
+            width="220"
+            height="118"
+            rx="13"
+          />
+          <text class="nt" x="1101" y="711">MI frame-end IRQ</text>
+          <text class="ns" x="1101" y="736">rkisp_mi_v21_isr() → mi_frame_end()</text>
+          <text class="ns" x="1101" y="757">DMA 已把一帧写入当前 buffer</text>
+          <text class="ns" x="1101" y="778">再交还 VB2</text>
+          <rect
+            class="node video"
+            x="679"
+            y="678"
+            width="220"
+            height="118"
+            rx="13"
+          />
+          <text class="nt" x="789" y="711">vb2_buffer_done()</text>
+          <text class="ns" x="789" y="736">VB2_BUF_STATE_DONE</text>
+          <text class="ns" x="789" y="757">buffer 从 ACTIVE 变为 DONE</text>
+          <text class="ns" x="789" y="778">唤醒等待取帧的应用</text>
+          <rect
+            class="node relation"
+            x="367"
+            y="678"
+            width="220"
+            height="118"
+            rx="13"
+          />
+          <text class="nt" x="477" y="711">vb2_ioctl_dqbuf()</text>
+          <text class="ns" x="477" y="736">V4L2/VB2 取出 DONE buffer</text>
+          <text class="ns" x="477" y="757">
+            复制 index / bytesused / sequence
+          </text>
+          <text class="ns" x="477" y="778">返回给 ioctl 调用者</text>
+          <rect
+            class="node video"
+            x="55"
+            y="678"
+            width="220"
+            height="118"
+            rx="13"
+          />
+          <text class="nt" x="165" y="711">VIDIOC_DQBUF</text>
+          <text class="ns" x="165" y="736">应用得到一帧 buffer</text>
+          <text class="ns" x="165" y="757">连续成功 + sequence 递增</text>
+          <text class="ns" x="165" y="778">才证明持续帧已到用户态</text>
+          <path
+            d="M1314 737H1211M991 737H899M679 737H587M367 737H275"
+            fill="none"
+            stroke="#64a66f"
+            stroke-width="2.4"
+            marker-end="url(#ag5)"
+          />
+
+          <rect
+            class="node relation"
+            x="367"
+            y="850"
+            width="846"
+            height="78"
+            rx="13"
+          />
+          <text class="nt" x="790" y="881">STREAMON 返回 0 不等于已有帧</text>
+          <text class="ns" x="790" y="905">
+            它只能证明启动调用链没有立即返回致命错误；还要看
+            IRQ、vb2_buffer_done() 和连续 VIDIOC_DQBUF
+          </text>
+        </svg>
+      </section>
+      <p class="reading-note">
+        <strong>Source Insight 顺序：</strong
+        ><code>capture.c → rkisp_v4l2_ioctl_ops</code>，确认
+        <code>VIDIOC_STREAMON</code> 交给 <code>vb2_ioctl_streamon</code>；再读
+        <code>capture_v21.c → rkisp_vb2_ops / rkisp_start_streaming</code>，跟进
+        <code>rkisp_stream_start</code> 与
+        <code>pipe.set_stream(true)</code>；最后到
+        <code>dev.c → rkisp_pipeline_set_stream</code> 看
+        <code>v4l2_subdev_call(..., s_stream)</code>。回帧时反向寻找 MI/ISP
+        IRQ、DMA 完成与
+        <code>vb2_buffer_done()</code>。<strong>排错顺序：</strong>软件图 →
+        启动回调 → CSI/ISP 中断 → buffer DONE → DQBUF。
+      </p>
+
+      <section class="grid">
+        <article class="card">
+          <h3>大白话</h3>
+          <p>
+            HW 层像统一机房，管理寄存器、时钟、IRQ；逻辑层像 Camera 项目组，拿着
+            HW 对象组装 CSI、ISP
+            和输出节点。这样多个逻辑实例不用各自重复占用同一套物理资源。
+          </p>
+        </article>
+        <article class="card">
+          <h3>证据边界</h3>
+          <p>
+            <code>rkisp driver version</code> 证明逻辑 probe 执行；出现
+            <code>/dev/video0</code> 证明 video_device 注册。两者都不能保证 RAW
+            已进入 ISP 或 DQBUF 能得到有效帧。
+          </p>
+        </article>
+        <article class="card">
+          <h3>面试表达</h3>
+          <p>
+            RKISP 驱动分 HW 与逻辑实例：HW probe 管共享资源，逻辑 probe attach
+            HW 后注册 CSI/ISP subdev 和 stream video_device；mainpath 通过
+            <code>video_register_device()</code> 暴露用户态节点。
+          </p>
+        </article>
+      </section>
+      <div class="source">
+        <strong>Source Insight：</strong
+        ><code>drivers/media/platform/rockchip/isp/hw.c → rkisp_hw_probe()</code
+        >；<code>dev.c → rkisp_plat_probe()</code
+        >、<code>rkisp_register_platform_subdevs()</code>；<code
+          >capture.c → rkisp_register_stream_vdev()</code
+        >。
+      </div>
+      <nav class="stage-nav">
+        <a href="21-MediaController-Entity-Pad-Link.html">← 阶段 06</a
+        ><a href="../00-首页/学习驾驶舱/pages/learning-route.html"
+          >返回完整路线</a
+        ><a href="23-V4L2-VB2用户态取流.html">阶段 08：V4L2 / VB2 取流 →</a>
+      </nav>
+    </main>
+  </body>
+</html>

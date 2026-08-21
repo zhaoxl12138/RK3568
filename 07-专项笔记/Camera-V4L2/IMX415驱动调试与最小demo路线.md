@@ -199,7 +199,7 @@ frame_sink.cpp/.h
 
 - [[V4L2命令行抓帧记录]]
 - [[OpenCV读取Camera记录]]
-- [[Camera驱动第1章-IMX415-Sensor与驱动]]
+- [[03-IMX415-Sensor-Bring-up]]
 - [[Camera驱动求职第1周执行计划]]
 
 #Camera #IMX415 #V4L2 #RKISP #Demo #Linux驱动

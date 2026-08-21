@@ -58,6 +58,7 @@ a:focus {
   background: rgb(8 13 28 / 90%);
   backdrop-filter: blur(18px);
 }
+.no-break { white-space: nowrap; }
 
 .site-nav a { color: inherit; text-decoration: none; }
 .site-nav__brand { display: grid; flex: 0 0 auto; color: white; line-height: 1.1; white-space: nowrap; }
@@ -127,6 +128,7 @@ a:focus {
 }
 .course-menu__item span { color: #7f8da8; font-family: "Cascadia Code", Consolas, monospace; font-size: .72rem; }
 .course-menu__item strong { overflow: hidden; color: var(--site-muted); font-size: .78rem; text-overflow: ellipsis; white-space: nowrap; }
+.course-menu__item small { margin-left: auto; color: #7f8da8; font-size: .64rem; white-space: nowrap; }
 .course-menu__item.is-complete span { color: #7fc29a; }
 .course-menu__item.is-current { border-color: rgb(101 165 255 / 42%); background: rgb(101 165 255 / 12%); }
 .course-menu__item.is-current span, .course-menu__item.is-current strong { color: #dceaff; }
@@ -205,6 +207,7 @@ a:focus {
 .course-footer-nav__inner { margin-top: 0; }
 
 .course-route { display: grid; gap: .8rem; }
+.course-route__scope { margin: 0 0 .2rem; padding: .7rem .85rem; border: 1px solid rgb(101 165 255 / 18%); border-radius: 12px; color: var(--site-muted); background: rgb(101 165 255 / 6%); font-size: .82rem; }
 .course-route__card {
   display: grid;
   grid-template-columns: 7rem minmax(12rem, .7fr) minmax(18rem, 1.5fr) auto;

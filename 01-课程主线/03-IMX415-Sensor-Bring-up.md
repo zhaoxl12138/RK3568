@@ -1,8 +1,51 @@
-# Camera 驱动第 1 章：IMX415 Sensor 与驱动
+---
+id: course-03-imx415-bring-up
+doc-type: course
+title: IMX415 Sensor Bring-up
+course-stage: "03"
+learning-status: review-needed
+evidence-status: verified
+publish-status: published
+updated: 2026-08-10
+---
 
-> 目标：用当前 RK3568 + IMX415 的真实原理图、DTS、内核源码和板端输出，解释 Sensor 如何从硬件连接变成 `/dev/video0`。
+# IMX415 Sensor Bring-up
 
-## 0. 一条主线
+## 为什么学习
+理解驱动注册、匹配、probe、上电、读 ID 与 V4L2 subdev 注册的真实边界。
+
+## 在整条链路中的位置
+`DTS 创建 i2c_client → I2C Core 匹配 imx415_i2c_driver → imx415_probe()`。
+
+## 输入 / 输出 / 软件身份 / 硬件身份
+输入是 `client->dev.of_node` 和 I2C 通道；输出是已确认 ID 的 V4L2 Sensor subdev。IMX415 是外部硬件，`imx415.c` 是 I2C Driver。
+
+## RK3568 当前对应
+板端设备为 `4-001a-1`，Sensor entity 为 `m00_b_imx415 4-001a-1`。
+
+## DTS / 源码入口
+DTS 属性见 [[02-DTS与设备发现]]；本章只关注 probe 怎样消费资源。驱动入口：`drivers/media/i2c/imx415.c`。
+
+## 实板验证
+`Detected imx415 id 0000e0` 证明控制通道、基本上电和读 ID 成功，但不能证明 MIPI 数据正确或能够出图。
+
+## 常见故障
+先区分未创建设备、未匹配驱动、上电失败、I2C 读 ID 失败和 subdev 注册失败。
+
+## 面试表达
+驱动注册只把能力交给 I2C Core；设备匹配成功后框架才回调 `imx415_probe()`。
+
+## 验收题
+读 ID 成功能证明什么，为什么仍不能证明 `/dev/video0` 一定能出图？
+
+## 下一阶段接口
+下一章进入 [[04-MIPI-CSI2-DPHY]]，追 RAW10 离开 Sensor 后怎样进入 SoC。
+
+### 学习记录与源码对照
+
+> 原始目标：用真实原理图、DTS、内核源码和板端输出解释 Sensor 初始化。
+
+#### 0. 一条主线
 
 ```text
 原理图
@@ -17,7 +60,7 @@
 
 本文按这条顺序阅读。每个结论至少对应一种证据：原理图位置、源码行号或板端输出。
 
-## 1. 当前板型的源码入口
+#### 1. 当前板型的源码入口
 
 SDK：
 
@@ -57,9 +100,9 @@ kernel/arch/arm64/boot/dts/rockchip/rk3568-atk-evb1-ddr4-v10.dtsi
 
 注意：源码中没有 `rk3568-atk-evb1-ddr4-v10.dts`，不要找错文件名。
 
-## 2. 原理图到 DTS：硬件为什么这样配置
+#### 2. 原理图到 DTS：硬件为什么这样配置
 
-### 2.1 两份原理图的位置
+##### 2.1 两份原理图的位置
 
 | 对象        | 文件                                                                            | 重点位置                        |
 | --------- | ----------------------------------------------------------------------------- | --------------------------- |
@@ -68,13 +111,13 @@ kernel/arch/arm64/boot/dts/rockchip/rk3568-atk-evb1-ddr4-v10.dtsi
 
 主板 MIPI CSI 接口：
 
-![主板 MIPI CSI 接口](assets/主板-MIPI-CSI接口.png)
+![主板 MIPI CSI 接口](../05-实验与证据/assets/主板-MIPI-CSI接口.png)
 
 IMX415 Sensor 引脚：
 
-![IMX415 Sensor 引脚](assets/IMX415-Sensor引脚.png)
+![IMX415 Sensor 引脚](../05-实验与证据/assets/IMX415-Sensor引脚.png)
 
-### 2.2 唯一硬件映射表
+##### 2.2 唯一硬件映射表
 
 | IMX415 模组信号   | 主板网络                 | DTS 表达                                                | 驱动中的资源/用途             |
 | ------------- | -------------------- | ----------------------------------------------------- | --------------------- |
@@ -99,7 +142,7 @@ GPIO 的确认顺序是：
 
 它们不是在 DTS 中随意选择的。
 
-### 2.3 电源与时钟的特殊点
+##### 2.3 电源与时钟的特殊点
 
 IMX415 模组使用 VCC3.3，通过板载 LDO 生成：
 
@@ -114,7 +157,7 @@ VCC3.3
 
 模组上的 `24MHZ/NC` 标记为不装，实际外部时钟由 RK3568 的 `CIF_CLKOUT` 提供。
 
-### 2.4 Sony 芯片上电时序与 ATK 模组控制
+##### 2.4 Sony 芯片上电时序与 ATK 模组控制
 
 > [!important] 先记结论
 > `power-gpios` 只对应一根 `CSI_PDN` 控制线，不能分别控制 `DVDD`、`OVDD/DOVDD`、`AVDD` 三路电源，也不能把它直接等同于 Sony 上电时序图中的三条电源曲线。
@@ -131,9 +174,9 @@ E:\【正点原子】RK3568开发板资料（A盘）-基础资料
 \IMX415-AAQR-C_Datasheet_E19504(产品信息).pdf
 ```
 
-![Sony IMX415上电时序（Datasheet第84页）](assets/IMX415-Sony上电时序-第84页.png)
+![Sony IMX415上电时序（Datasheet第84页）](../05-实验与证据/assets/IMX415-Sony上电时序-第84页.png)
 
-#### 2.4.1 Sony 图中各信号代表什么
+###### 2.4.1 Sony 图中各信号代表什么
 
 | Sony 图中的信号 | 含义 | 当前硬件/驱动中的对应对象 |
 |---|---|---|
@@ -152,7 +195,7 @@ XCLR = Low  → 保持复位
 XCLR = High → Clear OFF，解除复位
 ```
 
-#### 2.4.2 Sony 规定的最低时间
+###### 2.4.2 Sony 规定的最低时间
 
 ```text
 DVDD 上升
@@ -173,7 +216,7 @@ DVDD 上升
 | `T3` | XCLR 解除到 INCK 输入 | ≥ 1μs |
 | `T4` | XCLR 解除到开始 I2C 通信 | ≥ 20μs |
 
-#### 2.4.3 当前模组为什么只有一个 `power-gpios`
+###### 2.4.3 当前模组为什么只有一个 `power-gpios`
 
 当前 DTS：
 
@@ -210,7 +253,7 @@ dvdd-supply = <&vcc_camera_1v2>;
 
 当前 DTS 没有这三个属性，所以 `regulator_bulk_enable()` 操作的是 dummy regulator，不会改变真实电压。Sony 要求的三路电源上升过程由 VCC3.3、模组 LDO 及硬件特性负责，不是由 `power_gpio` 完成。
 
-#### 2.4.4 驱动代码实际执行的控制时序
+###### 2.4.4 驱动代码实际执行的控制时序
 
 `__imx415_power_on()` 执行的是 RK3568 能控制的模组级动作：
 
@@ -250,7 +293,7 @@ reset_gpio = 1
 
 这也解释了为什么 `Detected imx415 id 0000e0` 能够出现：三路真实供电已经存在，驱动完成了模组使能、解除复位和时钟输入，随后 I2C 成功读取芯片 ID。但它仍不能证明 MIPI 已经输出图像。
 
-## 3. IMX415 设备树节点
+#### 3. IMX415 设备树节点
 
 位置：
 
@@ -290,7 +333,7 @@ imx415：约第 650 行
 };
 ```
 
-### 每组属性负责什么
+##### 每组属性负责什么
 
 | 属性组                         | 作用                      | 直接影响                  |
 | --------------------------- | ----------------------- | --------------------- |
@@ -320,13 +363,13 @@ MIPI CSI-2 → 高速数据：传输 IMX415 输出的 RAW10 图像
 
 图像数据不会经过 I2C；`port/endpoint` 放在 I2C 设备节点中，只是为了完整描述这颗 Sensor 的数据连接。
 
-## 4. 从 DTS 到 `imx415_probe()`
+#### 4. 从 DTS 到 `imx415_probe()`
 
-### 4.1 函数调用流程图
+##### 4.1 函数调用流程图
 
 > 网页大图： [打开 IMX415 三层驱动调用流程](../04-项目/16-IMX415-三层驱动调用流程.html)
 
-### 4.2 四个角色分别干什么
+##### 4.2 四个角色分别干什么
 
 | 模块           | 大白话角色            | 它知道什么                                                | 它不负责什么                                      |
 | ------------ | ---------------- | ---------------------------------------------------- | ------------------------------------------- |
@@ -337,7 +380,7 @@ MIPI CSI-2 → 高速数据：传输 IMX415 输出的 RAW10 图像
 
 `I2C Core` 是内核框架；`i2c_client` 是它根据 DTS 创建的设备对象，二者不是同一个东西。
 
-### 4.3 注册、创建设备与匹配
+##### 4.3 注册、创建设备与匹配
 
 先分清本轮最关键的疑问：
 
@@ -463,7 +506,7 @@ imx415_probe(client, id);
 
 这时才轮到 IMX415 驱动真正操作硬件：获取时钟和 GPIO、上电、读取 `0000e0`、注册 V4L2 subdev。
 
-### 4.4 为什么有两个 `probe`
+##### 4.4 为什么有两个 `probe`
 
 ```text
 i2c_bus_type.probe = i2c_device_probe
@@ -485,7 +528,7 @@ Linux 通用驱动模型
 → IMX415 驱动的 imx415_probe()
 ```
 
-### 4.5 `compatible` 如何匹配
+##### 4.5 `compatible` 如何匹配
 
 DTS：
 
@@ -504,7 +547,7 @@ static const struct of_device_id imx415_of_match[] = {
 
 两者相同，`i2c_device_match()` 才允许继续绑定。但这只是软件匹配，不证明真实硬件存在。
 
-### 4.6 `struct i2c_client` 与信息来源
+##### 4.6 `struct i2c_client` 与信息来源
 
 它代表内核中的一个 I2C 从设备实例：
 
@@ -545,7 +588,7 @@ imx415.c            → 提供寄存器地址、模式表、预期 Sensor ID
 真实 IMX415         → 通过 I2C 返回实际 Sensor ID
 ```
 
-## 5. endpoint：图像数据接到哪里
+#### 5. endpoint：图像数据接到哪里
 
 Sensor 输出端：
 
@@ -603,7 +646,7 @@ imx415_out
 
 endpoint 写错不会阻止 I2C 读取 Sensor ID，但会导致 Media Graph 无法形成完整图像链路。
 
-## 6. `imx415_probe()`：真实硬件初始化
+#### 6. `imx415_probe()`：真实硬件初始化
 
 驱动文件：
 
@@ -627,7 +670,7 @@ kernel/drivers/media/i2c/imx415.c
 | `2610` | `imx415_i2c_driver`        |
 | `2621` | `sensor_mod_init()`        |
 
-### 6.1 probe 的有效阅读顺序
+##### 6.1 probe 的有效阅读顺序
 
 | 顺序 | 动作 | 对应 DTS/硬件 |
 |---:|---|---|
@@ -643,7 +686,7 @@ kernel/drivers/media/i2c/imx415.c
 
 第一次阅读可以暂时跳过 `devm_kzalloc`、mutex、`memset`、`snprintf` 和错误清理标签；先吃透第 3～8 步。
 
-### 6.2 日志和 sysfs 分别证明什么
+##### 6.2 日志和 sysfs 分别证明什么
 
 | 板端证据                              | 能证明什么                    | 不能证明什么         |
 | --------------------------------- | ------------------------ | -------------- |
@@ -673,7 +716,7 @@ compatible 匹配成功 ≠ 真实 Sensor 已响应
 Media Graph 完整    ≠ 图像内容一定正确
 ```
 
-## 7. 内核配置与 `/dev/video0`
+#### 7. 内核配置与 `/dev/video0`
 
 IMX415 驱动的编译关系：
 
@@ -699,7 +742,7 @@ CONFIG_VIDEO_IMX415=m
 → 编译为 imx415.ko
 → 模块加载后才注册驱动
 
-# CONFIG_VIDEO_IMX415 is not set
+### CONFIG_VIDEO_IMX415 is not set
 → 不参与编译
 → 系统中没有这个驱动
 ```
@@ -727,9 +770,9 @@ IMX415 输出 SGBRG10_1X10（RAW10）
 
 所以 `/dev/video0` 不是 Sensor 驱动单独创建的。Sensor 驱动注册的是 V4L2 subdev；RKISP 主路径注册视频采集节点。
 
-## 8. 新板卡固定排查顺序
+#### 8. 新板卡固定排查顺序
 
-### 8.1 动手前必须拿到的资料
+##### 8.1 动手前必须拿到的资料
 
 没有下面这些资料，不应该直接修改 DTS 或 Sensor 驱动：
 
@@ -752,7 +795,7 @@ IMX415 输出 SGBRG10_1X10（RAW10）
 → 模组供电由谁提供
 ```
 
-### 8.2 bring-up 固定顺序
+##### 8.2 bring-up 固定顺序
 
 1. 原理图：确认电源、MCLK、RESET、PWDN、I2C 和 MIPI Lane。
 2. BoardConfig：确认 `RK_KERNEL_DTS`。
@@ -776,15 +819,15 @@ IMX415 输出 SGBRG10_1X10（RAW10）
 → 谁注册 /dev/video0
 ```
 
-## 9. 岗位化面试复盘
+#### 9. 岗位化面试复盘
 
 > 本节用于把已经学过的内容转成面试表达，不阻塞第二章学习，也不提前提供标准答案。
 >
 > 请先保留自己的真实理解。不会的地方可以写“不懂”，回答后再补充高亮正确答案、当前板子证据和面试官追问。
 
-### 第一轮：核心原理
+##### 第一轮：核心原理
 
-#### 问题 1｜两条初始化路径
+###### 问题 1｜两条初始化路径
 
 开机过程中，DTS 中的 `imx415@1a` 和 `CONFIG_VIDEO_IMX415=y` 分别触发什么？
 
@@ -800,7 +843,7 @@ IMX415 输出 SGBRG10_1X10（RAW10）
 
 **我的回答：**
 
-#### 问题 2｜IMX415 驱动的信息从哪里来
+###### 问题 2｜IMX415 驱动的信息从哪里来
 
 `imx415_probe(struct i2c_client *client, ...)` 开始执行后，下面这些信息分别来自哪里？
 
@@ -815,7 +858,7 @@ IMX415 寄存器地址、模式表和预期芯片 ID
 
 **我的回答：**
 
-#### 问题 3｜probe 与真实硬件验证
+###### 问题 3｜probe 与真实硬件验证
 
 请按有效阅读顺序介绍 `imx415_probe()`：
 
@@ -836,7 +879,7 @@ IMX415 寄存器地址、模式表和预期芯片 ID
 
 **我的回答：**
 
-#### 问题 4｜控制流与图像数据流
+###### 问题 4｜控制流与图像数据流
 
 为什么 IMX415 节点写在 `&i2c4` 下面，但图像数据并不经过 I2C？
 
@@ -853,9 +896,9 @@ V4L2 subdev
 
 **我的回答：**
 
-### 第二轮：故障场景与项目表达
+##### 第二轮：故障场景与项目表达
 
-#### 问题 5｜没有 I2C client
+###### 问题 5｜没有 I2C client
 
 运行下面的命令，没有找到 `4-001a-1`：
 
@@ -867,7 +910,7 @@ ls -l /sys/bus/i2c/devices/
 
 **我的回答：**
 
-#### 问题 6｜已经绑定驱动，但读不到 Sensor ID
+###### 问题 6｜已经绑定驱动，但读不到 Sensor ID
 
 运行时已经能看到：
 
@@ -888,7 +931,7 @@ Detected imx415 id 0000e0
 
 **我的回答：**
 
-#### 问题 7｜拿到新板子和新 Sensor
+###### 问题 7｜拿到新板子和新 Sensor
 
 假设给你一块新 RK3568 板卡和一个新的 MIPI Sensor，要求独立完成 bring-up。请按实际工作顺序说明：
 
@@ -903,7 +946,7 @@ Detected imx415 id 0000e0
 
 **我的回答：**
 
-#### 问题 8｜90 秒项目讲解
+###### 问题 8｜90 秒项目讲解
 
 请用 60～90 秒向面试官介绍：
 
@@ -921,3 +964,157 @@ Detected imx415 id 0000e0
 ```
 
 **我的回答：**
+
+
+### 学习问答与订正
+
+#### Day 1 回顾题｜2026-07-29
+
+> 先用自己的话回答。回答完成后，把内容发给我；我会逐题判断，并将 `<mark>正确答案：</mark>` 写在你的答案下面。
+
+1. `imx415@1a` 中的 `1a` 是什么意思？
+
+   **我的回答：**1a表示设备的地址
+
+   <mark>判断：正确。</mark>
+
+   <mark>正确答案：</mark> `1a` 是该节点的 unit-address，对应 `reg = <0x1a>`，表示 IMX415 在当前 I2C 总线上的 7 位从设备地址 `0x1a`。
+
+2. `4-001a-1` 中，`4` 和 `001a` 分别表示什么？
+
+   **我的回答：**4代表的第四个I2C 001a表示设备的地址
+
+   <mark>判断：基本正确，表述需要精确。</mark>
+
+   <mark>正确答案：</mark> `4` 表示 Linux 中编号为 4 的 I2C adapter，也就是当前板子的 I2C4；`001a` 表示从设备地址 `0x1a`。不要机械理解成“发现的第四个 I2C 设备”。末尾的 `-1` 是当前 Rockchip 厂商驱动生成的实例命名部分，本阶段不依靠它判断总线或地址。
+
+3. `sensor_mod_init()` 是否直接调用 `imx415_probe()`？如果不是，真正是谁调用的？
+
+   **我的回答：**不是直接调用的 是I2C总线调用的
+
+   <mark>判断：方向正确，但“I2C 总线调用”不够准确。</mark>
+
+   <mark>正确答案：</mark> `sensor_mod_init()` 只通过 `i2c_add_driver()` 注册 `imx415_i2c_driver`。设备与驱动匹配成功后，由 Linux 驱动模型和 I2C Core 通过驱动的 `.probe` 回调调用 `imx415_probe(client, id)`。
+
+4. `compatible` 匹配成功，能否证明板子上真的连接了 IMX415？为什么？
+
+   **我的回答：**不能 不知道
+
+   <mark>判断：结论正确，原因没有回答。</mark>
+
+   <mark>正确答案：</mark> 不能。`compatible` 只是 DTS 与驱动 `of_match_table` 之间的软件字符串匹配，即使 DTS 写错了型号也可能完成匹配。必须在 `probe()` 中完成上电、退出复位，并通过真实 I2C 读取正确的 Sensor ID，才能确认硬件通信和型号。
+
+5. 哪一条日志可以证明 Sensor 已经完成基本上电、退出复位，并能够通过 I2C 返回芯片 ID？
+
+   **我的回答：**imx415_check_sensor_id
+
+   <mark>判断：不正确。你写的是执行检查的函数名，题目问的是板端日志证据。</mark>
+
+   <mark>正确答案：</mark>
+
+   ```text
+   imx415 4-001a-1: Detected imx415 id 0000e0
+   ```
+
+   这条日志来自 `imx415_check_sensor_id()` 成功读取并校验芯片 ID 之后。
+
+
+#### Day 2 第 1 轮回答与订正｜2026-07-30
+
+1. `imx415_probe()` 从哪里取得 DTS 节点？
+
+   **我的回答：**不太确定，`i2c_client` 里面的吧。
+
+   <mark>判断：方向正确。</mark>
+
+   <mark>正确答案：</mark> I2C Core 调用 `imx415_probe(client, id)` 时把已经关联 DTS 节点的 `i2c_client` 传进来。驱动通过下面两行取得节点：
+
+   ```c
+   struct device *dev = &client->dev;
+   struct device_node *node = dev->of_node;
+   ```
+
+   因此入口是 `client->dev.of_node`，它指向运行时的 `/i2c@fe5d0000/imx415@1a`。
+
+2. 时钟、RESET、PDN 分别怎么从 DTS 进入驱动？
+
+   **我的回答：**不是一开始就注册了么？
+
+   <mark>判断：不正确。这里混淆了“注册驱动”和“获取当前设备资源”。</mark>
+
+   <mark>正确答案：</mark> `sensor_mod_init()` 注册 `imx415_i2c_driver` 时，只登记匹配表和回调函数，不会取得某一块板子的 GPIO、时钟。匹配成功进入 `imx415_probe()` 后，驱动才以 `client->dev` 为入口向内核资源框架申请资源：
+
+   ```text
+   devm_clk_get(dev, "xvclk")
+   ↔ clock-names = "xvclk" + clocks
+
+   devm_gpiod_get(dev, "reset", ...)
+   ↔ reset-gpios
+
+   devm_gpiod_get(dev, "power", ...)
+   ↔ power-gpios（当前原理图中的 PDN/使能控制线）
+   ```
+
+   这些 API 根据 `dev->of_node` 找到同一个 `imx415@1a` 节点，再把 DTS 描述转换成驱动可使用的 clock/GPIO descriptor。
+
+3. `__imx415_power_on()` 的上电顺序是什么？
+
+   **我的回答：**`power_gpio, 1 → usleep_range → reset_gpio, 0 → usleep_range → clk_set_rate → clk_prepare_enable → usleep_range`。
+
+   <mark>判断：后半段顺序基本正确，但漏掉了 pinctrl 和 regulator。</mark>
+
+   <mark>正确答案：</mark>
+
+   ```text
+   pinctrl_select_state(pins_default)
+   → regulator_bulk_enable(dvdd/dovdd/avdd)
+   → power_gpio = 1
+   → 等待 10～20 ms
+   → reset_gpio = 0（ACTIVE_LOW 下表示解除复位，物理引脚拉高）
+   → 等待 10～20 ms
+   → clk_set_rate(xvclk, IMX415_XVCLK_FREQ_37M)
+   → clk_prepare_enable(xvclk)
+   → 等待 20～30 ms
+   → 允许开始 I2C 通信
+   ```
+
+4. 为什么当前板子出现 dummy regulator，但仍能正常工作？
+
+   **我的回答：**有板子供电。我没找到函数具体判断位置。
+
+   <mark>判断：硬件原因方向正确，需要把具体代码路径补完整。</mark>
+
+   <mark>正确答案：</mark> IMX415 驱动先在 `imx415_configure_regulators()` 中调用：
+
+   ```text
+   devm_regulator_bulk_get()
+   → regulator_bulk_get()
+   → _regulator_get()
+   ```
+
+   当前 DTS 没有 `dvdd-supply`、`dovdd-supply`、`avdd-supply`，`_regulator_get()` 查找失败后使用 `dummy_regulator_rdev`，并打印 `using dummy regulator`。dummy regulator 只让软件供电接口继续工作，不会产生真实电压。真实硬件由模组输入的 VCC3.3 经过板载 LDO 生成 AVDD≈2.8V、DOVDD≈1.8V、DVDD≈1.2V，所以仍能读取 ID。
+
+   > [!important] 供电时序补充
+   > `power-gpios` 只对应一根 `CSI_PDN` 控制线，不能分别控制三路 LDO，也不等于 Sony 时序图中的三条电源曲线。Sony 原图、`XCLR` 映射、最低时间参数及当前驱动的实际控制边界，统一整理在 [[03-IMX415-Sensor-Bring-up#2.4 Sony 芯片上电时序与 ATK 模组控制]]。
+
+5. `Detected imx415 id 0000e0` 是哪段代码产生的？
+
+   **我的回答：**`imx415_check_sensor_id`。
+
+   <mark>判断：正确，补充到具体语句。</mark>
+
+   <mark>正确答案：</mark> `imx415_check_sensor_id()` 先调用 `imx415_read_reg()` 读取 `IMX415_REG_CHIP_ID`，比较结果与 `CHIP_ID`；匹配后执行：
+
+   ```c
+   dev_info(dev, "Detected imx415 id %06x\n", CHIP_ID);
+   ```
+
+6. 读取 Sensor ID 成功能证明什么，不能证明什么？
+
+   **我的回答：**说明物理识别到 415。不能说明就能出图。
+
+   <mark>判断：正确。</mark>
+
+   <mark>正确答案：</mark> 它证明 Sensor 已具备基本供电、时钟和退出复位条件，I2C4 能访问 `0x1a`，读取值与 IMX415 的预期 ID 一致。它不能证明 endpoint/Media Graph 已绑定、MIPI CSI-2 已有数据、RKISP 已完成处理、应用已经 stream on，也不能证明图像内容和质量正常。
+
+通过标准：能按顺序讲出“资源获取 → 上电 → 读 ID”，并明确哪些是 DTS 描述、哪些是驱动实际动作。
