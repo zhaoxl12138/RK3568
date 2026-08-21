@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>05-V4L2-Subdev · RK3568</title><link rel="stylesheet" href="../../site.css?v=410aa77861"></head><body><div class="page-shell"><nav class="site-nav" data-site-nav aria-label="RK3568 Camera 课程导航"><a class="site-nav__brand" href="../../index.html"><span>RK3568</span><strong>Camera 课程</strong></a><div class="site-nav__links"><a href="../../index.html" data-nav-key="home">学习首页</a><a href="../learning-route.html" data-nav-key="route">完整路线</a><a href="../project.html" data-nav-key="project">项目</a></div><details class="site-nav__more course-menu"><summary>课程目录</summary><div class="site-nav__more-panel course-menu__grid"><a class="course-menu__item" href="../system-map.html"><span>00</span><strong>总览</strong></a><a class="course-menu__item" href="../../../../04-项目/15-Linux设备模型与总线分层.html"><span>01</span><strong>Linux Driver Model</strong></a><a class="course-menu__item" href="../../../../04-项目/20-DTS到运行时设备发现.html"><span>02</span><strong>DTS 与设备发现</strong></a><a class="course-menu__item" href="../../../../04-项目/16-IMX415-三层驱动调用流程.html"><span>03</span><strong>IMX415 Sensor</strong></a><a class="course-menu__item" href="../../../../04-项目/17-DPHY-从DTS到MediaGraph.html"><span>04</span><strong>MIPI CSI-2 / D-PHY</strong></a><a class="course-menu__item" href="../../../../04-项目/19-IMX415-v4l2-subdev注册与开流.html"><span>05</span><strong>V4L2 Subdev</strong></a><a class="course-menu__item" href="../../../../04-项目/21-MediaController-Entity-Pad-Link.html"><span>06</span><strong>Media Controller</strong></a><a class="course-menu__item" href="../../../../04-项目/22-RKISP-从RAW到VideoNode.html"><span>07</span><strong>RKISP</strong></a><a class="course-menu__item" href="../../../../04-项目/23-V4L2-VB2用户态取流.html"><span>08</span><strong>V4L2 用户态取流</strong></a><a class="course-menu__item" href="07-专项笔记--OpenCV--OpenCV读取Camera记录.html"><span>09</span><strong>GStreamer / OpenCV</strong></a><a class="course-menu__item" href="07-专项笔记--系统--AI Camera系统数据流与模块边界.html"><span>10</span><strong>RKNN / YOLO</strong></a><a class="course-menu__item" href="07-专项笔记--系统--AI Camera故障排查索引.html"><span>11</span><strong>Camera Bring-up 排障</strong></a></div></details><details class="site-nav__more reference-menu"><summary data-nav-key="reference" aria-current="page">资料与实验</summary><div class="site-nav__more-panel reference-menu__panel"><a href="../evidence.html" data-nav-key="evidence">实验依据</a><a href="../notes.html" data-nav-key="notes">专项笔记</a><a href="../environment.html" data-nav-key="environment">开发环境</a><a href="../phase0.html" data-nav-key="phase0">可视化参考</a><a href="../archive.html" data-nav-key="archive">归档</a><a href="obsidian://open?vault=RK3568&amp;file=00-%E9%A6%96%E9%A1%B5%2F00-RK3568%E5%AD%A6%E4%B9%A0%E4%B8%BB%E5%85%A5%E5%8F%A3">在 Obsidian 中打开</a></div></details><div class="site-nav__tools"><a class="site-nav__stage course-status" href="../learning-route.html#stage-05" title="当前学习阶段">当前 阶段 05 · V4L2 Subdev</a></div></nav><main id="main-content" class="note-page"><header class="hero"><p class="hero__eyebrow">GENERATED NOTE · 01-课程主线</p><h1>05-V4L2-Subdev </h1><p>此页面由 Markdown 知识源自动生成，适合网页阅读；编辑仍请回到 Obsidian。</p><div class="hero__actions"><a class="button" href="obsidian://open?vault=RK3568&amp;file=01-%E8%AF%BE%E7%A8%8B%E4%B8%BB%E7%BA%BF%2F05-V4L2-Subdev">在 Obsidian 中打开</a></div></header><article class="note-content"><p>---<br>id: course-05-v4l2-subdev<br>doc-type: course<br>title: V4L2 Subdev<br>course-stage: &quot;05&quot;<br>learning-status: in-progress<br>evidence-status: partial<br>publish-status: published<br>updated: 2026-08-12<br>---</p>
+<h2>V4L2 Subdev</h2>
+<blockquote>当前阶段入口：IMX415 V4L2 Subdev 源码陪读索引</blockquote>
+<h2>为什么学习</h2>
+<p><code>imx415_probe()</code> 能读到 Sensor ID，只证明控制面基本可用。要让 Camera 框架能够设置格式、曝光并开流，IMX415 驱动还必须把自己的能力组织成 <code>v4l2_subdev</code>、ops、controls、Media Pad，并注册到 V4L2 Async 框架。</p>
+<h2>本阶段只回答一件事</h2>
+<pre><code class="language-text">imx415.c 中已经写好的格式、控制和开流函数，
+怎样交给 V4L2 框架，并在未来请求到来时被调用？</code></pre>
+<h2>三个注册面</h2>
+<pre><code class="language-text">I2C Driver
+├─ imx415_probe()
+├─ imx415_remove()
+└─ runtime PM
+
+V4L2 subdev_ops
+├─ imx415_set_fmt()
+├─ imx415_get_fmt()
+└─ imx415_s_stream()
+
+V4L2 ctrl_ops
+└─ imx415_set_ctrl()</code></pre>
+<p>“驱动文件包含这些函数”不等于“初始化时把所有函数执行一遍”。注册的本质是把对象和函数地址交给框架；真正的格式、控制或开流请求到来时，框架才沿对应 ops 回调。</p>
+<h2>RK3568 当前对应</h2>
+<ul><li>Sensor 驱动：<code>drivers/media/i2c/imx415.c</code></li><li>V4L2 I2C 适配层：<code>drivers/media/v4l2-core/v4l2-common.c</code></li><li>Sensor Async 注册：<code>drivers/media/v4l2-core/v4l2-fwnode.c</code></li><li>可视化总览：IMX415 v4l2_subdev：从注册到开流</li></ul>
+<h2>当前源码节点</h2>
+<p>第一轮只追：</p>
+<pre><code class="language-text">device_initcall_sync(sensor_mod_init)
+→ sensor_mod_init()
+→ i2c_add_driver(&amp;imx415_i2c_driver)
+→ I2C 总线框架匹配后回调 imx415_probe()
+→ v4l2_i2c_subdev_init(sd, client, &amp;imx415_subdev_ops)
+→ media_entity_pads_init(...)
+→ v4l2_async_register_subdev_sensor_common(sd)</code></pre>
+<h2>通过条件</h2>
+<p>1. 分清 <code>.probe = imx415_probe</code> 是函数指针赋值，不是函数调用。<br>2. 解释 <code>sd = &amp;imx415-&gt;subdev</code> 中两个对象的包含关系。<br>3. 解释 <code>v4l2_i2c_subdev_init()</code> 做了什么、没有做什么。<br>4. 分清“挂接 ops”“创建 Source Pad”“Async 注册”三个动作。<br>5. 能从用户态 <code>STREAMON</code> 口述到 <code>imx415_s_stream()</code>，但暂不追 I2C 字节级实现。</p>
+<h2>下一阶段接口</h2>
+<p>阶段 05 完成后进入 06-Media-Controller，把 Sensor subdev 放回完整的 entity、pad、link 拓扑中。</p></article><footer class="footer"><a href="../notes.html">返回专项笔记导航</a> · <a href="../../index.html">返回驾驶舱首页</a></footer></main></div><script defer src="../../generated/vault-data.js?v=410aa77861"></script><script defer src="../../site.js?v=410aa77861"></script></body></html>

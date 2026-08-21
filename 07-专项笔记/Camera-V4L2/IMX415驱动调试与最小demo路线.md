@@ -199,7 +199,7 @@ frame_sink.cpp/.h
 
 - [[V4L2命令行抓帧记录]]
 - [[OpenCV读取Camera记录]]
-- [[01-AI视觉系统主线]]
-- [[02-从零到Python MVP学习路线]]
+- [[03-IMX415-Sensor-Bring-up]]
+- [[Camera驱动求职第1周执行计划]]
 
 #Camera #IMX415 #V4L2 #RKISP #Demo #Linux驱动

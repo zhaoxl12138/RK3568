@@ -5,6 +5,7 @@ import { access, mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promise
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import vm from 'node:vm';
 
 import {
   buildDashboardData,
@@ -205,15 +206,15 @@ test('parseStageTable ignores fenced examples and stops after the first relevant
 
 test('buildDashboardData indexes evidence assets with stage labels and warns for unknown stages', async () => {
   await Promise.all([
-    writeFixture('05-实验与证据/实验产物/01-实验产物索引.md', `
+    writeFixture('05-实验与证据/00-Camera证据索引.md', `
 ### 阶段 4 OpenCV
 ![[opencv_frame.jpg]]
 
 ### 未知阶段
 [演示](assets/demo.mp4)
 `),
-    writeFixture('05-实验与证据/实验产物/assets/opencv_frame.jpg', 'image'),
-    writeFixture('05-实验与证据/实验产物/assets/demo.mp4', 'video'),
+    writeFixture('05-实验与证据/assets/opencv_frame.jpg', 'image'),
+    writeFixture('05-实验与证据/assets/demo.mp4', 'video'),
   ]);
 
   const data = await buildDashboardData(vaultDir);
@@ -227,14 +228,14 @@ test('buildDashboardData indexes evidence assets with stage labels and warns for
 
 test('buildDashboardData assigns evidenceStageKey across punctuation variants and warns for unknown formats', async () => {
   await Promise.all([
-    writeFixture('07-专项笔记/系统/AI Camera分阶段验收标准.md', `
+    writeFixture('07-专项笔记/系统/Camera驱动能力验收矩阵.md', `
 ## 阶段总表
 | 阶段 | 要回答的问题 | 最小输出证据 | 通过标准 | 证据入口 |
 |---|---|---|---|---|
 | 1 Buildroot \u9a8c\u673a | q | e | c | [[e]] |
 | Buildroot 验机 | q | e | c | [[unknown]] |
 `),
-    writeFixture('05-实验与证据/实验产物/01-实验产物索引.md', `
+    writeFixture('05-实验与证据/00-Camera证据索引.md', `
 ### 相同阶段一的证据
 ![[evidence-a.jpg]]
 用到阶段：阶段 1，Buildroot 板端验机
@@ -247,9 +248,9 @@ test('buildDashboardData assigns evidenceStageKey across punctuation variants an
 ![[evidence-unknown.jpg]]
 用到阶段：Buildroot 验机
 `),
-    writeFixture('05-实验与证据/实验产物/assets/evidence-a.jpg', 'image'),
-    writeFixture('05-实验与证据/实验产物/assets/evidence-b.jpg', 'image'),
-    writeFixture('05-实验与证据/实验产物/assets/evidence-unknown.jpg', 'image'),
+    writeFixture('05-实验与证据/assets/evidence-a.jpg', 'image'),
+    writeFixture('05-实验与证据/assets/evidence-b.jpg', 'image'),
+    writeFixture('05-实验与证据/assets/evidence-unknown.jpg', 'image'),
   ]);
 
   const data = await buildDashboardData(vaultDir);
@@ -264,7 +265,7 @@ test('buildDashboardData assigns evidenceStageKey across punctuation variants an
 
 test('buildDashboardData distinguishes missing and explicitly invalid evidence stages', async () => {
   await Promise.all([
-    writeFixture('05-\u5b9e\u9a8c\u4e0e\u8bc1\u636e/\u5b9e\u9a8c\u4ea7\u7269/01-\u5b9e\u9a8c\u4ea7\u7269\u7d22\u5f15.md', `
+    writeFixture('05-\u5b9e\u9a8c\u4e0e\u8bc1\u636e/00-Camera\u8bc1\u636e\u7d22\u5f15.md', `
 ### \u9636\u6bb5 2 Missing field
 ![[missing-field.jpg]]
 
@@ -272,8 +273,8 @@ test('buildDashboardData distinguishes missing and explicitly invalid evidence s
 ![[explicit-invalid.jpg]]
 \u7528\u5230\u9636\u6bb5\uff1aNot a stage
 `),
-    writeFixture('05-\u5b9e\u9a8c\u4e0e\u8bc1\u636e/\u5b9e\u9a8c\u4ea7\u7269/assets/missing-field.jpg', 'image'),
-    writeFixture('05-\u5b9e\u9a8c\u4e0e\u8bc1\u636e/\u5b9e\u9a8c\u4ea7\u7269/assets/explicit-invalid.jpg', 'image'),
+    writeFixture('05-\u5b9e\u9a8c\u4e0e\u8bc1\u636e/assets/missing-field.jpg', 'image'),
+    writeFixture('05-\u5b9e\u9a8c\u4e0e\u8bc1\u636e/assets/explicit-invalid.jpg', 'image'),
   ]);
 
   const data = await buildDashboardData(vaultDir);
@@ -292,7 +293,7 @@ test('buildDashboardData distinguishes missing and explicitly invalid evidence s
 
 test('buildDashboardData parses realistic evidence sections, later stage fields, and embed aliases', async () => {
   await Promise.all([
-    writeFixture('05-实验与证据/实验产物/01-实验产物索引.md', `
+    writeFixture('05-实验与证据/00-Camera证据索引.md', `
 ## 关键实验产物
 
 ### 1. OpenCV单帧JPG
@@ -300,7 +301,7 @@ test('buildDashboardData parses realistic evidence sections, later stage fields,
 仓库内备份：
 
 \`\`\`text
-05-实验与证据\\实验产物\\assets\\opencv_frame_gst.jpg
+05-实验与证据\\assets\\opencv_frame_gst.jpg
 \`\`\`
 
 图片预览：
@@ -317,8 +318,8 @@ OpenCV 读取 Camera。
 
 ![[assets/yolo_hls_pull_test_frame.jpg|480]]
 `),
-    writeFixture('05-实验与证据/实验产物/assets/opencv_frame_gst.jpg', 'image'),
-    writeFixture('05-实验与证据/实验产物/assets/yolo_hls_pull_test_frame.jpg', 'image'),
+    writeFixture('05-实验与证据/assets/opencv_frame_gst.jpg', 'image'),
+    writeFixture('05-实验与证据/assets/yolo_hls_pull_test_frame.jpg', 'image'),
   ]);
 
   const data = await buildDashboardData(vaultDir);
@@ -334,7 +335,7 @@ OpenCV 读取 Camera。
 
 test('buildDashboardData maps explicit evidence semantics to stable learning stages', async () => {
   await Promise.all([
-    writeFixture('05-实验与证据/实验产物/01-实验产物索引.md', `
+    writeFixture('05-实验与证据/00-Camera证据索引.md', `
 ### OpenCV 默认摄像头读取 Camera
 ![[opencv.jpg]]
 
@@ -354,7 +355,7 @@ test('buildDashboardData maps explicit evidence semantics to stable learning sta
 ![[unknown.jpg]]
 `),
     ...['opencv.jpg', 'rknn.jpg', 'inference.jpg', 'streaming.jpg', 'display.jpg', 'unknown.jpg']
-      .map((name) => writeFixture(`05-实验与证据/实验产物/assets/${name}`, 'image')),
+      .map((name) => writeFixture(`05-实验与证据/assets/${name}`, 'image')),
   ]);
 
   const data = await buildDashboardData(vaultDir);
@@ -372,14 +373,14 @@ test('buildDashboardData maps explicit evidence semantics to stable learning sta
 
 test('buildDashboardData emits resolvable browser and vault paths with media metadata', async () => {
   await Promise.all([
-    writeFixture('05-实验与证据/实验产物/01-实验产物索引.md', `
+    writeFixture('05-实验与证据/00-Camera证据索引.md', `
 ### 1. Gallery media
 ![[assets/opencv_frame.jpg]]
 ![[assets/demo.mp4]]
 用到阶段：Stage media
 `),
-    writeFixture('05-实验与证据/实验产物/assets/opencv_frame.jpg', 'image'),
-    writeFixture('05-实验与证据/实验产物/assets/demo.mp4', 'video'),
+    writeFixture('05-实验与证据/assets/opencv_frame.jpg', 'image'),
+    writeFixture('05-实验与证据/assets/demo.mp4', 'video'),
   ]);
 
   const data = await buildDashboardData(vaultDir);
@@ -396,15 +397,15 @@ test('buildDashboardData emits resolvable browser and vault paths with media met
       name: 'demo.mp4',
       type: 'video',
       mediaType: 'video/mp4',
-      vaultPath: '05-实验与证据/实验产物/assets/demo.mp4',
-      assetPath: '../../05-实验与证据/实验产物/assets/demo.mp4',
+      vaultPath: '05-实验与证据/assets/demo.mp4',
+      assetPath: '../../05-实验与证据/assets/demo.mp4',
     },
     {
       name: 'opencv_frame.jpg',
       type: 'image',
       mediaType: 'image/jpeg',
-      vaultPath: '05-实验与证据/实验产物/assets/opencv_frame.jpg',
-      assetPath: '../../05-实验与证据/实验产物/assets/opencv_frame.jpg',
+      vaultPath: '05-实验与证据/assets/opencv_frame.jpg',
+      assetPath: '../../05-实验与证据/assets/opencv_frame.jpg',
     },
   ]);
   await Promise.all(data.evidence.map((item) => access(path.resolve(dashboardDir, item.assetPath))));
@@ -412,7 +413,7 @@ test('buildDashboardData emits resolvable browser and vault paths with media met
 
 test('buildDashboardData sorts normalized evidence names and warnings deterministically', async () => {
   await Promise.all([
-    writeFixture('05-实验与证据/实验产物/01-实验产物索引.md', `
+    writeFixture('05-实验与证据/00-Camera证据索引.md', `
 ### 1. 无阶段
 ![[assets\\中.jpg|300]]
 ![[assets/a.jpg|别名]]
@@ -420,9 +421,9 @@ test('buildDashboardData sorts normalized evidence names and warnings determinis
 ![[assets/é.jpg]]
 ![[assets/a.jpg|重复]]
 `),
-    writeFixture('05-实验与证据/实验产物/assets/中.jpg', 'image'),
-    writeFixture('05-实验与证据/实验产物/assets/a.jpg', 'image'),
-    writeFixture('05-实验与证据/实验产物/assets/é.jpg', 'image'),
+    writeFixture('05-实验与证据/assets/中.jpg', 'image'),
+    writeFixture('05-实验与证据/assets/a.jpg', 'image'),
+    writeFixture('05-实验与证据/assets/é.jpg', 'image'),
   ]);
 
   const first = await buildDashboardData(vaultDir);
@@ -432,7 +433,7 @@ test('buildDashboardData sorts normalized evidence names and warnings determinis
   assert.deepEqual(first.warnings, second.warnings);
   assert.deepEqual(first.warnings.slice(0, 2), [
     'Missing optional task board: 06-任务/01-下一步任务看板.md',
-    'Missing optional acceptance table: 07-专项笔记/系统/AI Camera分阶段验收标准.md',
+    'Missing optional acceptance table: 07-专项笔记/系统/Camera驱动能力验收矩阵.md',
   ]);
   assert.equal(new Set(first.warnings).size, first.warnings.length);
   assert.deepEqual(first.warnings.filter((warning) => warning.startsWith('Evidence has unknown stage:')), [
@@ -444,7 +445,7 @@ test('buildDashboardData sorts normalized evidence names and warnings determinis
 
 test('buildDashboardData matches exact case-sensitive basenames without substring collisions', async () => {
   await Promise.all([
-    writeFixture('05-实验与证据/实验产物/01-实验产物索引.md', `
+    writeFixture('05-实验与证据/00-Camera证据索引.md', `
 ### 1. Referenced lowercase asset
 ![[assets/myfoo.jpg]]
 用到阶段：Stage lowercase
@@ -453,8 +454,8 @@ test('buildDashboardData matches exact case-sensitive basenames without substrin
 ![[assets/FOO.jpg]]
 用到阶段：Wrong case
 `),
-    writeFixture('05-实验与证据/实验产物/assets/foo.jpg', 'image'),
-    writeFixture('05-实验与证据/实验产物/assets/myfoo.jpg', 'image'),
+    writeFixture('05-实验与证据/assets/foo.jpg', 'image'),
+    writeFixture('05-实验与证据/assets/myfoo.jpg', 'image'),
   ]);
 
   const data = await buildDashboardData(vaultDir);
@@ -470,7 +471,7 @@ test('buildDashboardData matches exact case-sensitive basenames without substrin
 
 test('buildDashboardData ignores temp and historical filenames absent from gallery assets', async () => {
   await Promise.all([
-    writeFixture('05-实验与证据/实验产物/01-实验产物索引.md', `
+    writeFixture('05-实验与证据/00-Camera证据索引.md', `
 ### 1. Gallery asset
 ![[assets/opencv_frame.jpg]]
 用到阶段：Stage gallery
@@ -481,7 +482,7 @@ bus.jpg
 /tmp/scrfd_result.jpg
 E:\\temp\\yolov5_result.jpg
 `),
-    writeFixture('05-实验与证据/实验产物/assets/opencv_frame.jpg', 'image'),
+    writeFixture('05-实验与证据/assets/opencv_frame.jpg', 'image'),
   ]);
 
   const data = await buildDashboardData(vaultDir);
@@ -492,8 +493,8 @@ E:\\temp\\yolov5_result.jpg
 
 test('buildObsidianUrl separately encodes the Chinese vault and normalized file path', () => {
   assert.equal(
-    buildObsidianUrl('RK3568 学习库', '07-专项笔记\\系统\\AI Camera分阶段验收标准.md'),
-    'obsidian://open?vault=RK3568%20%E5%AD%A6%E4%B9%A0%E5%BA%93&file=07-%E4%B8%93%E9%A1%B9%E7%AC%94%E8%AE%B0%2F%E7%B3%BB%E7%BB%9F%2FAI%20Camera%E5%88%86%E9%98%B6%E6%AE%B5%E9%AA%8C%E6%94%B6%E6%A0%87%E5%87%86',
+    buildObsidianUrl('RK3568 学习库', '07-专项笔记\\系统\\Camera驱动能力验收矩阵.md'),
+    'obsidian://open?vault=RK3568%20%E5%AD%A6%E4%B9%A0%E5%BA%93&file=07-%E4%B8%93%E9%A1%B9%E7%AC%94%E8%AE%B0%2F%E7%B3%BB%E7%BB%9F%2FCamera%E9%A9%B1%E5%8A%A8%E8%83%BD%E5%8A%9B%E9%AA%8C%E6%94%B6%E7%9F%A9%E9%98%B5',
   );
 });
 
@@ -505,7 +506,7 @@ test('buildDashboardData returns the dashboard shape and warns for missing optio
 ## 本轮唯一任务
 - [ ] 检查串口
 `),
-    writeFixture('07-专项笔记/系统/AI Camera分阶段验收标准.md', `
+    writeFixture('07-专项笔记/系统/Camera驱动能力验收矩阵.md', `
 ## 阶段总表
 | 阶段 | 要回答的问题 | 最小输出证据 | 通过标准 | 证据入口 |
 |---|---|---|---|---|
@@ -516,33 +517,94 @@ test('buildDashboardData returns the dashboard shape and warns for missing optio
   const data = await buildDashboardData(vaultDir);
 
   assert.deepEqual(Object.keys(data), [
-    'currentStage', 'currentTasks', 'stages', 'domains', 'evidence', 'quickLinks', 'warnings',
+    'currentStage', 'currentTasks', 'stages', 'domains', 'evidence', 'quickLinks', 'notes', 'warnings',
   ]);
   assert.equal(data.stages[0].status, 'current');
   assert.equal(data.warnings.some((warning) => warning.startsWith('Unknown stage status:')), false);
   assert.deepEqual(data.domains.map(({ name }) => name), [
-    'Camera', 'OpenCV', 'RKNN', 'Display', 'Streaming', 'System',
+    'Camera', 'V4L2', 'OpenCV', 'System',
   ]);
-  assert.equal(data.quickLinks.length, 9);
-  const projectTalk = data.quickLinks.find(({ name }) => name === 'projectTalk');
-  assert.equal(projectTalk.name, 'projectTalk');
-  assert.equal(projectTalk.url, buildObsidianUrl('RK3568', projectTalk.filePath));
-  assert.match(projectTalk.webPath, /^pages\/notes\/.+\.html$/u);
+  assert.deepEqual(
+    data.quickLinks.map(({ name, filePath }) => ({ name, filePath })),
+    [
+      { name: 'taskBoard', filePath: '06-任务/01-下一步任务看板.md' },
+      { name: 'activeRoute', filePath: '06-任务/Camera驱动求职第1周执行计划.md' },
+      { name: 'currentChapter', filePath: '01-课程主线/03-IMX415-Sensor-Bring-up.md' },
+      { name: 'dailyRecord', filePath: '05-实验与证据/2026-07-28-Camera驱动Day1验收.md' },
+      { name: 'acceptance', filePath: '07-专项笔记/系统/Camera驱动能力验收矩阵.md' },
+      { name: 'evidenceMoc', filePath: '05-实验与证据/2026-07-28-直连板端读取IMX415配置.md' },
+      { name: 'outputMoc', filePath: '09-输出沉淀/00-输出沉淀入口.md' },
+    ],
+  );
   assert.ok([...data.domains, ...data.quickLinks].every(({ url }) => url.includes('vault=RK3568&')));
+  assert.ok(data.notes.some(({ filePath, webPath }) => (
+    filePath === '06-任务/01-下一步任务看板.md'
+      && /^pages\/notes\/.+\.html$/u.test(webPath)
+  )));
   assert.ok(data.warnings.some((warning) => warning.includes('evidence')));
 });
 
 test('writeDashboardData emits a valid pretty JSON assignment with the required prefix', async () => {
+  await Promise.all([
+    writeFixture('00-首页/course-map.json', JSON.stringify({
+      stages: [{
+        id: '04',
+        title: 'MIPI CSI-2 / D-PHY',
+        objective: '从 DTS endpoint 追到 D-PHY 和 Media Graph。',
+        sourcePath: '06-任务/04-MIPI-CSI2-DPHY.md',
+        path: '../../04-项目/17-DPHY-从DTS到MediaGraph.html',
+      }],
+    })),
+    writeFixture('00-首页/00-当前学习状态.md', [
+      '---',
+      'course-stage: "04"',
+      'learning-unit: dphy-from-dts-to-media-graph',
+      'week: 1',
+      'day: 3',
+      'competency-id: C02',
+      'updated: 2026-08-09',
+      '---',
+      '',
+      '# 当前学习状态',
+    ].join('\n')),
+    writeFixture('06-任务/01-下一步任务看板.md', [
+      '## 当前阶段',
+      '- 阶段：阶段 2：旧任务编号',
+      '## 本轮唯一任务',
+      '- [ ] 不得覆盖课程阶段',
+    ].join('\n')),
+    writeFixture('06-任务/04-MIPI-CSI2-DPHY.md', '# MIPI CSI-2 / D-PHY'),
+  ]);
   const outputFile = path.join(vaultDir, '00-首页/学习驾驶舱/generated/vault-data.js');
+  const stalePage = path.join(
+    vaultDir,
+    '00-首页/学习驾驶舱/pages/notes/01-主线--旧路线.html',
+  );
+  await mkdir(path.dirname(stalePage), { recursive: true });
+  await writeFile(stalePage, '<!doctype html><title>stale</title>', 'utf8');
   await writeDashboardData(vaultDir, outputFile);
   const emitted = await readFile(outputFile, 'utf8');
   const prefix = 'window.RK3568_VAULT_DATA = ';
+  const context = { window: {} };
+  vm.runInNewContext(emitted, context, { filename: outputFile });
 
   assert.ok(emitted.startsWith(prefix));
-  assert.equal(emitted, `${prefix}${JSON.stringify(JSON.parse(emitted.slice(prefix.length, -2)), null, 2)};\n`);
-  assert.ok(JSON.parse(emitted.slice(prefix.length, -2)).quickLinks.every(
+  assert.deepEqual(JSON.parse(JSON.stringify(context.window.RK3568_COURSE)), {
+    currentStage: '04',
+    stages: [{
+      id: '04',
+      title: 'MIPI CSI-2 / D-PHY',
+      objective: '从 DTS endpoint 追到 D-PHY 和 Media Graph。',
+      sourcePath: '06-任务/04-MIPI-CSI2-DPHY.md',
+      path: '../../04-项目/17-DPHY-从DTS到MediaGraph.html',
+    }],
+  });
+  assert.equal(context.window.RK3568_VAULT_DATA.currentStage, '04');
+  assert.ok(context.window.RK3568_VAULT_DATA.quickLinks.every(
     ({ url }) => url.includes('vault=RK3568&'),
   ));
+  assert.doesNotMatch(emitted, /Camera驱动第2章-MIPI-DPHY与CSI2/u);
+  await assert.rejects(access(stalePage));
 });
 
 test('renderMarkdown turns note structure into escaped HTML and safe links', () => {
@@ -564,6 +626,8 @@ test('renderMarkdown turns note structure into escaped HTML and safe links', () 
     '| --- | --- |',
     '| NV12 | BGR |',
     '',
+    '![Sensor 时序](assets/sensor timing.png)',
+    '',
     '参见 [[系统地图|系统地图]]。',
   ].join('\n'), { linkMap: new Map([['系统地图', 'system-map.html']]) });
 
@@ -571,14 +635,113 @@ test('renderMarkdown turns note structure into escaped HTML and safe links', () 
   assert.match(html, /<code>appsink<\/code>/u);
   assert.match(html, /&lt;camera&gt;/u);
   assert.match(html, /<table>[\s\S]*<th>输入<\/th>[\s\S]*<td>BGR<\/td>/u);
+  assert.match(html, /<img src="assets\/sensor timing\.png" alt="Sensor 时序">/u);
   assert.match(html, /href="system-map\.html">系统地图<\/a>/u);
   assert.doesNotMatch(html, /<script>/iu);
 });
 
+test('writeDashboardData discovers and rewrites Markdown links outside the dashboard directory', async () => {
+  await writeFixture('00-首页/学习驾驶舱/index.html', '<!doctype html><meta charset="utf-8"><a href="pages/placeholder.html">页面</a>');
+  await writeFixture('00-首页/学习驾驶舱/pages/placeholder.html', '<!doctype html><meta charset="utf-8"><p>占位</p>');
+  await writeFixture('04-项目/diagram.html', '<!doctype html><meta charset="utf-8"><a href="../06-任务/source.md">源码笔记</a>');
+  await writeFixture('06-任务/source.md', '# 源码笔记\n\n中文内容必须生成网页。');
+
+  const outputFile = path.join(vaultDir, '00-首页/学习驾驶舱/generated/vault-data.js');
+  await writeDashboardData(vaultDir, outputFile);
+
+  const rewritten = await readFile(path.join(vaultDir, '04-项目/diagram.html'), 'utf8');
+  assert.doesNotMatch(rewritten, /\.md(?:#|["'])/u);
+  assert.match(
+    rewritten,
+    /\.\.\/00-首页\/学习驾驶舱\/pages\/notes\/06-任务--source\.html/u,
+  );
+  await access(path.join(
+    vaultDir,
+    '00-首页/学习驾驶舱/pages/notes/06-任务--source.html',
+  ));
+
+  await writeFixture('06-任务/source.md', '# 源码笔记\n\n第二次构建也必须同步。');
+  await writeDashboardData(vaultDir, outputFile);
+  const regenerated = await readFile(
+    path.join(vaultDir, '00-首页/学习驾驶舱/pages/notes/06-任务--source.html'),
+    'utf8',
+  );
+  assert.match(regenerated, /第二次构建也必须同步/u);
+});
+
+test('notes with web-publish false stay out of generated HTML and note data', async () => {
+  await writeFixture(
+    '06-任务/draft.md',
+    [
+      '---',
+      'web-publish: false',
+      'learning-status: in-progress',
+      '---',
+      '',
+      '# 学习草稿',
+      '',
+      '尚未完成的内容。',
+    ].join('\n'),
+  );
+  await writeFixture('06-任务/published.md', '# 已发布章节\n\n可以生成网页。');
+
+  const outputFile = path.join(
+    vaultDir,
+    '00-首页/学习驾驶舱/generated/vault-data.js',
+  );
+  await writeDashboardData(vaultDir, outputFile);
+
+  await assert.rejects(
+    access(path.join(
+      vaultDir,
+      '00-首页/学习驾驶舱/pages/notes/06-任务--draft.html',
+    )),
+    ({ code }) => code === 'ENOENT',
+  );
+  await access(path.join(
+    vaultDir,
+    '00-首页/学习驾驶舱/pages/notes/06-任务--published.html',
+  ));
+
+  const output = await readFile(outputFile, 'utf8');
+  assert.doesNotMatch(output, /06-任务\/draft\.md/u);
+  assert.match(output, /06-任务\/published\.md/u);
+});
+
+test('generated notes rebase source-relative links and resolve Obsidian image embeds', async () => {
+  await writeFixture('00-首页/学习驾驶舱/index.html', '<!doctype html><meta charset="utf-8"><a href="../../04-项目/source.md">项目笔记</a>');
+  await writeFixture('04-项目/source.md', [
+    '# 项目笔记',
+    '',
+    '[打开流程图](./diagram.html)',
+    '',
+    '![本地图](assets/local.png)',
+    '',
+    '![[shared.jpg]]',
+    '',
+    '[本机 PDF](<file:///E:/资料/手册.pdf>)',
+  ].join('\n'));
+  await writeFixture('04-项目/diagram.html', '<!doctype html><meta charset="utf-8"><p>流程图</p>');
+  await writeFixture('04-项目/assets/local.png', 'local image');
+  await writeFixture('05-实验与证据/assets/shared.jpg', 'shared image');
+
+  const outputFile = path.join(vaultDir, '00-首页/学习驾驶舱/generated/vault-data.js');
+  await writeDashboardData(vaultDir, outputFile);
+
+  const generated = await readFile(
+    path.join(vaultDir, '00-首页/学习驾驶舱/pages/notes/04-项目--source.html'),
+    'utf8',
+  );
+  assert.match(generated, /href="\.\.\/\.\.\/\.\.\/\.\.\/04-项目\/diagram\.html"/u);
+  assert.match(generated, /src="\.\.\/\.\.\/\.\.\/\.\.\/04-项目\/assets\/local\.png"/u);
+  assert.match(generated, /src="\.\.\/\.\.\/\.\.\/\.\.\/05-实验与证据\/assets\/shared\.jpg"/u);
+  assert.match(generated, /href="file:\/\/\/E:\/资料\/手册\.pdf"/u);
+});
+
 test('buildDashboardData exposes generated web paths and warns for missing important notes', async () => {
   await writeFixture('06-任务/01-下一步任务看板.md', '## 当前阶段\n- 阶段：1 Buildroot\n\n## 本轮唯一任务\n- [ ] 验机');
-  await writeFixture('07-专项笔记/系统/AI Camera分阶段验收标准.md', '## 阶段总表\n| 阶段 | 要回答的问题 | 最小输出证据 | 通过标准 | 证据入口 | 状态 |\n| --- | --- | --- | --- | --- | --- |\n| 1 Buildroot | Q | E | C | [[缺失笔记]] | 计划 |');
-  await writeFixture('05-实验与证据/实验产物/01-实验产物索引.md');
+  await writeFixture('07-专项笔记/系统/Camera驱动能力验收矩阵.md', '## 阶段总表\n| 阶段 | 要回答的问题 | 最小输出证据 | 通过标准 | 证据入口 | 状态 |\n| --- | --- | --- | --- | --- | --- |\n| 1 Buildroot | Q | E | C | [[缺失笔记]] | 计划 |');
+  await writeFixture('05-实验与证据/00-Camera证据索引.md');
 
   const data = await buildDashboardData(vaultDir);
   const taskBoard = data.quickLinks.find(({ name }) => name === 'taskBoard');

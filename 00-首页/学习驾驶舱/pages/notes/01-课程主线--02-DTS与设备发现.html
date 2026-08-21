@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>02-DTS与设备发现 · RK3568</title><link rel="stylesheet" href="../../site.css?v=410aa77861"></head><body><div class="page-shell"><nav class="site-nav" data-site-nav aria-label="RK3568 Camera 课程导航"><a class="site-nav__brand" href="../../index.html"><span>RK3568</span><strong>Camera 课程</strong></a><div class="site-nav__links"><a href="../../index.html" data-nav-key="home">学习首页</a><a href="../learning-route.html" data-nav-key="route">完整路线</a><a href="../project.html" data-nav-key="project">项目</a></div><details class="site-nav__more course-menu"><summary>课程目录</summary><div class="site-nav__more-panel course-menu__grid"><a class="course-menu__item" href="../system-map.html"><span>00</span><strong>总览</strong></a><a class="course-menu__item" href="../../../../04-项目/15-Linux设备模型与总线分层.html"><span>01</span><strong>Linux Driver Model</strong></a><a class="course-menu__item" href="../../../../04-项目/20-DTS到运行时设备发现.html"><span>02</span><strong>DTS 与设备发现</strong></a><a class="course-menu__item" href="../../../../04-项目/16-IMX415-三层驱动调用流程.html"><span>03</span><strong>IMX415 Sensor</strong></a><a class="course-menu__item" href="../../../../04-项目/17-DPHY-从DTS到MediaGraph.html"><span>04</span><strong>MIPI CSI-2 / D-PHY</strong></a><a class="course-menu__item" href="../../../../04-项目/19-IMX415-v4l2-subdev注册与开流.html"><span>05</span><strong>V4L2 Subdev</strong></a><a class="course-menu__item" href="../../../../04-项目/21-MediaController-Entity-Pad-Link.html"><span>06</span><strong>Media Controller</strong></a><a class="course-menu__item" href="../../../../04-项目/22-RKISP-从RAW到VideoNode.html"><span>07</span><strong>RKISP</strong></a><a class="course-menu__item" href="../../../../04-项目/23-V4L2-VB2用户态取流.html"><span>08</span><strong>V4L2 用户态取流</strong></a><a class="course-menu__item" href="07-专项笔记--OpenCV--OpenCV读取Camera记录.html"><span>09</span><strong>GStreamer / OpenCV</strong></a><a class="course-menu__item" href="07-专项笔记--系统--AI Camera系统数据流与模块边界.html"><span>10</span><strong>RKNN / YOLO</strong></a><a class="course-menu__item" href="07-专项笔记--系统--AI Camera故障排查索引.html"><span>11</span><strong>Camera Bring-up 排障</strong></a></div></details><details class="site-nav__more reference-menu"><summary data-nav-key="reference" aria-current="page">资料与实验</summary><div class="site-nav__more-panel reference-menu__panel"><a href="../evidence.html" data-nav-key="evidence">实验依据</a><a href="../notes.html" data-nav-key="notes">专项笔记</a><a href="../environment.html" data-nav-key="environment">开发环境</a><a href="../phase0.html" data-nav-key="phase0">可视化参考</a><a href="../archive.html" data-nav-key="archive">归档</a><a href="obsidian://open?vault=RK3568&amp;file=00-%E9%A6%96%E9%A1%B5%2F00-RK3568%E5%AD%A6%E4%B9%A0%E4%B8%BB%E5%85%A5%E5%8F%A3">在 Obsidian 中打开</a></div></details><div class="site-nav__tools"><a class="site-nav__stage course-status" href="../learning-route.html#stage-05" title="当前学习阶段">当前 阶段 05 · V4L2 Subdev</a></div></nav><main id="main-content" class="note-page"><header class="hero"><p class="hero__eyebrow">GENERATED NOTE · 01-课程主线</p><h1>02-DTS与设备发现 </h1><p>此页面由 Markdown 知识源自动生成，适合网页阅读；编辑仍请回到 Obsidian。</p><div class="hero__actions"><a class="button" href="obsidian://open?vault=RK3568&amp;file=01-%E8%AF%BE%E7%A8%8B%E4%B8%BB%E7%BA%BF%2F02-DTS%E4%B8%8E%E8%AE%BE%E5%A4%87%E5%8F%91%E7%8E%B0">在 Obsidian 中打开</a></div></header><article class="note-content"><p>---<br>id: course-02-dts-device-discovery<br>doc-type: course<br>title: DTS 与设备发现<br>course-stage: &quot;02&quot;<br>learning-status: review-needed<br>evidence-status: verified<br>publish-status: published<br>updated: 2026-08-10<br>---</p>
+<h2>DTS 与设备发现</h2>
+<h2>为什么学习</h2>
+<p>把原理图上的 I2C、时钟、GPIO 和 MIPI 连接翻译成 Linux 能创建和匹配设备的描述。</p>
+<h2>在整条链路中的位置</h2>
+<p><code>原理图 → DTS → platform_device / i2c_client → driver match → probe</code>。</p>
+<h2>输入 / 输出 / 软件身份 / 硬件身份</h2>
+<p>输入是板级连接和芯片资源；输出是运行时设备节点、I2C client 与 endpoint 关系。DTS 是硬件描述，不是驱动代码。</p>
+<h2>RK3568 当前对应</h2>
+<p>IMX415 位于 I2C4、地址 <code>0x1a</code>，<code>imx415_out</code> 与 <code>mipi_in_ucam1</code> 双向引用。</p>
+<h2>DTS / 源码入口</h2>
+<p>板级 DTSI：<code>rk3568-atk-evb1-ddr4-v10.dtsi</code>；通用语法见 DTS基础语法。</p>
+<h2>实板验证</h2>
+<p>运行时节点 <code>/sys/firmware/devicetree/base/i2c@fe5d0000/imx415@1a</code> 存在，<code>compatible=sony,imx415</code>、<code>reg=0x1a</code>。</p>
+<h2>常见故障</h2>
+<p>节点未合入最终 DTB、<code>status</code> 未启用、I2C 地址/总线错误、endpoint 单端或 lane 配置错误。</p>
+<h2>面试表达</h2>
+<p>DTS 同时描述控制面和数据面：I2C 父子关系创建 Sensor 设备，endpoint 描述图像数据连接。</p>
+<h2>验收题</h2>
+<p>为什么 IMX415 节点写在 <code>&amp;i2c4</code> 下，但图像数据不经过 I2C？</p>
+<h2>下一阶段接口</h2>
+<p>下一章进入 03-IMX415-Sensor-Bring-up，看驱动如何消费这些资源并完成 probe。</p>
+<h3>学习记录与源码对照</h3>
+<h3>四、从 IMX415 节点开始读</h3>
+<p>你这份 DTS 里，IMX415 位于：</p>
+<pre><code class="language-dts">&amp;i2c4 {
+    status = &quot;okay&quot;;
+
+    imx415: imx415@1a {
+        status = &quot;okay&quot;;
+        compatible = &quot;sony,imx415&quot;;
+        reg = &lt;0x1a&gt;;
+        ...
+    };
+};</code></pre>
+<p>这段首先告诉我们：</p>
+<pre><code class="language-text">IMX415 挂在 I2C4
+I2C 地址是 0x1a
+设备被启用
+使用 sony,imx415 驱动匹配字符串</code></pre>
+<p>这和你板端 Media Graph 中看到的：</p>
+<pre><code class="language-text">m00_b_imx415 4-001a-1</code></pre>
+<p>是能够对应上的。</p>
+<p>其中：</p>
+<pre><code class="language-text">4
+    I2C bus 4
+
+001a
+    I2C 地址 0x1a</code></pre>
+<p>---</p>
+<h3>五、逐项看 IMX415 的属性</h3>
+<p>原始节点是：</p>
+<pre><code class="language-dts">imx415: imx415@1a {
+    status = &quot;okay&quot;;
+    compatible = &quot;sony,imx415&quot;;
+    reg = &lt;0x1a&gt;;
+    clocks = &lt;&amp;cru CLK_CIF_OUT&gt;;
+    clock-names = &quot;xvclk&quot;;
+    power-domains = &lt;&amp;power RK3568_PD_VI&gt;;
+    pinctrl-names = &quot;rockchip,camera_default&quot;;
+    pinctrl-0 = &lt;&amp;cif_clk&gt;;
+    reset-gpios = &lt;&amp;gpio3 RK_PB6 GPIO_ACTIVE_LOW&gt;;
+    power-gpios = &lt;&amp;gpio4 RK_PB4 GPIO_ACTIVE_HIGH&gt;;
+    ...
+};</code></pre>
+<p>我们按驱动 Bring-up 的顺序看。</p>
+<h4>1. <code>compatible</code></h4>
+<pre><code class="language-dts">compatible = &quot;sony,imx415&quot;;</code></pre>
+<p>这是驱动匹配的关键。</p>
+<p>Sensor 驱动中一般会有类似：</p>
+<pre><code class="language-c">static const struct of_device_id imx415_of_match[] = {
+    { .compatible = &quot;sony,imx415&quot; },
+    { }
+};</code></pre>
+<p>Linux 解析设备树后，用：</p>
+<pre><code class="language-text">DTS compatible
+        ↓ 匹配
+driver of_match_table
+        ↓
+调用 probe()</code></pre>
+<p>因此：</p>
+<pre><code class="language-text">compatible 决定“这个节点交给哪个驱动”</code></pre>
+<p>---</p>
+<h4>2. <code>reg</code></h4>
+<pre><code class="language-dts">reg = &lt;0x1a&gt;;</code></pre>
+<p>因为它位于 <code>&amp;i2c4</code> 下，所以这里表示 I2C 从设备地址：</p>
+<pre><code class="language-text">IMX415 I2C 地址 = 0x1a</code></pre>
+<p>驱动后面通过 I2C 向该地址读写 Sensor 寄存器。</p>
+<p>---</p>
+<h4>3. <code>clocks</code> 和 <code>clock-names</code></h4>
+<pre><code class="language-dts">clocks = &lt;&amp;cru CLK_CIF_OUT&gt;;
+clock-names = &quot;xvclk&quot;;</code></pre>
+<p>表示 IMX415 的外部输入时钟来自 RK3568 的：</p>
+<pre><code class="language-text">CRU → CLK_CIF_OUT</code></pre>
+<p>驱动里可能通过类似：</p>
+<pre><code class="language-c">devm_clk_get(dev, &quot;xvclk&quot;);</code></pre>
+<p>获得该时钟。</p>
+<p>对应关系是：</p>
+<pre><code class="language-text">DTS clock-names = &quot;xvclk&quot;
+             ↓
+驱动 clk_get(&quot;xvclk&quot;)</code></pre>
+<p>Sensor 没有正确的 XVCLK，通常连 I2C chip ID 都可能读取失败，或者 Sensor 无法正常启动。</p>
+<p>---</p>
+<h4>4. <code>power-domains</code></h4>
+<pre><code class="language-dts">power-domains = &lt;&amp;power RK3568_PD_VI&gt;;</code></pre>
+<p>这描述的主要是 RK3568 视频输入相关电源域，而不等于 IMX415 模组所有模拟、数字电源都由这里直接供给。</p>
+<p>先这样理解：</p>
+<pre><code class="language-text">RK3568 的 VI/Camera 硬件模块需要进入上电状态</code></pre>
+<p>---</p>
+<h4>5. <code>pinctrl</code></h4>
+<pre><code class="language-dts">pinctrl-names = &quot;rockchip,camera_default&quot;;
+pinctrl-0 = &lt;&amp;cif_clk&gt;;</code></pre>
+<p>表示选择 Camera 默认 pinmux 配置，并把相关引脚复用为：</p>
+<pre><code class="language-text">CIF Camera clock 功能</code></pre>
+<p>引脚默认可能只是 GPIO，必须通过 pinctrl 改成相应外设功能。</p>
+<p>---</p>
+<h4>6. <code>reset-gpios</code></h4>
+<pre><code class="language-dts">reset-gpios = &lt;&amp;gpio3 RK_PB6 GPIO_ACTIVE_LOW&gt;;</code></pre>
+<p>含义：</p>
+<pre><code class="language-text">Reset 引脚在 GPIO3_B6
+低电平有效</code></pre>
+<p>因此驱动控制时：</p>
+<pre><code class="language-text">拉低 → Sensor 处于 reset
+拉高 → Sensor 退出 reset</code></pre>
+<p>注意“逻辑值”和“物理电平”可能被 GPIO framework 按 ACTIVE_LOW 转换，驱动通常不需要自己重新翻转理解。</p>
+<p>---</p>
+<h4>7. <code>power-gpios</code></h4>
+<pre><code class="language-dts">power-gpios = &lt;&amp;gpio4 RK_PB4 GPIO_ACTIVE_HIGH&gt;;</code></pre>
+<p>表示：</p>
+<pre><code class="language-text">模组电源控制引脚为 GPIO4_B4
+高电平使能</code></pre>
+<p>这看起来是 Rockchip BSP 或当前 Sensor 驱动使用的厂商属性，不一定属于所有上游 IMX415 驱动的通用 binding。</p>
+<p>因此学习时要记：</p>
+<pre><code class="language-text">DTS 属性能否生效
+取决于当前驱动是否调用 gpiod_get() 或 of_get_named_gpio() 读取它</code></pre>
+<p>不是随便在 DTS 写一个属性，驱动就会自动使用。</p>
+<p>---</p>
+<h3>六、Rockchip Camera 模组属性</h3>
+<p>你这里还有：</p>
+<pre><code class="language-dts">rockchip,camera-module-index = &lt;0&gt;;
+rockchip,camera-module-facing = &quot;back&quot;;
+rockchip,camera-module-name = &quot;CMK-OT1522-FG3&quot;;
+rockchip,camera-module-lens-name = &quot;CS-P1150-IRC-8M-FAU&quot;;</code></pre>
+<p>它们属于 Rockchip Camera BSP 的模组描述信息。</p>
+<p>大致含义：</p>
+<pre><code class="language-text">camera-module-index
+    Camera 模组编号
+
+camera-module-facing
+    朝向，back 表示后置方向
+
+camera-module-name
+    模组名称
+
+camera-module-lens-name
+    镜头名称</code></pre>
+<p>这类属性不决定 MIPI 数据能否传输，但可能被 Rockchip 驱动、RKAIQ、用户态 Camera 框架用来识别模组和匹配 IQ 配置。</p>
+<p>---</p>
+<h3>七、最关键：IMX415 的 <code>port/endpoint</code></h3>
+<p>IMX415 节点最后是：</p>
+<pre><code class="language-dts">port {
+    imx415_out: endpoint {
+        remote-endpoint = &lt;&amp;mipi_in_ucam1&gt;;
+        data-lanes = &lt;1 2 3 4&gt;;
+    };
+};</code></pre>
+<p>这部分描述的不是 I2C 控制，而是图像数据链路。</p>
+<h4>1. <code>port</code></h4>
+<pre><code class="language-text">该设备的逻辑媒体端口</code></pre>
+<h4>2. <code>imx415_out: endpoint</code></h4>
+<p>这是 Sensor 的输出端点：</p>
+<pre><code class="language-text">IMX415 图像数据从这里向外流</code></pre>
+<p><code>imx415_out</code> 是 label，可以被另一端引用。</p>
+<h4>3. <code>remote-endpoint</code></h4>
+<pre><code class="language-dts">remote-endpoint = &lt;&amp;mipi_in_ucam1&gt;;</code></pre>
+<p>表示：</p>
+<pre><code class="language-text">IMX415 输出端
+连接到
+mipi_in_ucam1 输入端</code></pre>
+<h4>4. <code>data-lanes</code></h4>
+<pre><code class="language-dts">data-lanes = &lt;1 2 3 4&gt;;</code></pre>
+<p>表示该链路使用四条 MIPI CSI-2 Data Lane：</p>
+<pre><code class="language-text">Lane 1
+Lane 2
+Lane 3
+Lane 4</code></pre>
+<p>它不是 GPIO，也不是 Linux 的设备编号。</p>
+<p>最终：</p>
+<pre><code class="language-text">IMX415 通过 4 Lane MIPI CSI-2 输出 RAW 数据</code></pre>
+<p>---</p>
+<h3>八、沿着 <code>remote-endpoint</code> 找到 D-PHY</h3>
+<p>现在看到：</p>
+<pre><code class="language-dts">remote-endpoint = &lt;&amp;mipi_in_ucam1&gt;;</code></pre>
+<p>你就应该全文搜索：</p>
+<pre><code class="language-text">mipi_in_ucam1:</code></pre>
+<p>文件中找到：</p>
+<pre><code class="language-dts">&amp;csi2_dphy0 {
+    status = &quot;okay&quot;;
+
+    ports {
+        port@0 {
+            reg = &lt;0&gt;;
+
+            mipi_in_ucam1: endpoint@2 {
+                reg = &lt;2&gt;;
+                remote-endpoint = &lt;&amp;imx415_out&gt;;
+                data-lanes = &lt;1 2 3 4&gt;;
+            };
+        };
+
+        port@1 {
+            reg = &lt;1&gt;;
+
+            csidphy_out: endpoint@0 {
+                reg = &lt;0&gt;;
+                remote-endpoint = &lt;&amp;isp0_in&gt;;
+            };
+        };
+    };
+};</code></pre>
+<p>这里非常关键。</p>
+<h4>D-PHY 输入端</h4>
+<pre><code class="language-dts">mipi_in_ucam1: endpoint@2 {
+    remote-endpoint = &lt;&amp;imx415_out&gt;;
+    data-lanes = &lt;1 2 3 4&gt;;
+};</code></pre>
+<p>与 Sensor 端形成成对引用：</p>
+<pre><code class="language-text">imx415_out
+    remote → mipi_in_ucam1
+
+mipi_in_ucam1
+    remote → imx415_out</code></pre>
+<p>这叫：</p>
+<pre><code class="language-text">endpoint 双向引用</code></pre>
+<p>但 Camera 数据仍然单向：</p>
+<pre><code class="language-text">IMX415 → D-PHY</code></pre>
+<p>不是 D-PHY 把图像反向传给 IMX415。</p>
+<p>---</p>
+<h3>九、<code>port@0</code> 和 <code>port@1</code> 怎么看</h3>
+<p>在 <code>csi2_dphy0</code> 下：</p>
+<pre><code class="language-dts">port@0 {
+    reg = &lt;0&gt;;
+    ...
+};
+
+port@1 {
+    reg = &lt;1&gt;;
+    ...
+};</code></pre>
+<p>可以从当前配置和 Media Graph 判断：</p>
+<pre><code class="language-text">port@0
+    D-PHY 输入侧
+    接 Sensor
+
+port@1
+    D-PHY 输出侧
+    接后续 ISP 链路</code></pre>
+<p>其中：</p>
+<pre><code class="language-dts">csidphy_out: endpoint@0 {
+    remote-endpoint = &lt;&amp;isp0_in&gt;;
+};</code></pre>
+<p>说明 D-PHY 输出端连接到 ISP 输入端。</p>
+<p>所以现在链路是：</p>
+<pre><code class="language-text">imx415_out
+    ↓
+mipi_in_ucam1
+    ↓
+csi2_dphy0 内部
+    ↓
+csidphy_out
+    ↓
+isp0_in</code></pre>
+<p>---</p>
+<h3>十、继续追踪到 ISP</h3>
+<p>根据：</p>
+<pre><code class="language-dts">remote-endpoint = &lt;&amp;isp0_in&gt;;</code></pre>
+<p>搜索 <code>isp0_in:</code>，找到：</p>
+<pre><code class="language-dts">&amp;rkisp_vir0 {
+    status = &quot;okay&quot;;
+
+    port {
+        #address-cells = &lt;1&gt;;
+        #size-cells = &lt;0&gt;;
+
+        isp0_in: endpoint@0 {
+            reg = &lt;0&gt;;
+            remote-endpoint = &lt;&amp;csidphy_out&gt;;
+        };
+    };
+};</code></pre>
+<p>这说明：</p>
+<pre><code class="language-text">RKISP virtual pipeline 0 已启用
+它的输入 endpoint 为 isp0_in
+对端是 D-PHY 的 csidphy_out</code></pre>
+<p>于是 DTS 描述的主链路完整了：</p>
+<pre><code class="language-text">IMX415
+  imx415_out
+       ↓
+  mipi_in_ucam1
+csi2_dphy0
+  csidphy_out
+       ↓
+  isp0_in
+rkisp_vir0</code></pre>
+<p>你原来的写法：</p>
+<pre><code class="language-text">imx415_out
+↔ mipi_in_ucam1
+→ rockchip-csi2-dphy0
+→ csidphy_out
+↔ isp0_in</code></pre>
+<p>更准确地分成两张图。</p>
+<h5>Endpoint 配对关系</h5>
+<pre><code class="language-text">imx415_out ↔ mipi_in_ucam1
+
+csidphy_out ↔ isp0_in</code></pre>
+<h5>图像数据方向</h5>
+<pre><code class="language-text">IMX415
+→ csi2_dphy0
+→ rkisp_vir0</code></pre>
+<p>---</p>
+<h3>十一、为什么还要启用这些节点</h3>
+<p>文件中还有：</p>
+<pre><code class="language-dts">&amp;csi2_dphy_hw {
+    status = &quot;okay&quot;;
+};
+
+&amp;csi2_dphy0 {
+    status = &quot;okay&quot;;
+};
+
+&amp;rkisp {
+    status = &quot;okay&quot;;
+};
+
+&amp;rkisp_mmu {
+    status = &quot;okay&quot;;
+};
+
+&amp;rkisp_vir0 {
+    status = &quot;okay&quot;;
+};</code></pre>
+<p>它们分别可以先这样理解：</p>
+<pre><code class="language-text">csi2_dphy_hw
+    D-PHY 底层硬件资源
+
+csi2_dphy0
+    当前使用的 D-PHY 实例/逻辑接口
+
+rkisp
+    ISP 核心硬件
+
+rkisp_mmu
+    ISP 使用的地址转换/IOMMU相关模块
+
+rkisp_vir0
+    ISP 的一条虚拟 Camera pipeline</code></pre>
+<p>所以仅启用 IMX415 还不够。</p>
+<p>必须让链路上的相关节点都处于可用状态：</p>
+<pre><code class="language-text">Sensor okay
+DPHY hardware okay
+DPHY instance okay
+ISP okay
+ISP MMU okay
+ISP virtual pipeline okay</code></pre>
+<p>任何关键环节 disabled，都可能导致链路无法注册完整。</p>
+<p>---</p>
+<h3>十二、DTS 怎么变成你看到的 Media Graph</h3>
+<p>DTS 中的关系：</p>
+<pre><code class="language-text">imx415_out
+↔ mipi_in_ucam1
+
+csidphy_out
+↔ isp0_in</code></pre>
+<p>启动后，各个驱动执行：</p>
+<pre><code class="language-text">IMX415 驱动注册 Sensor subdev
+DPHY 驱动注册 DPHY subdev
+RKISP 驱动注册 CSI/ISP subdev
+mainpath 驱动注册 video node</code></pre>
+<p>Media/V4L2 框架根据 endpoint 绑定它们，最后在 <code>media-ctl -p</code> 中表现为：</p>
+<pre><code class="language-text">m00_b_imx415 4-001a-1
+→ rockchip-csi2-dphy0
+→ rkisp-csi-subdev
+→ rkisp-isp-subdev
+→ rkisp_mainpath
+→ /dev/video0</code></pre>
+<p>注意 DTS 里没有直接写：</p>
+<pre><code class="language-text">/dev/video0</code></pre>
+<p><code>/dev/video0</code> 是 RKISP 驱动注册 video device 后，由 Linux 动态分配出来的。</p>
+<p>因此：</p>
+<pre><code class="language-text">DTS 描述硬件和连接
+驱动创建 entity、pad、link、video node
+Media Controller 展示最终拓扑</code></pre>
+<p>---</p>
+<h3>十三、这份 DTS 有一个值得重点检查的问题</h3>
+<p>在 <code>&amp;i2c4</code> 下，你同时启用了：</p>
+<pre><code class="language-dts">imx335@1a {
+    status = &quot;okay&quot;;
+    reg = &lt;0x1a&gt;;
+};
+
+ov13850@10 {
+    status = &quot;okay&quot;;
+    reg = &lt;0x10&gt;;
+};
+
+imx415@1a {
+    status = &quot;okay&quot;;
+    reg = &lt;0x1a&gt;;
+};</code></pre>
+<p>其中 IMX335 和 IMX415 都在同一个 <code>i2c4</code> 下，并且地址都为：</p>
+<pre><code class="language-text">0x1a</code></pre>
+<p>还共同使用了类似的：</p>
+<pre><code class="language-text">reset GPIO3_B6
+power/pwdn GPIO4_B4
+CLK_CIF_OUT</code></pre>
+<p>这从设备树静态内容看是明显需要核查的地方。</p>
+<p>正常情况下，同一条 I2C 总线上不能同时存在两个相同地址的实际设备。这里可能存在几种情况：</p>
+<pre><code class="language-text">这三个节点是不同 Camera 模组的候选配置
+实际产品只会装其中一个
+
+厂商 BSP 驱动会通过 chip ID 识别，失败设备不会完成 probe
+
+最终编译时还存在 overlay、条件编译或其他 DTS 覆盖
+
+这个板级 DTS 本身就把多个备选 Sensor 同时写为 okay</code></pre>
+<p>从你的 Media Graph 看，最终成功注册的是：</p>
+<pre><code class="language-text">m00_b_imx415 4-001a-1</code></pre>
+<p>所以实际工作链路是 IMX415。</p>
+<p>但在学习“独立移植”时，推荐把未使用 Sensor 明确设为：</p>
+<pre><code class="language-dts">status = &quot;disabled&quot;;</code></pre>
+<p>例如只使用 IMX415 时，概念上应整理为：</p>
+<pre><code class="language-dts">imx335: imx335@1a {
+    status = &quot;disabled&quot;;
+};
+
+ov13850: ov13850@10 {
+    status = &quot;disabled&quot;;
+};
+
+imx415: imx415@1a {
+    status = &quot;okay&quot;;
+};</code></pre>
+<p>是否直接修改，先不要动当前可用系统；后续应先确认实际编译使用的 DTB 和源码分支。</p>
+<p>---</p>
+<h3>十四、你以后看 Camera DTS 的固定顺序</h3>
+<p>以后拿到任何 Sensor DTS，都按这张检查表看。</p>
+<h4>第一步：找总线节点</h4>
+<pre><code class="language-dts">&amp;i2c4 {</code></pre>
+<p>回答：</p>
+<pre><code class="language-text">Sensor 挂在哪条 I2C 总线上？</code></pre>
+<h4>第二步：找设备节点</h4>
+<pre><code class="language-dts">imx415@1a</code></pre>
+<p>回答：</p>
+<pre><code class="language-text">I2C 地址是什么？
+status 是否 okay？</code></pre>
+<h4>第三步：找驱动匹配</h4>
+<pre><code class="language-dts">compatible = &quot;sony,imx415&quot;;</code></pre>
+<p>回答：</p>
+<pre><code class="language-text">会匹配哪个驱动？</code></pre>
+<h4>第四步：看硬件资源</h4>
+<pre><code class="language-text">clock
+power
+reset
+pwdn/power GPIO
+pinctrl</code></pre>
+<p>回答：</p>
+<pre><code class="language-text">Sensor 如何上电、退出复位、获得时钟？</code></pre>
+<h4>第五步：看 MIPI 输出</h4>
+<pre><code class="language-dts">imx415_out: endpoint {
+    data-lanes = &lt;1 2 3 4&gt;;
+};</code></pre>
+<p>回答：</p>
+<pre><code class="language-text">Sensor 输出接哪里？
+使用几条 Lane？</code></pre>
+<h4>第六步：跟踪 <code>remote-endpoint</code></h4>
+<pre><code class="language-text">imx415_out
+→ mipi_in_ucam1
+→ csidphy_out
+→ isp0_in</code></pre>
+<p>回答：</p>
+<pre><code class="language-text">图像数据进入哪个 D-PHY 和 ISP？</code></pre>
+<h4>第七步：检查下游模块</h4>
+<pre><code class="language-text">csi2_dphy_hw
+csi2_dphy0
+rkisp
+rkisp_mmu
+rkisp_vir0</code></pre>
+<p>回答：</p>
+<pre><code class="language-text">关键模块是否全部启用？</code></pre>
+<p>---</p>
+<h3>十五、根据当前 DTS，你先回答这 8 道题</h3>
+<p>不用查资料，直接基于这份 DTS 回答：</p>
+<pre><code class="language-text">【IMX415 DTS 阅读验证】
+
+1. IMX415 挂在哪条 I2C 总线上？地址是多少？
+
+2. compatible = &quot;sony,imx415&quot; 的作用是什么？
+
+3. CLK_CIF_OUT 在这里给谁提供什么资源？
+
+4. reset-gpios = &lt;&amp;gpio3 RK_PB6 GPIO_ACTIVE_LOW&gt;
+   分别表示什么？
+
+5. data-lanes = &lt;1 2 3 4&gt; 表示什么？
+
+6. 请写出两对 endpoint：
+   ______ ↔ ______
+   ______ ↔ ______
+
+7. 请按数据方向写出：
+   IMX415 → ______ → ______
+
+8. DTS 里有没有直接创建 /dev/video0？
+   如果没有，它是由谁创建的？</code></pre>
+<p>你这一步真正要形成的思维不是背属性，而是：</p>
+<pre><code class="language-text">原理图决定硬件连接
+↓
+DTS 描述硬件连接和资源
+↓
+compatible 匹配驱动
+↓
+驱动读取 DTS 并初始化硬件
+↓
+endpoint 建立 Media Pipeline
+↓
+RKISP 驱动注册 /dev/video0</code></pre>
+<p>这份 DTS 的 Camera 主线配置就在 <code>&amp;i2c4</code>、<code>&amp;csi2_dphy0</code>、<code>&amp;rkisp_vir0</code> 以及相关 <code>status = &quot;okay&quot;</code> 节点中。</p></article><footer class="footer"><a href="../notes.html">返回专项笔记导航</a> · <a href="../../index.html">返回驾驶舱首页</a></footer></main></div><script defer src="../../generated/vault-data.js?v=410aa77861"></script><script defer src="../../site.js?v=410aa77861"></script></body></html>

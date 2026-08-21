@@ -4,82 +4,52 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
-  <meta name="description" content="RK3568 Phase0 可视化总入口与学习路径">
-  <title>RK3568 Phase0 可视化总入口</title>
-  <link rel="stylesheet" href="./styles.css">
-  <link rel="stylesheet" href="./site.css">
-  <script defer src="./generated/vault-data.js"></script>
-  <script defer src="./site.js"></script>
-  <script defer src="./app.js"></script>
+  <meta name="description" content="从 IMX415 接入 RK3568 开始，按 00–11 课程路线学习 Camera 驱动与 Bring-up。">
+  <title>RK3568 Camera 学习驾驶舱</title>
+  <link rel="stylesheet" href="./site.css?v=410aa77861">
+  <link rel="stylesheet" href="./styles.css?v=f4bd44e24e">
+  <script defer src="./generated/vault-data.js?v=410aa77861"></script>
+  <script defer src="./site.js?v=410aa77861"></script>
+  <script defer src="./app.js?v=410aa77861"></script>
 </head>
 <body>
   <a class="skip-link" href="#main-content">跳到主要内容</a>
-  <nav class="site-nav" data-site-nav aria-label="网站导航">
-    <a class="site-nav__brand" href="./index.html">RK3568 / PHASE0</a>
-    <div class="site-nav__links">
-      <a href="#start">现在开始</a>
-      <a href="#route">学习路径</a>
-      <a href="#important">重要内容</a>
-    </div>
-  </nav>
+  <nav class="site-nav" data-site-nav aria-label="RK3568 Camera 课程导航"><a class="site-nav__brand" href="index.html"><span>RK3568</span><strong>Camera 课程</strong></a><div class="site-nav__links"><a href="index.html" data-nav-key="home" aria-current="page">学习首页</a><a href="pages/learning-route.html" data-nav-key="route">完整路线</a><a href="pages/project.html" data-nav-key="project">项目</a></div><details class="site-nav__more course-menu"><summary>课程目录</summary><div class="site-nav__more-panel course-menu__grid"><a class="course-menu__item" href="pages/system-map.html"><span>00</span><strong>总览</strong></a><a class="course-menu__item" href="../../04-项目/15-Linux设备模型与总线分层.html"><span>01</span><strong>Linux Driver Model</strong></a><a class="course-menu__item" href="../../04-项目/20-DTS到运行时设备发现.html"><span>02</span><strong>DTS 与设备发现</strong></a><a class="course-menu__item" href="../../04-项目/16-IMX415-三层驱动调用流程.html"><span>03</span><strong>IMX415 Sensor</strong></a><a class="course-menu__item" href="../../04-项目/17-DPHY-从DTS到MediaGraph.html"><span>04</span><strong>MIPI CSI-2 / D-PHY</strong></a><a class="course-menu__item" href="../../04-项目/19-IMX415-v4l2-subdev注册与开流.html"><span>05</span><strong>V4L2 Subdev</strong></a><a class="course-menu__item" href="../../04-项目/21-MediaController-Entity-Pad-Link.html"><span>06</span><strong>Media Controller</strong></a><a class="course-menu__item" href="../../04-项目/22-RKISP-从RAW到VideoNode.html"><span>07</span><strong>RKISP</strong></a><a class="course-menu__item" href="../../04-项目/23-V4L2-VB2用户态取流.html"><span>08</span><strong>V4L2 用户态取流</strong></a><a class="course-menu__item" href="pages/notes/07-专项笔记--OpenCV--OpenCV读取Camera记录.html"><span>09</span><strong>GStreamer / OpenCV</strong></a><a class="course-menu__item" href="pages/notes/07-专项笔记--系统--AI Camera系统数据流与模块边界.html"><span>10</span><strong>RKNN / YOLO</strong></a><a class="course-menu__item" href="pages/notes/07-专项笔记--系统--AI Camera故障排查索引.html"><span>11</span><strong>Camera Bring-up 排障</strong></a></div></details><details class="site-nav__more reference-menu"><summary data-nav-key="reference">资料与实验</summary><div class="site-nav__more-panel reference-menu__panel"><a href="pages/evidence.html" data-nav-key="evidence">实验依据</a><a href="pages/notes.html" data-nav-key="notes">专项笔记</a><a href="pages/environment.html" data-nav-key="environment">开发环境</a><a href="pages/phase0.html" data-nav-key="phase0">可视化参考</a><a href="pages/archive.html" data-nav-key="archive">归档</a><a href="obsidian://open?vault=RK3568&amp;file=00-%E9%A6%96%E9%A1%B5%2F00-RK3568%E5%AD%A6%E4%B9%A0%E4%B8%BB%E5%85%A5%E5%8F%A3">在 Obsidian 中打开</a></div></details><div class="site-nav__tools"><a class="site-nav__stage course-status" href="pages/learning-route.html#stage-05" title="当前学习阶段">当前 阶段 05 · V4L2 Subdev</a></div></nav>
 
   <div class="page-shell">
     <main id="main-content">
-      <header class="hero" aria-labelledby="page-title">
-        <p class="hero__eyebrow">LOCAL LEARNING SYSTEM · PHASE 0</p>
-        <h1 id="page-title">RK3568 <span>Phase0 可视化总入口</span></h1>
-        <p>先用一张总入口建立系统地图，再沿学习路径逐步深入 Camera、推理、显示与推流。</p>
-        <div class="hero__actions">
-          <a class="button" href="#start">从当前阶段开始</a>
-          <a class="button button--quiet" href="pages/phase0.html">打开 Phase0 页面</a>
-        </div>
+      <header class="hero cockpit-hero" aria-labelledby="page-title">
+        <p class="hero__eyebrow">RK3568 + IMX415 · CAMERA BRING-UP COURSE</p>
+        <h1 id="page-title">Camera 驱动<br><span>学习驾驶舱</span></h1>
+        <p>不是资料目录，而是一条从 IMX415 接入、内核驱动到用户态取流和 Bring-up 排障的连续课程。</p>
       </header>
 
-      <section id="start" class="section" aria-labelledby="start-title">
-        <div class="section-heading">
-          <p class="section-kicker">START HERE</p>
-          <h2 id="start-title">现在从这里开始</h2>
+      <section id="start" class="section cockpit" aria-labelledby="start-title">
+        <div class="section-heading"><p class="section-kicker">YOU ARE HERE</p><h2 id="start-title">现在学什么</h2></div>
+        <div class="cockpit-grid">
+          <article class="cockpit-card cockpit-card--current"><span>当前阶段</span><strong data-course-current>04 · MIPI CSI-2 / D-PHY</strong><p>00–03 已完成，当前进入高速图像数据链路。</p></article>
+          <article class="cockpit-card cockpit-card--objective"><span>当前目标</span><strong>本阶段要讲清楚</strong><p data-course-objective>从 DTS endpoint 追到 D-PHY 和 Media Graph，解释 RAW 数据如何进入 SoC。</p></article>
+          <article class="cockpit-card cockpit-card--next"><span>下一步</span><strong>继续当前主线</strong><a class="button" data-course-next href="../../04-项目/17-DPHY-从DTS到MediaGraph.html">进入阶段 04：MIPI CSI-2 / D-PHY</a></article>
         </div>
-        <article class="current-card site-state" data-current-state>
-          <div>
-            <span class="badge badge--blue">当前阶段</span>
-            <p class="current-stage" data-current-stage>尚未生成当前阶段</p>
-          </div>
-          <div>
-            <span class="badge badge--purple">首条未完成任务</span>
-            <p class="current-task" data-current-task>当前没有未完成任务</p>
-          </div>
-          <a class="button" data-current-task-link href="../../06-任务/01-下一步任务看板.md">打开下一步任务看板</a>
-        </article>
       </section>
 
       <section id="route" class="section" aria-labelledby="route-title">
-        <div class="section-heading">
-          <p class="section-kicker">RECOMMENDED ROUTE</p>
-          <h2 id="route-title">推荐学习路径</h2>
-        </div>
-        <div class="card-grid">
-          <a class="card" href="pages/learning-route.html"><span class="badge badge--blue">01 · 主线</span><h3>学习路线</h3><p>从零到 Python MVP 的阶段顺序与验收节奏。</p><span class="card__link">进入页面 →</span></a>
-          <a class="card" href="pages/system-map.html"><span class="badge badge--purple">02 · 地图</span><h3>系统地图</h3><p>先看清 Camera、V4L2、GStreamer、RKNN 与输出边界。</p><span class="card__link">进入页面 →</span></a>
-          <a class="card" href="pages/phase0.html"><span class="badge badge--orange">03 · Phase0</span><h3>Phase0 入口</h3><p>用可视化页面理解数据流和第一轮系统全景。</p><span class="card__link">进入页面 →</span></a>
-          <a class="card" href="pages/project.html"><span class="badge badge--green">04 · 项目</span><h3>项目说明</h3><p>把学习内容放回 RK3568 AI Camera 的完整目标。</p><span class="card__link">进入页面 →</span></a>
+        <div class="section-heading section-heading--split"><div><p class="section-kicker">ONE LEARNING ROUTE</p><h2 id="route-title">完整学习路线</h2></div><a class="button button--quiet" href="pages/learning-route.html">打开路线专页</a></div>
+        <div data-course-route aria-label="RK3568 Camera 00–11 学习路线"></div>
+      </section>
+
+      <section id="reference" class="section reference-desk" aria-labelledby="reference-title">
+        <div class="section-heading"><p class="section-kicker">REFERENCE · NOT THE MAIN ROUTE</p><h2 id="reference-title">需要时再查</h2></div>
+        <div class="reference-links">
+          <a href="pages/evidence.html"><strong>实验依据</strong><span>板端日志、DTS、Media Graph</span></a>
+          <a href="pages/notes.html"><strong>专项笔记</strong><span>按主题查找完整记录</span></a>
+          <a href="pages/environment.html"><strong>开发环境</strong><span>SDK、WSL、Source Insight</span></a>
+          <a href="pages/phase0.html"><strong>可视化参考</strong><span>动画、框架图和配置流程</span></a>
+          <a href="pages/archive.html"><strong>归档</strong><span>历史页面与归档候选</span></a>
         </div>
       </section>
 
-      <section id="important" class="section" aria-labelledby="important-title">
-        <div class="section-heading">
-          <p class="section-kicker">REFERENCE DESK</p>
-          <h2 id="important-title">重要内容</h2>
-        </div>
-        <div class="card-grid card-grid--compact">
-          <a class="card" href="pages/evidence.html"><h3>证据</h3><p>实验产物、截图与可验证输出。</p><span class="card__link">查看证据 →</span></a>
-          <a class="card" href="pages/environment.html"><h3>环境</h3><p>板端、工具链与运行环境说明。</p><span class="card__link">查看环境 →</span></a>
-          <a class="card" href="pages/notes.html"><h3>笔记</h3><p>按主题回到 Obsidian 专项笔记。</p><span class="card__link">查看笔记 →</span></a>
-          <a class="card" href="pages/archive.html"><h3>归档</h3><p>阶段性材料与历史页面入口。</p><span class="card__link">查看归档 →</span></a>
-        </div>
-      </section>
-
-      <footer class="footer">网页只读，内容回 Obsidian；当前状态以任务看板为准。<a href="../../00-首页/00-RK3568学习主入口.md">返回 Obsidian 主入口</a></footer>
+      <footer class="footer">学习顺序以 00–11 主线为准；正文仍可回到 Obsidian 编辑。<a href="obsidian://open?vault=RK3568&amp;file=00-%E9%A6%96%E9%A1%B5%2F00-RK3568%E5%AD%A6%E4%B9%A0%E4%B8%BB%E5%85%A5%E5%8F%A3">在 Obsidian 中打开</a> · <a href="index.html">返回学习驾驶舱首页</a></footer>
     </main>
   </div>
 </body>

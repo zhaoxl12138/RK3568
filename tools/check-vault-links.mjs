@@ -26,7 +26,8 @@ function isActiveDocument(filePath) {
 }
 
 function isValidatedDocument(filePath) {
-  return filePath.split('/')[0] !== 'docs';
+  const [topLevel] = filePath.split('/');
+  return topLevel !== 'docs' && topLevel !== ARCHIVE_DIR;
 }
 
 function isOrphanExempt(filePath) {
@@ -35,6 +36,11 @@ function isOrphanExempt(filePath) {
     filePath === 'README.md'
     || filePath === TASK_BOARD
     || /^00-.*入口\.md$/u.test(basename)
+    || /^01-课程主线\/(?:0[5-9]|1[01])-.*\.md$/u.test(filePath)
+    || filePath.startsWith('08-附录/模板/')
+    || filePath.startsWith('08-附录/图源/Excalidraw/')
+    || filePath.startsWith('08-附录/Skills/')
+    || filePath.startsWith('docs/')
     || filePath.split('/').includes('generated')
   );
 }

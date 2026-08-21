@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>2026-07-28-直连板端读取IMX415配置 · RK3568</title><link rel="stylesheet" href="../../site.css?v=410aa77861"></head><body><div class="page-shell"><nav class="site-nav" data-site-nav aria-label="RK3568 Camera 课程导航"><a class="site-nav__brand" href="../../index.html"><span>RK3568</span><strong>Camera 课程</strong></a><div class="site-nav__links"><a href="../../index.html" data-nav-key="home">学习首页</a><a href="../learning-route.html" data-nav-key="route">完整路线</a><a href="../project.html" data-nav-key="project">项目</a></div><details class="site-nav__more course-menu"><summary>课程目录</summary><div class="site-nav__more-panel course-menu__grid"><a class="course-menu__item" href="../system-map.html"><span>00</span><strong>总览</strong></a><a class="course-menu__item" href="../../../../04-项目/15-Linux设备模型与总线分层.html"><span>01</span><strong>Linux Driver Model</strong></a><a class="course-menu__item" href="../../../../04-项目/20-DTS到运行时设备发现.html"><span>02</span><strong>DTS 与设备发现</strong></a><a class="course-menu__item" href="../../../../04-项目/16-IMX415-三层驱动调用流程.html"><span>03</span><strong>IMX415 Sensor</strong></a><a class="course-menu__item" href="../../../../04-项目/17-DPHY-从DTS到MediaGraph.html"><span>04</span><strong>MIPI CSI-2 / D-PHY</strong></a><a class="course-menu__item" href="../../../../04-项目/19-IMX415-v4l2-subdev注册与开流.html"><span>05</span><strong>V4L2 Subdev</strong></a><a class="course-menu__item" href="../../../../04-项目/21-MediaController-Entity-Pad-Link.html"><span>06</span><strong>Media Controller</strong></a><a class="course-menu__item" href="../../../../04-项目/22-RKISP-从RAW到VideoNode.html"><span>07</span><strong>RKISP</strong></a><a class="course-menu__item" href="../../../../04-项目/23-V4L2-VB2用户态取流.html"><span>08</span><strong>V4L2 用户态取流</strong></a><a class="course-menu__item" href="07-专项笔记--OpenCV--OpenCV读取Camera记录.html"><span>09</span><strong>GStreamer / OpenCV</strong></a><a class="course-menu__item" href="07-专项笔记--系统--AI Camera系统数据流与模块边界.html"><span>10</span><strong>RKNN / YOLO</strong></a><a class="course-menu__item" href="07-专项笔记--系统--AI Camera故障排查索引.html"><span>11</span><strong>Camera Bring-up 排障</strong></a></div></details><details class="site-nav__more reference-menu"><summary data-nav-key="reference" aria-current="page">资料与实验</summary><div class="site-nav__more-panel reference-menu__panel"><a href="../evidence.html" data-nav-key="evidence">实验依据</a><a href="../notes.html" data-nav-key="notes">专项笔记</a><a href="../environment.html" data-nav-key="environment">开发环境</a><a href="../phase0.html" data-nav-key="phase0">可视化参考</a><a href="../archive.html" data-nav-key="archive">归档</a><a href="obsidian://open?vault=RK3568&amp;file=00-%E9%A6%96%E9%A1%B5%2F00-RK3568%E5%AD%A6%E4%B9%A0%E4%B8%BB%E5%85%A5%E5%8F%A3">在 Obsidian 中打开</a></div></details><div class="site-nav__tools"><a class="site-nav__stage course-status" href="../learning-route.html#stage-05" title="当前学习阶段">当前 阶段 05 · V4L2 Subdev</a></div></nav><main id="main-content" class="note-page"><header class="hero"><p class="hero__eyebrow">GENERATED NOTE · 05-实验与证据</p><h1>2026-07-28-直连板端读取IMX415配置 </h1><p>此页面由 Markdown 知识源自动生成，适合网页阅读；编辑仍请回到 Obsidian。</p><div class="hero__actions"><a class="button" href="obsidian://open?vault=RK3568&amp;file=05-%E5%AE%9E%E9%AA%8C%E4%B8%8E%E8%AF%81%E6%8D%AE%2F2026-07-28-%E7%9B%B4%E8%BF%9E%E6%9D%BF%E7%AB%AF%E8%AF%BB%E5%8F%96IMX415%E9%85%8D%E7%BD%AE">在 Obsidian 中打开</a></div></header><article class="note-content"><p>---<br>id: EVID-20260728-IMX415-RUNTIME<br>doc-type: evidence<br>title: 直连板端读取 IMX415 运行时配置<br>course-stage: &quot;02&quot;<br>learning-status: validated<br>evidence-status: verified<br>publish-status: published<br>collected-at: 2026-07-28 (具体时分未记录)<br>board: ATK-DLRK3568 + IMX415<br>system: Buildroot (release string 未保留)<br>kernel: 4.19.232<br>sdk-commit: 未记录<br>dtb: 运行中 DTB 文件名与哈希未记录<br>device-ip: 192.168.0.230<br>raw-output-file: 无独立原始文件；关键输出摘录保存在本文<br>updated: 2026-08-10<br>---</p>
+<h2>2026-07-28｜直连板端读取 IMX415 运行时配置</h2>
+<h2>环境快照</h2>
+<table><thead><tr><th>字段</th><th>采集当时的值</th><th>审计说明</th></tr></thead><tbody><tr><td>采集时间</td><td>2026-07-28，具体时分未记录</td><td>不补造时间</td></tr><tr><td>板卡 / Sensor</td><td><code>ATK-DLRK3568</code> / IMX415</td><td>运行时设备与驱动名称可交叉核对</td></tr><tr><td>系统 / 内核</td><td>Buildroot / <code>Linux 4.19.232 aarch64</code></td><td>本记录不采用未绑定环境的 <code>4.19.255</code></td></tr><tr><td>DTB / SDK commit</td><td>未记录</td><td>运行时路径不能唯一确定源码提交</td></tr><tr><td>设备 IP</td><td><code>192.168.0.230</code></td><td>只代表 2026-07-28 的 SSH 环境</td></tr><tr><td>原始输出文件</td><td>未单独保存</td><td>关键值以内嵌摘录保留</td></tr></tbody></table>
+<h2>操作目的</h2>
+<p>从板端运行时 sysfs 和 device tree 树确认 IMX415 节点、endpoint、I2C client、驱动绑定、V4L2 subdev 与内核配置之间的关系。</p>
+<h2>原始命令</h2>
+<pre><code class="language-bash">uname -a
+find /sys/firmware/devicetree/base/i2c@fe5d0000/imx415@1a -maxdepth 2 -type f
+grep -aH . /sys/firmware/devicetree/base/i2c@fe5d0000/imx415@1a/compatible
+grep -aH . /sys/firmware/devicetree/base/i2c@fe5d0000/imx415@1a/status
+readlink -f /sys/bus/i2c/devices/4-001a-1/driver
+cat /sys/bus/i2c/devices/4-001a-1/name
+cat /sys/bus/i2c/devices/4-001a-1/modalias
+cat /sys/class/video4linux/v4l-subdev3/name
+grep -E &#39;CONFIG_MEDIA_CONTROLLER|CONFIG_VIDEO_IMX415|CONFIG_VIDEO_ROCKCHIP_ISP&#39; /proc/config.gz</code></pre>
+<p>命令按 Buildroot 可用工具记录，文本筛选使用 <code>grep</code>，不假设板端存在 <code>rg</code>。<code>/proc/config.gz</code> 的实际读取通常还需 <code>zcat</code>；原始会话没有保存完整命令行，故这里只保留当时记录的查询意图，不声称逐字复现。</p>
+<h2>原始输出</h2>
+<pre><code class="language-text">/sys/firmware/devicetree/base/i2c@fe5d0000/imx415@1a
+compatible: sony,imx415
+status: okay
+clock-names: xvclk
+rockchip,camera-module-facing: back
+rockchip,camera-module-lens-name: CS-P1150-IRC-8M-FAU
+rockchip,camera-module-name: CMK-OT1522-FG3
+data-lanes: 1 2 3 4
+remote-endpoint: /csi2-dphy0/ports/port@0/endpoint@2
+
+/sys/bus/i2c/devices/4-001a-1/name: imx415
+modalias: of:Nimx415T&lt;NULL&gt;Csony,imx415
+driver: /sys/bus/i2c/drivers/imx415
+/sys/class/video4linux/v4l-subdev3: m00_b_imx415 4-001a-1
+
+CONFIG_MEDIA_CONTROLLER=y
+CONFIG_VIDEO_IMX415=y
+CONFIG_VIDEO_ROCKCHIP_ISP1=y
+CONFIG_VIDEO_ROCKCHIP_ISP=y
+CONFIG_VIDEO_ROCKCHIP_ISP_VERSION_V1X=y
+CONFIG_VIDEO_ROCKCHIP_ISP_VERSION_V21=y</code></pre>
+<p>当时还记录到运行时节点含 <code>reg</code>、<code>reset-gpios</code>、<code>power-gpios</code>、<code>clocks</code>、<code>power-domains</code>，但没有看到 <code>avdd-supply</code>、<code>dvdd-supply</code>、<code>dovdd-supply</code>。</p>
+<h2>可以证明</h2>
+<ul><li><code>EVID-20260728-IMX415-RUNTIME</code> 可以证明本次启动环境存在 <code>sony,imx415</code> 的运行时节点，I2C client <code>4-001a-1</code> 已绑定到 <code>imx415</code> 驱动。</li><li>Sensor endpoint 和 D-PHY endpoint 在运行时通过 phandle 关联，双方记录了 4 条 data lane。</li><li><code>CONFIG_VIDEO_IMX415=y</code> 与没有独立 <code>imx415.ko</code> 并不矛盾：该配置表示驱动内建。</li><li>设备 IP <code>192.168.0.230</code> 只用于追溯本次 SSH 环境；2026-05-28 的抓帧记录使用过 <code>192.168.0.103</code>，两者不是同一次环境快照。</li></ul>
+<h2>不能证明</h2>
+<ul><li>运行时节点存在不能证明仓库中哪一个 DTS/DTB 文件被加载，也不能证明对应 SDK commit。</li><li>endpoint 与驱动绑定正常不能证明 MIPI 数据无误、ISP 已收到帧或用户态抓帧成功。</li><li>缺少 supply 属性与日志中的 dummy regulator 相符，但不能据此断言板级实际供电方式。</li><li>本记录不能为 Media API <code>4.19.255</code> 提供采集日期或运行内核归属；该值保持未核实。</li></ul>
+<h2>关联课程阶段</h2>
+<ul><li>主归属：<code>02</code> DTS 与设备发现</li><li>交叉引用：<code>03</code> IMX415 Sensor、<code>04</code> MIPI CSI-2 / D-PHY</li><li>环境基线：环境基线/RK3568-IMX415当前基线</li><li>配套日志与拓扑：2026-07-28-Camera驱动Day1验收</li></ul>
+<h2>状态</h2>
+<p><code>verified</code></p></article><footer class="footer"><a href="../notes.html">返回专项笔记导航</a> · <a href="../../index.html">返回驾驶舱首页</a></footer></main></div><script defer src="../../generated/vault-data.js?v=410aa77861"></script><script defer src="../../site.js?v=410aa77861"></script></body></html>

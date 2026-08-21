@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>00-系统总览 · RK3568</title><link rel="stylesheet" href="../../site.css?v=410aa77861"></head><body><div class="page-shell"><nav class="site-nav" data-site-nav aria-label="RK3568 Camera 课程导航"><a class="site-nav__brand" href="../../index.html"><span>RK3568</span><strong>Camera 课程</strong></a><div class="site-nav__links"><a href="../../index.html" data-nav-key="home">学习首页</a><a href="../learning-route.html" data-nav-key="route">完整路线</a><a href="../project.html" data-nav-key="project">项目</a></div><details class="site-nav__more course-menu"><summary>课程目录</summary><div class="site-nav__more-panel course-menu__grid"><a class="course-menu__item" href="../system-map.html"><span>00</span><strong>总览</strong></a><a class="course-menu__item" href="../../../../04-项目/15-Linux设备模型与总线分层.html"><span>01</span><strong>Linux Driver Model</strong></a><a class="course-menu__item" href="../../../../04-项目/20-DTS到运行时设备发现.html"><span>02</span><strong>DTS 与设备发现</strong></a><a class="course-menu__item" href="../../../../04-项目/16-IMX415-三层驱动调用流程.html"><span>03</span><strong>IMX415 Sensor</strong></a><a class="course-menu__item" href="../../../../04-项目/17-DPHY-从DTS到MediaGraph.html"><span>04</span><strong>MIPI CSI-2 / D-PHY</strong></a><a class="course-menu__item" href="../../../../04-项目/19-IMX415-v4l2-subdev注册与开流.html"><span>05</span><strong>V4L2 Subdev</strong></a><a class="course-menu__item" href="../../../../04-项目/21-MediaController-Entity-Pad-Link.html"><span>06</span><strong>Media Controller</strong></a><a class="course-menu__item" href="../../../../04-项目/22-RKISP-从RAW到VideoNode.html"><span>07</span><strong>RKISP</strong></a><a class="course-menu__item" href="../../../../04-项目/23-V4L2-VB2用户态取流.html"><span>08</span><strong>V4L2 用户态取流</strong></a><a class="course-menu__item" href="07-专项笔记--OpenCV--OpenCV读取Camera记录.html"><span>09</span><strong>GStreamer / OpenCV</strong></a><a class="course-menu__item" href="07-专项笔记--系统--AI Camera系统数据流与模块边界.html"><span>10</span><strong>RKNN / YOLO</strong></a><a class="course-menu__item" href="07-专项笔记--系统--AI Camera故障排查索引.html"><span>11</span><strong>Camera Bring-up 排障</strong></a></div></details><details class="site-nav__more reference-menu"><summary data-nav-key="reference" aria-current="page">资料与实验</summary><div class="site-nav__more-panel reference-menu__panel"><a href="../evidence.html" data-nav-key="evidence">实验依据</a><a href="../notes.html" data-nav-key="notes">专项笔记</a><a href="../environment.html" data-nav-key="environment">开发环境</a><a href="../phase0.html" data-nav-key="phase0">可视化参考</a><a href="../archive.html" data-nav-key="archive">归档</a><a href="obsidian://open?vault=RK3568&amp;file=00-%E9%A6%96%E9%A1%B5%2F00-RK3568%E5%AD%A6%E4%B9%A0%E4%B8%BB%E5%85%A5%E5%8F%A3">在 Obsidian 中打开</a></div></details><div class="site-nav__tools"><a class="site-nav__stage course-status" href="../learning-route.html#stage-05" title="当前学习阶段">当前 阶段 05 · V4L2 Subdev</a></div></nav><main id="main-content" class="note-page"><header class="hero"><p class="hero__eyebrow">GENERATED NOTE · 01-课程主线</p><h1>00-系统总览 </h1><p>此页面由 Markdown 知识源自动生成，适合网页阅读；编辑仍请回到 Obsidian。</p><div class="hero__actions"><a class="button" href="obsidian://open?vault=RK3568&amp;file=01-%E8%AF%BE%E7%A8%8B%E4%B8%BB%E7%BA%BF%2F00-%E7%B3%BB%E7%BB%9F%E6%80%BB%E8%A7%88">在 Obsidian 中打开</a></div></header><article class="note-content"><p>---<br>id: course-00-system-overview<br>doc-type: course<br>title: RK3568 Camera 系统总览<br>aliases:</p>
+<ul><li>Linux Camera 驱动框架总览</li><li>2026-08-08-Linux Camera驱动框架总览</li></ul>
+<p>course-stage: &quot;00&quot;<br>learning-status: review-needed<br>evidence-status: partial<br>publish-status: published<br>updated: 2026-08-10<br>---</p>
+<h2>RK3568 Camera 系统总览</h2>
+<h2>为什么学习</h2>
+<p>先建立 Sensor、D-PHY、CSI-2、RKISP、Media Controller 与 <code>/dev/videoX</code> 的统一地图，后续追 DTS、源码和板端证据时才不会混淆硬件、驱动与框架对象。</p>
+<h2>在整条链路中的位置</h2>
+<p>本章是课程入口：控制流从 DTS 和驱动模型进入各模块，图像数据流从 IMX415 经 MIPI CSI-2 / D-PHY 进入 RKISP，最终到达视频节点。</p>
+<h2>输入 / 输出 / 软件身份 / 硬件身份</h2>
+<table><thead><tr><th>对象</th><th>输入</th><th>输出</th><th>软件身份</th><th>硬件身份</th></tr></thead><tbody><tr><td>IMX415</td><td>I2C 配置、时钟、供电与复位</td><td>RAW10</td><td>I2C client、V4L2 subdev</td><td>图像传感器</td></tr><tr><td>D-PHY / CSI-2</td><td>MIPI 差分信号</td><td>RAW 数据流</td><td>Platform device/driver、V4L2 subdev</td><td>SoC 接收物理层与协议接收器</td></tr><tr><td>RKISP</td><td>RAW Bayer</td><td>可供视频节点输出的图像</td><td>V4L2/Media entity</td><td>ISP 硬件</td></tr><tr><td>Video node</td><td>buffer 与开流请求</td><td>用户态帧</td><td>V4L2 video device</td><td>无独立硬件身份</td></tr></tbody></table>
+<h2>RK3568 当前对应</h2>
+<blockquote>今天的核心成果：把 Camera 中容易混淆的“硬件、总线驱动、V4L2、Media Controller”分开，并能把它们重新串成一条可追代码的主线。<br><br>配套阅读：D-PHY 从 DTS 到 Media Graph 源码陪读、MIPI CSI-2 / D-PHY</blockquote>
+<h4>1. 先记住完整主线</h4>
+<h5>硬件数据流</h5>
+<pre><code class="language-text">IMX415 Sensor
+    ↓ RAW10 图像数据
+MIPI CSI-2 D-PHY
+    ↓
+CSI-2 Receiver
+    ↓
+RKISP
+    ↓
+rkisp_mainpath
+    ↓
+/dev/video0
+    ↓
+OpenCV / GStreamer / YOLO</code></pre>
+<h5>Linux 软件主线</h5>
+<pre><code class="language-text">DTS 描述设备和连接
+        ↓
+Linux 创建设备对象
+        ↓
+I2C / Platform Driver 匹配
+        ↓
+probe() 初始化硬件
+        ↓
+驱动注册 V4L2 Subdev
+        ↓
+Media Controller 创建 Entity / Pad
+        ↓
+Async Framework 匹配上下游
+        ↓
+media_create_pad_link()
+        ↓
+形成 Camera Pipeline
+        ↓
+/dev/video0 给用户态取帧</code></pre>
+<p>这两条线要同时看：</p>
+<ul><li><strong>硬件数据流</strong>回答“图像从哪里流到哪里”。</li><li><strong>Linux 软件主线</strong>回答“内核如何发现、初始化并组织这些硬件”。</li></ul>
+<h4>2. 四类概念不要混在一起</h4>
+<table><thead><tr><th>层次</th><th>代表概念</th><th>解决的问题</th><th>RK3568 当前实例</th></tr></thead><tbody><tr><td>真实硬件 / 协议</td><td>Sensor、D-PHY、CSI-2、ISP</td><td>电气信号和图像数据怎样传输、处理</td><td>IMX415、CSI2 D-PHY、RKISP</td></tr><tr><td>Linux 设备模型</td><td>I2C、Platform、SPI、USB</td><td>Linux 通过什么总线找到并管理设备</td><td>IMX415 是 I2C，D-PHY 是 Platform</td></tr><tr><td>Camera 功能框架</td><td>V4L2、V4L2 Subdev</td><td>Camera 模块怎样被统一表示和控制</td><td>Sensor、D-PHY、CSI、ISP Subdev</td></tr><tr><td>拓扑管理框架</td><td>Media Controller</td><td>各个 Camera 模块怎样连接</td><td>Entity、Pad、Link、Media Graph</td></tr></tbody></table>
+<p>最容易错的地方是：</p>
+<pre><code class="language-text">I2C / Platform 不是 Camera 功能
+V4L2 / Media Controller 也不是物理传输协议
+CSI-2 / D-PHY 不是驱动类型</code></pre>
+<h4>3. Linux 驱动模型：谁负责找到设备</h4>
+<p>Linux 不会根据驱动文件名猜它是什么类型，而是看驱动注册到哪一种总线框架：</p>
+<pre><code class="language-c">struct platform_driver   // SoC 内部固定控制器
+struct i2c_driver        // I2C 外设
+struct spi_driver        // SPI 外设
+struct usb_driver        // USB 外设</code></pre>
+<h5>当前 Camera 中的对应关系</h5>
+<pre><code class="language-text">RK3568 D-PHY 控制器
+    → platform_device
+    → platform_driver
+
+IMX415 Sensor
+    → i2c_client
+    → i2c_driver</code></pre>
+<p>所以：</p>
+<blockquote>Platform Driver 通常负责 SoC 内部固定硬件控制器；挂在控制器总线上的具体外设，再使用 I2C、SPI、USB 等对应的驱动模型。</blockquote>
+<h4>4. DTS 是设备档案，不是驱动实现</h4>
+<p>DTS 主要描述：</p>
+<pre><code class="language-text">板子上有什么设备
+设备地址在哪里
+需要什么寄存器、时钟、GPIO、电源域
+设备之间如何连接</code></pre>
+<p>例如 D-PHY：</p>
+<pre><code class="language-dts">csi2_dphy0: csi2-dphy0 {
+    compatible = &quot;rockchip,rk3568-csi2-dphy&quot;;
+    rockchip,hw = &lt;&amp;csi2_dphy_hw&gt;;
+};</code></pre>
+<p>这里的 <code>compatible</code> 负责提供匹配标识：</p>
+<pre><code class="language-text">DTS 节点
+    ↓
+Platform Device
+    ↓
+compatible 与驱动 match 表比较
+    ↓
+匹配成功
+    ↓
+probe()</code></pre>
+<p>DTS 不会直接把节点标成“V4L2 设备”或“Camera Sensor”。这些身份由驱动代码决定：驱动在 <code>probe()</code> 中调用 V4L2 和 Media Controller 接口，才把硬件接入 Camera 框架。</p>
+<h4>5. Linux 框架与厂商驱动的关系</h4>
+<p>Linux 提供规则和通用接口：</p>
+<pre><code class="language-text">Device Model
+Platform Driver Framework
+I2C Driver Framework
+V4L2
+Media Controller
+Async Framework</code></pre>
+<p>厂商或社区驱动负责真正理解硬件：</p>
+<pre><code class="language-text">IMX415 Driver       → 读取 Sensor ID、写寄存器、设置曝光和开流
+RK3568 D-PHY Driver → 配置 D-PHY 寄存器、管理 Lane 和数据接收
+RK3568 ISP Driver   → 处理 RAW 图像并输出视频节点</code></pre>
+<p>驱动通过 Linux 提供的接口接入框架，例如：</p>
+<pre><code class="language-c">v4l2_subdev_init()
+media_entity_pads_init()
+v4l2_async_register_subdev()
+media_create_pad_link()</code></pre>
+<p>一句话：</p>
+<blockquote>Linux 定义统一规则，厂商驱动填写具体硬件行为。</blockquote>
+<h4>6. 一个模块有两个身份</h4>
+<h5>IMX415</h5>
+<p>从 Linux 设备模型看：</p>
+<pre><code class="language-text">IMX415
+    → I2C Device
+    → I2C Driver</code></pre>
+<p>从 Camera 框架看：</p>
+<pre><code class="language-text">IMX415
+    → V4L2 Sensor Subdev
+    → /dev/v4l-subdev3</code></pre>
+<h5>D-PHY</h5>
+<p>从 Linux 设备模型看：</p>
+<pre><code class="language-text">D-PHY
+    → Platform Device
+    → Platform Driver</code></pre>
+<p>从 Camera 框架看：</p>
+<pre><code class="language-text">D-PHY
+    → V4L2 Subdev
+    → Media Entity
+    → Sink / Source Pad</code></pre>
+<p>因此：</p>
+<pre><code class="language-text">I2C / Platform
+    解决“Linux 怎么找到和管理设备”
+
+V4L2 / Media Controller
+    解决“Camera 模块怎样统一表示和连接”</code></pre>
+<h4>7. V4L2 与 V4L2 Subdev</h4>
+<p>V4L2 是 <code>Video4Linux2</code>，属于 Linux 内核中的 Video / Camera 功能框架，不是 Rockchip 私有库，也不是用户态第三方库。</p>
+<pre><code class="language-text">Linux Kernel
+    ↓
+V4L2 Framework
+    ↓
+统一管理 Camera 和 Video 设备</code></pre>
+<p>Camera 流水线不是单一设备：</p>
+<pre><code class="language-text">Sensor → D-PHY → CSI → ISP</code></pre>
+<p>因此这些内部模块通常表示为 V4L2 Subdev：</p>
+<pre><code class="language-text">IMX415                  → /dev/v4l-subdev3
+rockchip-csi2-dphy0     → /dev/v4l-subdev2
+rkisp-csi-subdev        → /dev/v4l-subdev1
+rkisp-isp-subdev        → /dev/v4l-subdev0</code></pre>
+<p>Subdev 主要负责：</p>
+<pre><code class="language-text">支持哪些格式和分辨率
+有什么输入 / 输出端口
+怎样设置曝光、增益和时序
+怎样设置格式
+怎样开流和停流</code></pre>
+<p>它不是主要给应用直接取 Frame Buffer 的节点；最终给用户态取图的是 <code>/dev/video0</code>。</p>
+<h4>8. Media Controller：把模块连成图</h4>
+<p>V4L2 Subdev 能描述一个个模块，但还需要描述模块之间的连接，这由 Media Controller 完成。</p>
+<p>核心对象只有三个：</p>
+<pre><code class="language-text">Entity = 一个 Camera 模块
+Pad    = 模块的输入 / 输出端口
+Link   = 两个 Pad 之间的连接</code></pre>
+<p>当前链路可以理解为：</p>
+<pre><code class="language-text">IMX415
+  pad0: Source
+       ↓
+rockchip-csi2-dphy0
+  pad0: Sink
+  pad1: Source
+       ↓
+rkisp-csi-subdev
+       ↓
+rkisp-isp-subdev
+       ↓
+rkisp_mainpath
+       ↓
+/dev/video0</code></pre>
+<pre><code class="language-bash">media-ctl -p</code></pre>
+<p>看到的就是 Media Controller 在运行时维护的 Entity / Pad / Link 拓扑。</p>
+<h4>9. DTS endpoint 与 Media Graph 的区别</h4>
+<p>DTS 中的：</p>
+<pre><code class="language-dts">remote-endpoint = &lt;&amp;imx415_out&gt;;</code></pre>
+<p>只是静态连接描述，表达：</p>
+<blockquote>这两个硬件端点应该连接。</blockquote>
+<p>运行时还要经过驱动和异步框架：</p>
+<pre><code class="language-text">DTS endpoint
+    ↓
+Driver probe()
+    ↓
+V4L2 Subdev 注册
+    ↓
+Media Entity / Pad 初始化
+    ↓
+Async match
+    ↓
+.bound()
+    ↓
+media_create_pad_link()
+    ↓
+运行时 Media Graph</code></pre>
+<p>所以不能把 <code>remote-endpoint</code> 理解成“DTS 编译时已经创建了 Media Link”。</p>
+<h4>10. D-PHY 的两个对象：HW 与逻辑 D-PHY</h4>
+<p>RK3568 D-PHY 驱动拆成两个容易混淆的对象：</p>
+<h5><code>csi2_dphy_hw</code></h5>
+<p>表示底层真实硬件资源：</p>
+<pre><code class="language-text">寄存器
+Clock
+GRF
+stream_on / stream_off</code></pre>
+<h5><code>csi2_dphy0</code></h5>
+<p>表示 Camera 链路中的逻辑 D-PHY：</p>
+<pre><code class="language-text">Platform Device
+V4L2 Subdev
+Media Entity
+Sink / Source Pad
+Sensor 异步绑定关系</code></pre>
+<p>两者通过 DTS 关联：</p>
+<pre><code class="language-dts">rockchip,hw = &lt;&amp;csi2_dphy_hw&gt;;</code></pre>
+<p>驱动中的关系大致是：</p>
+<pre><code class="language-text">of_parse_phandle()
+    ↓
+of_find_device_by_node()
+    ↓
+platform_get_drvdata()
+    ↓
+dphy-&gt;dphy_hw</code></pre>
+<p>也就是：DTS 中的静态 phandle，最终变成 C 结构体之间的指针关系。</p>
+<h4>11. IMX415 与 D-PHY 的共同驱动模板</h4>
+<p>虽然两者的底层总线不同：</p>
+<pre><code class="language-text">IMX415 → I2C Driver
+D-PHY  → Platform Driver</code></pre>
+<p>但进入 Camera 框架后的套路相近：</p>
+<pre><code class="language-text">Driver Match
+    ↓
+probe()
+    ↓
+初始化时钟、GPIO、寄存器等硬件资源
+    ↓
+初始化 V4L2 Subdev
+    ↓
+初始化 Media Entity / Pad
+    ↓
+注册 Async
+    ↓
+匹配上下游
+    ↓
+创建 Media Link</code></pre>
+<p>真正的差别在于：</p>
+<pre><code class="language-text">各自初始化什么硬件
+各自提供几个 Pad
+各自有哪些 ops
+如何与上下游绑定</code></pre>
+<h4>12. 当前最值得记住的面试表达</h4>
+<blockquote>RK3568 Camera 需要分三层理解。第一层是 Linux 设备模型：IMX415 挂在 I2C 总线上，D-PHY、CSI 和 ISP 这类 SoC 内部控制器通常由 Platform Driver 管理。第二层是 Camera 功能框架：Sensor、D-PHY、CSI、ISP 都可以表示为 V4L2 Subdev。第三层是 Media Controller：通过 Entity、Pad 和 Link 把这些 Subdev 组织成完整的 Camera Pipeline。DTS 只描述设备资源和静态连接，驱动在 probe 中初始化硬件、注册 Subdev，异步框架匹配上下游后，再由 <code>.bound()</code> 调用 <code>media_create_pad_link()</code> 建立运行时链路，最后通过 <code>/dev/video0</code> 给用户态取帧。</blockquote>
+<h4>13. 今日学习结果</h4>
+<p>今天已经完成：</p>
+<pre><code class="language-text">✅ 区分真实硬件、Linux 总线模型、V4L2、Media Controller
+✅ 理解 IMX415 为什么是 I2C Driver + V4L2 Sensor Subdev
+✅ 理解 D-PHY 为什么是 Platform Driver + V4L2 Subdev
+✅ 理解 DTS endpoint 与运行时 Media Link 不是一回事
+✅ 理解 csi2_dphy_hw 与 csi2_dphy0 的分工
+✅ 串起 DTS → probe → Subdev → Async → Media Link → /dev/video0</code></pre>
+<p>当前还没有深入：</p>
+<pre><code class="language-text">rkisp-csi-subdev 如何解析下游 endpoint
+rkisp-isp-subdev 如何建立下游 link
+RAW10 在 CSI / ISP 各节点之间如何传递
+STREAMON 后各模块如何真正开始传输帧</code></pre>
+<p>下一步主线：</p>
+<pre><code class="language-text">D-PHY Source
+    → rkisp-csi-subdev
+    → rkisp-isp-subdev
+    → rkisp_mainpath
+    → /dev/video0</code></pre>
+<h4>14. 最后只记这几句话</h4>
+<pre><code class="language-text">DTS
+= 描述硬件和连接关系
+
+I2C / Platform
+= Linux 找到并管理设备的方式
+
+Driver
+= 真正懂具体硬件如何操作
+
+probe()
+= 驱动初始化设备的入口
+
+V4L2
+= Linux 对 Camera / Video 设备的统一功能框架
+
+V4L2 Subdev
+= Sensor、D-PHY、CSI、ISP 等内部模块的软件表示
+
+Media Controller
+= 管理 Entity / Pad / Link，组成 Camera 拓扑
+
+/dev/video0
+= 用户态获取图像 Buffer 的 V4L2 Video Node</code></pre>
+<h2>DTS / 源码入口</h2>
+<ul><li>DTS 与设备发现：02-DTS与设备发现</li><li>Linux 驱动模型：01-Linux-Driver-Model</li><li>Sensor 驱动：03-IMX415-Sensor-Bring-up</li><li>D-PHY 概念与入口：04-MIPI-CSI2-DPHY、D-PHY 源码陪读索引</li></ul>
+<h2>实板验证</h2>
+<p>当前证据包括运行时 I2C client、IMX415 Sensor ID、Media Graph 和抓帧结果。它们分别证明链路的不同层次，任何单项都不能替代完整开流验证。</p>
+<h2>常见故障</h2>
+<p>先按供电/时钟/复位、I2C 匹配与 ID、endpoint 与异步绑定、D-PHY/CSI、RKISP、video node 分层定位，不从 <code>/dev/video0</code> 缺失直接跳到某个驱动函数。</p>
+<h2>面试表达</h2>
+<p>RK3568 Camera 不是单个驱动，而是由 Sensor、MIPI 接收、ISP 和 V4L2/Media 框架组成的 pipeline；DTS 描述设备和连接，驱动模型完成匹配与 probe，运行时 Media Graph 表达数据链。</p>
+<h2>验收题</h2>
+<p>1. 控制流与图像数据流分别经过哪些模块？<br>2. DTS endpoint 与运行时 Media link 有什么区别？<br>3. Sensor ID 成功为什么不能证明已经出图？</p>
+<h2>下一阶段接口</h2>
+<p>下一阶段进入 01-Linux-Driver-Model，解释 DTS 设备如何与 I2C/Platform driver 匹配并触发 probe。</p></article><footer class="footer"><a href="../notes.html">返回专项笔记导航</a> · <a href="../../index.html">返回驾驶舱首页</a></footer></main></div><script defer src="../../generated/vault-data.js?v=410aa77861"></script><script defer src="../../site.js?v=410aa77861"></script></body></html>
