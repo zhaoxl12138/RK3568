@@ -1,0 +1,117 @@
+device           : /dev/video0
+format           : NV12 3840x2160, planes=1
+driver buffers   : 4
+queued buffers   : 4
+stream status    : ON
+frame[000] index=0 sequence=2 timestamp=35770.998128 bytesused=12441600 flags=0x00002001
+frame[001] index=1 sequence=3 timestamp=35771.031421 bytesused=12441600 flags=0x00002001
+frame[002] index=2 sequence=4 timestamp=35771.064744 bytesused=12441600 flags=0x00002001
+frame[003] index=3 sequence=5 timestamp=35771.098079 bytesused=12441600 flags=0x00002001
+frame[004] index=0 sequence=6 timestamp=35771.131409 bytesused=12441600 flags=0x00002001
+frame[005] index=1 sequence=7 timestamp=35771.164744 bytesused=12441600 flags=0x00002001
+frame[006] index=2 sequence=8 timestamp=35771.198089 bytesused=12441600 flags=0x00002001
+frame[007] index=3 sequence=9 timestamp=35771.231416 bytesused=12441600 flags=0x00002001
+frame[008] index=0 sequence=10 timestamp=35771.264800 bytesused=12441600 flags=0x00002001
+frame[009] index=1 sequence=11 timestamp=35771.298141 bytesused=12441600 flags=0x00002001
+frame[010] index=2 sequence=12 timestamp=35771.331410 bytesused=12441600 flags=0x00002001
+frame[011] index=3 sequence=13 timestamp=35771.364734 bytesused=12441600 flags=0x00002001
+frame[012] index=0 sequence=14 timestamp=35771.398154 bytesused=12441600 flags=0x00002001
+frame[013] index=1 sequence=15 timestamp=35771.431422 bytesused=12441600 flags=0x00002001
+frame[014] index=2 sequence=16 timestamp=35771.464807 bytesused=12441600 flags=0x00002001
+frame[015] index=3 sequence=17 timestamp=35771.498160 bytesused=12441600 flags=0x00002001
+frame[016] index=0 sequence=18 timestamp=35771.531395 bytesused=12441600 flags=0x00002001
+frame[017] index=1 sequence=19 timestamp=35771.564812 bytesused=12441600 flags=0x00002001
+frame[018] index=2 sequence=20 timestamp=35771.598145 bytesused=12441600 flags=0x00002001
+frame[019] index=3 sequence=21 timestamp=35771.631396 bytesused=12441600 flags=0x00002001
+frame[020] index=0 sequence=22 timestamp=35771.664749 bytesused=12441600 flags=0x00002001
+frame[021] index=1 sequence=23 timestamp=35771.698085 bytesused=12441600 flags=0x00002001
+frame[022] index=2 sequence=24 timestamp=35771.731482 bytesused=12441600 flags=0x00002001
+frame[023] index=3 sequence=25 timestamp=35771.764750 bytesused=12441600 flags=0x00002001
+frame[024] index=0 sequence=26 timestamp=35771.798149 bytesused=12441600 flags=0x00002001
+frame[025] index=1 sequence=27 timestamp=35771.831501 bytesused=12441600 flags=0x00002001
+frame[026] index=2 sequence=28 timestamp=35771.864816 bytesused=12441600 flags=0x00002001
+frame[027] index=3 sequence=29 timestamp=35771.898086 bytesused=12441600 flags=0x00002001
+frame[028] index=0 sequence=30 timestamp=35771.931502 bytesused=12441600 flags=0x00002001
+frame[029] index=1 sequence=31 timestamp=35771.964757 bytesused=12441600 flags=0x00002001
+frame[030] index=2 sequence=32 timestamp=35771.998088 bytesused=12441600 flags=0x00002001
+frame[031] index=3 sequence=33 timestamp=35772.031428 bytesused=12441600 flags=0x00002001
+frame[032] index=0 sequence=34 timestamp=35772.064821 bytesused=12441600 flags=0x00002001
+frame[033] index=1 sequence=35 timestamp=35772.098158 bytesused=12441600 flags=0x00002001
+frame[034] index=2 sequence=36 timestamp=35772.131489 bytesused=12441600 flags=0x00002001
+frame[035] index=3 sequence=37 timestamp=35772.164756 bytesused=12441600 flags=0x00002001
+frame[036] index=0 sequence=38 timestamp=35772.198172 bytesused=12441600 flags=0x00002001
+frame[037] index=1 sequence=39 timestamp=35772.231491 bytesused=12441600 flags=0x00002001
+frame[038] index=2 sequence=40 timestamp=35772.264845 bytesused=12441600 flags=0x00002001
+frame[039] index=3 sequence=41 timestamp=35772.298180 bytesused=12441600 flags=0x00002001
+frame[040] index=0 sequence=42 timestamp=35772.331494 bytesused=12441600 flags=0x00002001
+frame[041] index=1 sequence=43 timestamp=35772.364769 bytesused=12441600 flags=0x00002001
+frame[042] index=2 sequence=44 timestamp=35772.398177 bytesused=12441600 flags=0x00002001
+frame[043] index=3 sequence=45 timestamp=35772.431513 bytesused=12441600 flags=0x00002001
+frame[044] index=0 sequence=46 timestamp=35772.464770 bytesused=12441600 flags=0x00002001
+frame[045] index=1 sequence=47 timestamp=35772.498125 bytesused=12441600 flags=0x00002001
+frame[046] index=2 sequence=48 timestamp=35772.531457 bytesused=12441600 flags=0x00002001
+frame[047] index=3 sequence=49 timestamp=35772.564770 bytesused=12441600 flags=0x00002001
+frame[048] index=0 sequence=50 timestamp=35772.598172 bytesused=12441600 flags=0x00002001
+frame[049] index=1 sequence=51 timestamp=35772.631455 bytesused=12441600 flags=0x00002001
+frame[050] index=2 sequence=52 timestamp=35772.664852 bytesused=12441600 flags=0x00002001
+frame[051] index=3 sequence=53 timestamp=35772.698169 bytesused=12441600 flags=0x00002001
+frame[052] index=0 sequence=54 timestamp=35772.731522 bytesused=12441600 flags=0x00002001
+frame[053] index=1 sequence=55 timestamp=35772.764853 bytesused=12441600 flags=0x00002001
+frame[054] index=2 sequence=56 timestamp=35772.798110 bytesused=12441600 flags=0x00002001
+frame[055] index=3 sequence=57 timestamp=35772.831440 bytesused=12441600 flags=0x00002001
+frame[056] index=0 sequence=58 timestamp=35772.864856 bytesused=12441600 flags=0x00002001
+frame[057] index=1 sequence=59 timestamp=35772.898192 bytesused=12441600 flags=0x00002001
+frame[058] index=2 sequence=60 timestamp=35772.931447 bytesused=12441600 flags=0x00002001
+frame[059] index=3 sequence=61 timestamp=35772.964857 bytesused=12441600 flags=0x00002001
+frame[060] index=0 sequence=62 timestamp=35772.998128 bytesused=12441600 flags=0x00002001
+frame[061] index=1 sequence=63 timestamp=35773.031476 bytesused=12441600 flags=0x00002001
+frame[062] index=2 sequence=64 timestamp=35773.064799 bytesused=12441600 flags=0x00002001
+frame[063] index=3 sequence=65 timestamp=35773.098099 bytesused=12441600 flags=0x00002001
+frame[064] index=0 sequence=66 timestamp=35773.131513 bytesused=12441600 flags=0x00002001
+frame[065] index=1 sequence=67 timestamp=35773.164864 bytesused=12441600 flags=0x00002001
+frame[066] index=2 sequence=68 timestamp=35773.198185 bytesused=12441600 flags=0x00002001
+frame[067] index=3 sequence=69 timestamp=35773.231533 bytesused=12441600 flags=0x00002001
+frame[068] index=0 sequence=70 timestamp=35773.264790 bytesused=12441600 flags=0x00002001
+frame[069] index=1 sequence=71 timestamp=35773.298201 bytesused=12441600 flags=0x00002001
+frame[070] index=2 sequence=72 timestamp=35773.331519 bytesused=12441600 flags=0x00002001
+frame[071] index=3 sequence=73 timestamp=35773.364794 bytesused=12441600 flags=0x00002001
+frame[072] index=0 sequence=74 timestamp=35773.398129 bytesused=12441600 flags=0x00002001
+frame[073] index=1 sequence=75 timestamp=35773.431527 bytesused=12441600 flags=0x00002001
+frame[074] index=2 sequence=76 timestamp=35773.464806 bytesused=12441600 flags=0x00002001
+frame[075] index=3 sequence=77 timestamp=35773.498107 bytesused=12441600 flags=0x00002001
+frame[076] index=0 sequence=78 timestamp=35773.531538 bytesused=12441600 flags=0x00002001
+frame[077] index=1 sequence=79 timestamp=35773.564812 bytesused=12441600 flags=0x00002001
+frame[078] index=2 sequence=80 timestamp=35773.598205 bytesused=12441600 flags=0x00002001
+frame[079] index=3 sequence=81 timestamp=35773.631547 bytesused=12441600 flags=0x00002001
+frame[080] index=0 sequence=82 timestamp=35773.664799 bytesused=12441600 flags=0x00002001
+frame[081] index=1 sequence=83 timestamp=35773.698134 bytesused=12441600 flags=0x00002001
+frame[082] index=2 sequence=84 timestamp=35773.731544 bytesused=12441600 flags=0x00002001
+frame[083] index=3 sequence=85 timestamp=35773.764881 bytesused=12441600 flags=0x00002001
+frame[084] index=0 sequence=86 timestamp=35773.798201 bytesused=12441600 flags=0x00002001
+frame[085] index=1 sequence=87 timestamp=35773.831548 bytesused=12441600 flags=0x00002001
+frame[086] index=2 sequence=88 timestamp=35773.864873 bytesused=12441600 flags=0x00002001
+frame[087] index=3 sequence=89 timestamp=35773.898219 bytesused=12441600 flags=0x00002001
+frame[088] index=0 sequence=90 timestamp=35773.931550 bytesused=12441600 flags=0x00002001
+frame[089] index=1 sequence=91 timestamp=35773.964803 bytesused=12441600 flags=0x00002001
+frame[090] index=2 sequence=92 timestamp=35773.998178 bytesused=12441600 flags=0x00002001
+frame[091] index=3 sequence=93 timestamp=35774.031469 bytesused=12441600 flags=0x00002001
+frame[092] index=0 sequence=94 timestamp=35774.064817 bytesused=12441600 flags=0x00002001
+frame[093] index=1 sequence=95 timestamp=35774.098161 bytesused=12441600 flags=0x00002001
+frame[094] index=2 sequence=96 timestamp=35774.131536 bytesused=12441600 flags=0x00002001
+frame[095] index=3 sequence=97 timestamp=35774.164878 bytesused=12441600 flags=0x00002001
+frame[096] index=0 sequence=98 timestamp=35774.198212 bytesused=12441600 flags=0x00002001
+frame[097] index=1 sequence=99 timestamp=35774.231477 bytesused=12441600 flags=0x00002001
+frame[098] index=2 sequence=100 timestamp=35774.264873 bytesused=12441600 flags=0x00002001
+frame[099] index=3 sequence=101 timestamp=35774.298208 bytesused=12441600 flags=0x00002001
+
+=== capture summary ===
+captured frames  : 100
+elapsed seconds  : 3.300023
+actual fps       : 30.000
+first sequence   : 2
+last sequence    : 101
+sequence gaps    : 0
+poll timeouts    : 0
+bytesused min    : 12441600
+bytesused max    : 12441600
+stream status    : OFF

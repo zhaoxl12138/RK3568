@@ -3,15 +3,15 @@ id: course-07-rkisp
 doc-type: course
 title: RKISP
 course-stage: "07"
-learning-status: not-started
+learning-status: understood
 evidence-status: partial
-publish-status: draft
+publish-status: published
 updated: 2026-08-12
 ---
 
 # RKISP
 
-> 学习状态：未开始。本页先固定源码边界、数据链与验收目标。
+> 学习状态：第一轮已完成。已建立 RKISP HW/逻辑对象、Video Node 注册和开流回帧主线。
 
 ## 为什么学习
 

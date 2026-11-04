@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>图像验证记录 · RK3568</title><link rel="stylesheet" href="../../site.css?v=a5f6aba6cb"></head><body><div class="page-shell"><nav class="site-nav" data-site-nav aria-label="RK3568 Camera 课程导航"><a class="site-nav__brand" href="../../index.html"><span>RK3568</span><strong>Camera 课程</strong></a><div class="site-nav__links"><a href="../../index.html" data-nav-key="home">学习首页</a><a href="../learning-route.html" data-nav-key="route">完整路线</a><a href="../project.html" data-nav-key="project">项目</a></div><details class="site-nav__more course-menu"><summary>课程目录</summary><div class="site-nav__more-panel course-menu__grid"><a class="course-menu__item" href="../system-map.html"><span>00</span><strong>总览</strong></a><a class="course-menu__item" href="../../../../04-项目/15-Linux设备模型与总线分层.html"><span>01</span><strong>Linux Driver Model</strong></a><a class="course-menu__item" href="../../../../04-项目/20-DTS到运行时设备发现.html"><span>02</span><strong>DTS 与设备发现</strong></a><a class="course-menu__item" href="../../../../04-项目/16-IMX415-三层驱动调用流程.html"><span>03</span><strong>IMX415 Sensor</strong></a><a class="course-menu__item" href="../../../../04-项目/17-DPHY-从DTS到MediaGraph.html"><span>04</span><strong>MIPI CSI-2 / D-PHY</strong></a><a class="course-menu__item" href="../../../../04-项目/19-IMX415-v4l2-subdev注册与开流.html"><span>05</span><strong>V4L2 Subdev</strong></a><a class="course-menu__item" href="../../../../04-项目/21-MediaController-Entity-Pad-Link.html"><span>06</span><strong>Media Controller</strong></a><a class="course-menu__item" href="../../../../04-项目/22-RKISP-从RAW到VideoNode.html"><span>07</span><strong>RKISP</strong></a><a class="course-menu__item" href="../../../../04-项目/23-V4L2-VB2用户态取流.html"><span>08</span><strong>V4L2 用户态取流</strong></a><a class="course-menu__item" href="07-专项笔记--OpenCV--OpenCV读取Camera记录.html"><span>09</span><strong>GStreamer / OpenCV</strong></a><a class="course-menu__item" href="07-专项笔记--系统--AI Camera系统数据流与模块边界.html"><span>10</span><strong>RKNN / YOLO</strong></a><a class="course-menu__item" href="07-专项笔记--系统--AI Camera故障排查索引.html"><span>11</span><strong>Camera Bring-up 排障</strong></a></div></details><details class="site-nav__more reference-menu"><summary data-nav-key="reference" aria-current="page">资料与实验</summary><div class="site-nav__more-panel reference-menu__panel"><a href="../evidence.html" data-nav-key="evidence">实验依据</a><a href="../notes.html" data-nav-key="notes">专项笔记</a><a href="../environment.html" data-nav-key="environment">开发环境</a><a href="../phase0.html" data-nav-key="phase0">可视化参考</a><a href="../archive.html" data-nav-key="archive">归档</a><a href="obsidian://open?vault=RK3568&amp;file=00-%E9%A6%96%E9%A1%B5%2F00-RK3568%E5%AD%A6%E4%B9%A0%E4%B8%BB%E5%85%A5%E5%8F%A3">在 Obsidian 中打开</a></div></details><div class="site-nav__tools"><a class="site-nav__stage course-status" href="../learning-route.html#stage-08" title="当前学习阶段">当前 阶段 08 · V4L2 用户态取流</a></div></nav><main id="main-content" class="note-page"><header class="hero"><p class="hero__eyebrow">GENERATED NOTE · 05-实验与证据/V4L2用户态取流/Day5-保存NV12并验证图像</p><h1>图像验证记录 </h1><p>此页面由 Markdown 知识源自动生成，适合网页阅读；编辑仍请回到 Obsidian。</p><div class="hero__actions"><a class="button" href="obsidian://open?vault=RK3568&amp;file=05-%E5%AE%9E%E9%AA%8C%E4%B8%8E%E8%AF%81%E6%8D%AE%2FV4L2%E7%94%A8%E6%88%B7%E6%80%81%E5%8F%96%E6%B5%81%2FDay5-%E4%BF%9D%E5%AD%98NV12%E5%B9%B6%E9%AA%8C%E8%AF%81%E5%9B%BE%E5%83%8F%2F%E5%9B%BE%E5%83%8F%E9%AA%8C%E8%AF%81%E8%AE%B0%E5%BD%95">在 Obsidian 中打开</a></div></header><article class="note-content"><p>---<br>doc-type: evidence<br>title: V4L2 用户态编程 Day 5 图像验证记录<br>course-stage: &quot;08&quot;<br>learning-status: in-progress<br>evidence-status: verified<br>updated: 2026-08-30<br>---</p>
+<h2>V4L2 用户态编程 Day 5 图像验证记录</h2>
+<h2>今天已经实际完成</h2>
+<ul><li>在 RK3568 板端打开 <code>/dev/video0</code>，设置 3840×2160 NV12。</li><li>完成 <code>REQBUFS → QUERYBUF/mmap → QBUF → STREAMON → poll → DQBUF</code>。</li><li>根据 <code>buf.index</code> 找到对应 mmap 地址。</li><li>根据 <code>planes[0].bytesused=12441600</code> 保存第一帧。</li><li>生成 frame_000.nv12。</li><li>使用 FFmpeg 转换为 frame_000.png。</li><li>板端自动验收：<code>Day 5 save NV12 frame acceptance: PASS (12441600 bytes)</code>。</li></ul>
+<p>完整源码：capture_one_frame.c</p>
+<p>板端日志：capture-one.log</p>
+<p>实验说明：保存主线与推荐观看顺序</p>
+<h2>一、保存一帧时的对象关系</h2>
+<pre><code class="language-text">VIDIOC_DQBUF 返回
+├─ buf.index = 0
+│    └─ 本帧位于 buffers[0]
+├─ buf.length = 1
+│    └─ 当前 Buffer 有一个独立内存 Plane
+└─ planes[0]
+     ├─ bytesused = 12441600
+     └─ data_offset = 0
+
+应用登记表
+└─ buffers[0]
+     ├─ start[0]  → mmap 用户虚拟地址
+     └─ length[0] = 12441600
+
+真正写文件
+└─ 从 start[0] + data_offset 开始
+   写入 bytesused - data_offset 字节</code></pre>
+<p><code>DQBUF</code> 没有复制一张新图。它只是把完成 Buffer 的描述和所有权交还应用；应用随后读取 Day3 已建立的 mmap 地址。</p>
+<h2>二、三个长度不要混淆</h2>
+<table><thead><tr><th>字段</th><th>当前值</th><th>含义</th></tr></thead><tbody><tr><td><code>sizeimage</code></td><td>12441600</td><td>S_FMT 后驱动给出的该 Plane 最低容量要求</td></tr><tr><td><code>planes[0].length</code></td><td>12441600</td><td>QUERYBUF 返回的实际映射容量</td></tr><tr><td><code>planes[0].bytesused</code></td><td>12441600</td><td>DQBUF 后当前帧真正有效的数据长度</td></tr><tr><td><code>planes[0].data_offset</code></td><td>0</td><td>有效数据相对 mmap 首地址的起点</td></tr></tbody></table>
+<p>本次它们恰好相等，不代表所有格式和驱动都永远相等。尤其是 JPEG、H.264 等压缩数据，Buffer 容量通常固定，而每帧 <code>bytesused</code> 会变化。</p>
+<p>保存代码因此按下面关系计算：</p>
+<pre><code class="language-c">data = buffers[buf.index].start[plane] + planes[plane].data_offset;
+valid_bytes = planes[plane].bytesused - planes[plane].data_offset;
+fwrite(data, 1, valid_bytes, output);</code></pre>
+<h2>三、为什么当前 NV12 只有一个 Plane</h2>
+<p>当前节点使用的是 Multiplanar API，所以必须通过：</p>
+<pre><code class="language-c">struct v4l2_plane planes[VIDEO_MAX_PLANES];
+buf.m.planes = planes;</code></pre>
+<p>但驱动返回：</p>
+<pre><code class="language-text">num_planes = 1</code></pre>
+<p>这表示 Y 区域和 UV 区域连续存放在同一个内存 Plane 中：</p>
+<pre><code class="language-text">一块 12441600 字节内存
+├─ 前 3840×2160 字节：Y
+└─ 后 3840×1080 字节：交错 UV</code></pre>
+<p>因此直接按 <code>bytesused</code> 保存 <code>plane[0]</code>，就得到完整 NV12 文件。</p>
+<h2>四、板端与电脑端验证结果</h2>
+<p>板端输出：</p>
+<pre><code class="language-text">format plane[0] : bytesperline=3840 sizeimage=12441600
+dequeued frame   : index=0 sequence=2 planes=1
+saved plane[0]  : bytesused=12441600 data_offset=0 written=12441600
+bytes written    : 12441600</code></pre>
+<p>电脑端文件：</p>
+<pre><code class="language-text">frame_000.nv12：12441600 字节
+frame_000.png ：17776164 字节
+PNG 分辨率    ：3840×2160
+PNG 像素格式  ：RGB24</code></pre>
+<p>FFmpeg 转换命令：</p>
+<pre><code class="language-powershell">ffmpeg -f rawvideo -pixel_format nv12 -video_size 3840x2160 `
+  -i frame_000.nv12 -frames:v 1 frame_000.png</code></pre>
+<p>当前 <code>capture_one_frame.c</code> <strong>没有使用或链接 FFmpeg 库</strong>。板端程序只通过标准 C 的 <code>fopen()</code>、<code>fwrite()</code> 保存原始 NV12；程序结束后，电脑再单独启动 <code>ffmpeg.exe</code> 读取这个文件并转换 PNG。</p>
+<p>三种方式要区分：</p>
+<pre><code class="language-text">当前方式：程序写 NV12 → 外部 ffmpeg.exe 命令转换
+链接库方式：C 程序链接 libavformat/libavcodec/libswscale
+启动进程方式：C 程序通过 system()/popen() 启动外部 ffmpeg.exe</code></pre>
+<p>后两种都不是本次 Day5 的实现。Day5 故意分开抓帧与转换，先验证 V4L2 Buffer 保存是否正确。</p>
+<h2>五、实际画面检查</h2>
+<p><img src="../../../../05-实验与证据/V4L2用户态取流/Day5-保存NV12并验证图像/frame_000.png" alt="frame_000.png"></p>
+<p>视觉结论：</p>
+<ul><li>画面内容可以辨认，Camera 全链路已经产生真实图像。</li><li>没有明显绿屏或紫屏，当前按 NV12 解释没有出现典型 NV12/NV21 UV 顺序错误。</li><li>没有明显横向错位、分层或倾斜行，<code>bytesperline=3840</code> 与当前保存方式匹配。</li><li>没有明显截断或撕裂，文件长度与 4K NV12 理论值一致。</li><li>画面方向由 Camera 实际安装方向决定，不属于 Buffer 或像素格式错误。</li><li>场景较暗、噪点明显，这是曝光、增益、光照或 ISP 参数问题，不是本次保存流程失败。</li></ul>
+<p>图像统计：</p>
+<pre><code class="language-text">尺寸             ：3840×2160×3
+B/G/R 平均值     ：59.46 / 54.59 / 48.10
+灰度平均值       ：53.22
+灰度标准差       ：36.71
+灰度 P1/P50/P99  ：0 / 54 / 146
+接近全黑像素占比 ：19.79%
+接近全白像素占比 ：0%</code></pre>
+<p>这些数值支持“画面较暗但不是全黑”的视觉判断。</p>
+<h2>六、能证明什么，不能证明什么</h2>
+<p>当前证据能够证明：</p>
+<ul><li>Sensor → D-PHY → CSI → RKISP → mainpath → <code>/dev/video0</code> 的数据链路能够输出真实图像。</li><li>应用正确使用 <code>buf.index</code>、mmap 地址和 <code>bytesused</code> 保存了一帧。</li><li>3840×2160 NV12 文件大小、转换尺寸和画面排列一致。</li><li>当前 NV12 解释下没有明显 UV 顺序或 stride 错误。</li></ul>
+<p>当前证据仍不能证明：</p>
+<ul><li>长时间运行始终不丢帧、不超时。</li><li>实际 FPS 长期稳定在 30。</li><li>自动曝光、白平衡、降噪和其他 ISP 效果已经调优。</li><li>应用异常退出和所有错误路径都能完整释放资源。</li></ul>
+<p>这些属于 Day6 的连续 100 帧、FPS 和异常处理。</p>
+<h2>七、你的 Day5 验收题</h2>
+<h3>1. 保存图像时，为什么应该使用 <code>bytesused</code>，而不是直接把整个 <code>length</code> 都写入文件？</h3>
+<p>我的回答：</p>
+<p>只写当前帧的有效数据，避免把无效区域也保存进去。</p>
+<blockquote>[!success]- 正确答案（回答后再展开）<br><code>length</code> 是 Buffer Plane 的总容量，<code>bytesused</code> 是当前完成帧真正有效的数据范围。二者当前相等只是本次 NV12 的结果；对齐、压缩格式或其他驱动中可能不同，直接写整个 length 可能把无效尾部数据也保存进去。</blockquote>
+<h3>2. <code>DQBUF</code> 返回 <code>buf.index=2</code> 时，应用应该从哪里读取图像？</h3>
+<p>我的回答：</p>
+<p>从第三个 Buffer，也就是 <code>buffers[2]</code> 对应的 mmap 地址开始读，有效长度看 <code>bytesused</code>。</p>
+<blockquote>[!success]- 正确答案（回答后再展开）<br>应用应读取 <code>buffers[2].start[plane] + planes[plane].data_offset</code>，有效长度为 <code>bytesused - data_offset</code>。<code>buf.index</code> 把 DQBUF 的完成描述与 Day3 保存的 mmap 地址对应起来。</blockquote>
+<h3>3. NV12 有 Y 和 UV 两部分，为什么当前只保存 <code>plane[0]</code> 也能得到完整图像？</h3>
+<p>我的回答：</p>
+<p>Y 和 UV 连续放在同一个内存 Plane 中。Plane 可以理解为一块独立描述和映射的图像内存区域，但它不一定只保存一个颜色分量。</p>
+<blockquote>[!success]- 正确答案（回答后再展开）<br>因为当前驱动返回 <code>num_planes=1</code>，Y 与交错 UV 连续存放在同一个内存 Plane 中。Multiplanar API 只是接口形式，不代表当前格式一定有两个独立内存 Plane。</blockquote>
+<h3>4. 文件大小正确并且能转换成 PNG，能否单独证明画面完全正确？</h3>
+<p>我的回答：</p>
+<p>能吧。</p>
+<blockquote>[!success]- 正确答案（回答后再展开）<br>不能。它能证明长度和基本格式解释成立，但仍需实际查看颜色、亮度、画面方向、stride 错位、撕裂和内容；还不能证明长时间稳定性和 ISP 画质已经调好。</blockquote>
+<h3>5. 如果转换后出现绿屏、图像横向错位或文件截断，分别优先检查什么？</h3>
+<p>我的回答：</p>
+<p>绿屏应该是 UV 数据读写或顺序的问题；横向错位和文件截断可能与读取偏移有关。补充修正：横向错位优先检查 stride/<code>bytesperline</code>，文件截断优先检查 Plane 数、<code>bytesused</code> 和文件总长度。</p>
+<blockquote>[!success]- 正确答案（回答后再展开）<br>绿屏或明显偏色优先检查 NV12/NV21 与 UV 顺序；横向错位优先检查 <code>bytesperline</code>、stride 和每行对齐；截断或撕裂优先检查宽高、Plane 数、<code>bytesused</code>、<code>data_offset</code> 和实际文件长度。</blockquote></article><footer class="footer"><a href="../notes.html">返回专项笔记导航</a> · <a href="../../index.html">返回驾驶舱首页</a></footer></main></div><script defer src="../../generated/vault-data.js?v=a5f6aba6cb"></script><script defer src="../../site.js?v=a5f6aba6cb"></script></body></html>

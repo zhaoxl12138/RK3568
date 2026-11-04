@@ -3,15 +3,15 @@ id: course-06-media-controller
 doc-type: course
 title: Media Controller
 course-stage: "06"
-learning-status: not-started
+learning-status: understood
 evidence-status: partial
-publish-status: draft
+publish-status: published
 updated: 2026-08-12
 ---
 
 # Media Controller
 
-> 学习状态：未开始。这里先作为正式入口和学习边界，结论将在源码陪读过程中逐项校正。
+> 学习状态：第一轮已完成。已能解释 entity、pad、link、V4L2 Async 和 `media-ctl -p` 的证据边界。
 
 ## 为什么学习
 

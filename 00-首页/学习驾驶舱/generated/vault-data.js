@@ -1,21 +1,9 @@
 window.RK3568_VAULT_DATA = {
-  "currentStage": "05",
+  "currentStage": "08",
   "currentTasks": [
     {
       "completed": false,
-      "text": "完成 [[02-源码陪读/05-V4L2-Subdev/01-生命周期|驱动注册与 Subdev 组装]] 第一轮问答"
-    },
-    {
-      "completed": false,
-      "text": "指出 `imx415_i2c_driver`、`imx415_subdev_ops`、`imx415_ctrl_ops` 分别交给哪个框架"
-    },
-    {
-      "completed": false,
-      "text": "从 `v4l2_i2c_subdev_init()` 追到 `sd->ops = ops`，并说明挂接函数表不等于执行函数"
-    },
-    {
-      "completed": false,
-      "text": "从用户态 `STREAMON` 口述到 `imx415_s_stream()` 与 `__imx415_start_stream()`"
+      "text": "完成 Day 7：整理可重复运行的最小抓帧工程，脱离笔记讲清取流流程，再用现有题目验收。"
     }
   ],
   "stages": [],
@@ -46,6 +34,150 @@ window.RK3568_VAULT_DATA = {
     }
   ],
   "evidence": [
+    {
+      "id": "05-实验与证据/V4L2用户态取流/Day1-设备能力与格式枚举/Day1-验收记录.md",
+      "name": "V4L2 用户态编程 Day 1 验收记录",
+      "type": "record",
+      "mediaType": "text/markdown",
+      "assetPath": "",
+      "vaultPath": "",
+      "attachments": [],
+      "sourcePath": "05-实验与证据/V4L2用户态取流/Day1-设备能力与格式枚举/Day1-验收记录.md",
+      "sourceUrl": "obsidian://open?vault=RK3568&file=05-%E5%AE%9E%E9%AA%8C%E4%B8%8E%E8%AF%81%E6%8D%AE%2FV4L2%E7%94%A8%E6%88%B7%E6%80%81%E5%8F%96%E6%B5%81%2FDay1-%E8%AE%BE%E5%A4%87%E8%83%BD%E5%8A%9B%E4%B8%8E%E6%A0%BC%E5%BC%8F%E6%9E%9A%E4%B8%BE%2FDay1-%E9%AA%8C%E6%94%B6%E8%AE%B0%E5%BD%95",
+      "stageLabel": "阶段 8",
+      "evidenceStageKey": "stage-8",
+      "status": "verified",
+      "environment": {
+        "collectedAt": "unknown",
+        "board": "unknown",
+        "system": "unknown",
+        "kernel": "unknown",
+        "sdkCommit": "unknown",
+        "dtb": "unknown",
+        "deviceIp": "unknown",
+        "rawOutputFile": "unknown"
+      }
+    },
+    {
+      "id": "05-实验与证据/V4L2用户态取流/Day2-设置NV12格式/Day2-验收记录.md",
+      "name": "V4L2 用户态编程 Day 2 验收记录",
+      "type": "record",
+      "mediaType": "text/markdown",
+      "assetPath": "",
+      "vaultPath": "",
+      "attachments": [],
+      "sourcePath": "05-实验与证据/V4L2用户态取流/Day2-设置NV12格式/Day2-验收记录.md",
+      "sourceUrl": "obsidian://open?vault=RK3568&file=05-%E5%AE%9E%E9%AA%8C%E4%B8%8E%E8%AF%81%E6%8D%AE%2FV4L2%E7%94%A8%E6%88%B7%E6%80%81%E5%8F%96%E6%B5%81%2FDay2-%E8%AE%BE%E7%BD%AENV12%E6%A0%BC%E5%BC%8F%2FDay2-%E9%AA%8C%E6%94%B6%E8%AE%B0%E5%BD%95",
+      "stageLabel": "阶段 8",
+      "evidenceStageKey": "stage-8",
+      "status": "verified",
+      "environment": {
+        "collectedAt": "unknown",
+        "board": "unknown",
+        "system": "unknown",
+        "kernel": "unknown",
+        "sdkCommit": "unknown",
+        "dtb": "unknown",
+        "deviceIp": "unknown",
+        "rawOutputFile": "unknown"
+      }
+    },
+    {
+      "id": "05-实验与证据/V4L2用户态取流/Day3-申请与映射Buffer/Day3-验收记录.md",
+      "name": "V4L2 用户态编程 Day 3 验收记录",
+      "type": "record",
+      "mediaType": "text/markdown",
+      "assetPath": "",
+      "vaultPath": "",
+      "attachments": [],
+      "sourcePath": "05-实验与证据/V4L2用户态取流/Day3-申请与映射Buffer/Day3-验收记录.md",
+      "sourceUrl": "obsidian://open?vault=RK3568&file=05-%E5%AE%9E%E9%AA%8C%E4%B8%8E%E8%AF%81%E6%8D%AE%2FV4L2%E7%94%A8%E6%88%B7%E6%80%81%E5%8F%96%E6%B5%81%2FDay3-%E7%94%B3%E8%AF%B7%E4%B8%8E%E6%98%A0%E5%B0%84Buffer%2FDay3-%E9%AA%8C%E6%94%B6%E8%AE%B0%E5%BD%95",
+      "stageLabel": "阶段 8",
+      "evidenceStageKey": "stage-8",
+      "status": "verified",
+      "environment": {
+        "collectedAt": "unknown",
+        "board": "unknown",
+        "system": "unknown",
+        "kernel": "unknown",
+        "sdkCommit": "unknown",
+        "dtb": "unknown",
+        "deviceIp": "unknown",
+        "rawOutputFile": "unknown"
+      }
+    },
+    {
+      "id": "05-实验与证据/V4L2用户态取流/Day4-QBUF与连续取帧/Day4-验收记录.md",
+      "name": "V4L2 用户态编程 Day 4 验收记录",
+      "type": "record",
+      "mediaType": "text/markdown",
+      "assetPath": "",
+      "vaultPath": "",
+      "attachments": [],
+      "sourcePath": "05-实验与证据/V4L2用户态取流/Day4-QBUF与连续取帧/Day4-验收记录.md",
+      "sourceUrl": "obsidian://open?vault=RK3568&file=05-%E5%AE%9E%E9%AA%8C%E4%B8%8E%E8%AF%81%E6%8D%AE%2FV4L2%E7%94%A8%E6%88%B7%E6%80%81%E5%8F%96%E6%B5%81%2FDay4-QBUF%E4%B8%8E%E8%BF%9E%E7%BB%AD%E5%8F%96%E5%B8%A7%2FDay4-%E9%AA%8C%E6%94%B6%E8%AE%B0%E5%BD%95",
+      "stageLabel": "阶段 8",
+      "evidenceStageKey": "stage-8",
+      "status": "verified",
+      "environment": {
+        "collectedAt": "unknown",
+        "board": "unknown",
+        "system": "unknown",
+        "kernel": "unknown",
+        "sdkCommit": "unknown",
+        "dtb": "unknown",
+        "deviceIp": "unknown",
+        "rawOutputFile": "unknown"
+      }
+    },
+    {
+      "id": "05-实验与证据/V4L2用户态取流/Day5-保存NV12并验证图像/图像验证记录.md",
+      "name": "V4L2 用户态编程 Day 5 图像验证记录",
+      "type": "record",
+      "mediaType": "text/markdown",
+      "assetPath": "",
+      "vaultPath": "",
+      "attachments": [],
+      "sourcePath": "05-实验与证据/V4L2用户态取流/Day5-保存NV12并验证图像/图像验证记录.md",
+      "sourceUrl": "obsidian://open?vault=RK3568&file=05-%E5%AE%9E%E9%AA%8C%E4%B8%8E%E8%AF%81%E6%8D%AE%2FV4L2%E7%94%A8%E6%88%B7%E6%80%81%E5%8F%96%E6%B5%81%2FDay5-%E4%BF%9D%E5%AD%98NV12%E5%B9%B6%E9%AA%8C%E8%AF%81%E5%9B%BE%E5%83%8F%2F%E5%9B%BE%E5%83%8F%E9%AA%8C%E8%AF%81%E8%AE%B0%E5%BD%95",
+      "stageLabel": "阶段 8",
+      "evidenceStageKey": "stage-8",
+      "status": "verified",
+      "environment": {
+        "collectedAt": "unknown",
+        "board": "unknown",
+        "system": "unknown",
+        "kernel": "unknown",
+        "sdkCommit": "unknown",
+        "dtb": "unknown",
+        "deviceIp": "unknown",
+        "rawOutputFile": "unknown"
+      }
+    },
+    {
+      "id": "05-实验与证据/V4L2用户态取流/Day6-连续100帧与FPS/Day6-验收记录.md",
+      "name": "V4L2 用户态编程 Day 6 连续取帧验收记录",
+      "type": "record",
+      "mediaType": "text/markdown",
+      "assetPath": "",
+      "vaultPath": "",
+      "attachments": [],
+      "sourcePath": "05-实验与证据/V4L2用户态取流/Day6-连续100帧与FPS/Day6-验收记录.md",
+      "sourceUrl": "obsidian://open?vault=RK3568&file=05-%E5%AE%9E%E9%AA%8C%E4%B8%8E%E8%AF%81%E6%8D%AE%2FV4L2%E7%94%A8%E6%88%B7%E6%80%81%E5%8F%96%E6%B5%81%2FDay6-%E8%BF%9E%E7%BB%AD100%E5%B8%A7%E4%B8%8EFPS%2FDay6-%E9%AA%8C%E6%94%B6%E8%AE%B0%E5%BD%95",
+      "stageLabel": "阶段 8",
+      "evidenceStageKey": "stage-8",
+      "status": "verified",
+      "environment": {
+        "collectedAt": "unknown",
+        "board": "unknown",
+        "system": "unknown",
+        "kernel": "unknown",
+        "sdkCommit": "unknown",
+        "dtb": "unknown",
+        "deviceIp": "unknown",
+        "rawOutputFile": "unknown"
+      }
+    },
     {
       "id": "EVID-20260728-CAMERA-DAY1",
       "name": "Camera 驱动 Day 1 板端验收",
@@ -246,6 +378,90 @@ window.RK3568_VAULT_DATA = {
       "url": "obsidian://open?vault=RK3568&file=05-%E5%AE%9E%E9%AA%8C%E4%B8%8E%E8%AF%81%E6%8D%AE%2F2026-07-28-%E7%9B%B4%E8%BF%9E%E6%9D%BF%E7%AB%AF%E8%AF%BB%E5%8F%96IMX415%E9%85%8D%E7%BD%AE"
     },
     {
+      "title": "Day1-验收记录",
+      "folder": "05-实验与证据/V4L2用户态取流/Day1-设备能力与格式枚举",
+      "filePath": "05-实验与证据/V4L2用户态取流/Day1-设备能力与格式枚举/Day1-验收记录.md",
+      "webPath": "pages/notes/05-实验与证据--V4L2用户态取流--Day1-设备能力与格式枚举--Day1-验收记录.html",
+      "url": "obsidian://open?vault=RK3568&file=05-%E5%AE%9E%E9%AA%8C%E4%B8%8E%E8%AF%81%E6%8D%AE%2FV4L2%E7%94%A8%E6%88%B7%E6%80%81%E5%8F%96%E6%B5%81%2FDay1-%E8%AE%BE%E5%A4%87%E8%83%BD%E5%8A%9B%E4%B8%8E%E6%A0%BC%E5%BC%8F%E6%9E%9A%E4%B8%BE%2FDay1-%E9%AA%8C%E6%94%B6%E8%AE%B0%E5%BD%95"
+    },
+    {
+      "title": "README",
+      "folder": "05-实验与证据/V4L2用户态取流/Day1-设备能力与格式枚举",
+      "filePath": "05-实验与证据/V4L2用户态取流/Day1-设备能力与格式枚举/README.md",
+      "webPath": "pages/notes/05-实验与证据--V4L2用户态取流--Day1-设备能力与格式枚举--README.html",
+      "url": "obsidian://open?vault=RK3568&file=05-%E5%AE%9E%E9%AA%8C%E4%B8%8E%E8%AF%81%E6%8D%AE%2FV4L2%E7%94%A8%E6%88%B7%E6%80%81%E5%8F%96%E6%B5%81%2FDay1-%E8%AE%BE%E5%A4%87%E8%83%BD%E5%8A%9B%E4%B8%8E%E6%A0%BC%E5%BC%8F%E6%9E%9A%E4%B8%BE%2FREADME"
+    },
+    {
+      "title": "Day2-验收记录",
+      "folder": "05-实验与证据/V4L2用户态取流/Day2-设置NV12格式",
+      "filePath": "05-实验与证据/V4L2用户态取流/Day2-设置NV12格式/Day2-验收记录.md",
+      "webPath": "pages/notes/05-实验与证据--V4L2用户态取流--Day2-设置NV12格式--Day2-验收记录.html",
+      "url": "obsidian://open?vault=RK3568&file=05-%E5%AE%9E%E9%AA%8C%E4%B8%8E%E8%AF%81%E6%8D%AE%2FV4L2%E7%94%A8%E6%88%B7%E6%80%81%E5%8F%96%E6%B5%81%2FDay2-%E8%AE%BE%E7%BD%AENV12%E6%A0%BC%E5%BC%8F%2FDay2-%E9%AA%8C%E6%94%B6%E8%AE%B0%E5%BD%95"
+    },
+    {
+      "title": "README",
+      "folder": "05-实验与证据/V4L2用户态取流/Day2-设置NV12格式",
+      "filePath": "05-实验与证据/V4L2用户态取流/Day2-设置NV12格式/README.md",
+      "webPath": "pages/notes/05-实验与证据--V4L2用户态取流--Day2-设置NV12格式--README.html",
+      "url": "obsidian://open?vault=RK3568&file=05-%E5%AE%9E%E9%AA%8C%E4%B8%8E%E8%AF%81%E6%8D%AE%2FV4L2%E7%94%A8%E6%88%B7%E6%80%81%E5%8F%96%E6%B5%81%2FDay2-%E8%AE%BE%E7%BD%AENV12%E6%A0%BC%E5%BC%8F%2FREADME"
+    },
+    {
+      "title": "Day3-验收记录",
+      "folder": "05-实验与证据/V4L2用户态取流/Day3-申请与映射Buffer",
+      "filePath": "05-实验与证据/V4L2用户态取流/Day3-申请与映射Buffer/Day3-验收记录.md",
+      "webPath": "pages/notes/05-实验与证据--V4L2用户态取流--Day3-申请与映射Buffer--Day3-验收记录.html",
+      "url": "obsidian://open?vault=RK3568&file=05-%E5%AE%9E%E9%AA%8C%E4%B8%8E%E8%AF%81%E6%8D%AE%2FV4L2%E7%94%A8%E6%88%B7%E6%80%81%E5%8F%96%E6%B5%81%2FDay3-%E7%94%B3%E8%AF%B7%E4%B8%8E%E6%98%A0%E5%B0%84Buffer%2FDay3-%E9%AA%8C%E6%94%B6%E8%AE%B0%E5%BD%95"
+    },
+    {
+      "title": "README",
+      "folder": "05-实验与证据/V4L2用户态取流/Day3-申请与映射Buffer",
+      "filePath": "05-实验与证据/V4L2用户态取流/Day3-申请与映射Buffer/README.md",
+      "webPath": "pages/notes/05-实验与证据--V4L2用户态取流--Day3-申请与映射Buffer--README.html",
+      "url": "obsidian://open?vault=RK3568&file=05-%E5%AE%9E%E9%AA%8C%E4%B8%8E%E8%AF%81%E6%8D%AE%2FV4L2%E7%94%A8%E6%88%B7%E6%80%81%E5%8F%96%E6%B5%81%2FDay3-%E7%94%B3%E8%AF%B7%E4%B8%8E%E6%98%A0%E5%B0%84Buffer%2FREADME"
+    },
+    {
+      "title": "Day4-验收记录",
+      "folder": "05-实验与证据/V4L2用户态取流/Day4-QBUF与连续取帧",
+      "filePath": "05-实验与证据/V4L2用户态取流/Day4-QBUF与连续取帧/Day4-验收记录.md",
+      "webPath": "pages/notes/05-实验与证据--V4L2用户态取流--Day4-QBUF与连续取帧--Day4-验收记录.html",
+      "url": "obsidian://open?vault=RK3568&file=05-%E5%AE%9E%E9%AA%8C%E4%B8%8E%E8%AF%81%E6%8D%AE%2FV4L2%E7%94%A8%E6%88%B7%E6%80%81%E5%8F%96%E6%B5%81%2FDay4-QBUF%E4%B8%8E%E8%BF%9E%E7%BB%AD%E5%8F%96%E5%B8%A7%2FDay4-%E9%AA%8C%E6%94%B6%E8%AE%B0%E5%BD%95"
+    },
+    {
+      "title": "README",
+      "folder": "05-实验与证据/V4L2用户态取流/Day4-QBUF与连续取帧",
+      "filePath": "05-实验与证据/V4L2用户态取流/Day4-QBUF与连续取帧/README.md",
+      "webPath": "pages/notes/05-实验与证据--V4L2用户态取流--Day4-QBUF与连续取帧--README.html",
+      "url": "obsidian://open?vault=RK3568&file=05-%E5%AE%9E%E9%AA%8C%E4%B8%8E%E8%AF%81%E6%8D%AE%2FV4L2%E7%94%A8%E6%88%B7%E6%80%81%E5%8F%96%E6%B5%81%2FDay4-QBUF%E4%B8%8E%E8%BF%9E%E7%BB%AD%E5%8F%96%E5%B8%A7%2FREADME"
+    },
+    {
+      "title": "README",
+      "folder": "05-实验与证据/V4L2用户态取流/Day5-保存NV12并验证图像",
+      "filePath": "05-实验与证据/V4L2用户态取流/Day5-保存NV12并验证图像/README.md",
+      "webPath": "pages/notes/05-实验与证据--V4L2用户态取流--Day5-保存NV12并验证图像--README.html",
+      "url": "obsidian://open?vault=RK3568&file=05-%E5%AE%9E%E9%AA%8C%E4%B8%8E%E8%AF%81%E6%8D%AE%2FV4L2%E7%94%A8%E6%88%B7%E6%80%81%E5%8F%96%E6%B5%81%2FDay5-%E4%BF%9D%E5%AD%98NV12%E5%B9%B6%E9%AA%8C%E8%AF%81%E5%9B%BE%E5%83%8F%2FREADME"
+    },
+    {
+      "title": "图像验证记录",
+      "folder": "05-实验与证据/V4L2用户态取流/Day5-保存NV12并验证图像",
+      "filePath": "05-实验与证据/V4L2用户态取流/Day5-保存NV12并验证图像/图像验证记录.md",
+      "webPath": "pages/notes/05-实验与证据--V4L2用户态取流--Day5-保存NV12并验证图像--图像验证记录.html",
+      "url": "obsidian://open?vault=RK3568&file=05-%E5%AE%9E%E9%AA%8C%E4%B8%8E%E8%AF%81%E6%8D%AE%2FV4L2%E7%94%A8%E6%88%B7%E6%80%81%E5%8F%96%E6%B5%81%2FDay5-%E4%BF%9D%E5%AD%98NV12%E5%B9%B6%E9%AA%8C%E8%AF%81%E5%9B%BE%E5%83%8F%2F%E5%9B%BE%E5%83%8F%E9%AA%8C%E8%AF%81%E8%AE%B0%E5%BD%95"
+    },
+    {
+      "title": "Day6-验收记录",
+      "folder": "05-实验与证据/V4L2用户态取流/Day6-连续100帧与FPS",
+      "filePath": "05-实验与证据/V4L2用户态取流/Day6-连续100帧与FPS/Day6-验收记录.md",
+      "webPath": "pages/notes/05-实验与证据--V4L2用户态取流--Day6-连续100帧与FPS--Day6-验收记录.html",
+      "url": "obsidian://open?vault=RK3568&file=05-%E5%AE%9E%E9%AA%8C%E4%B8%8E%E8%AF%81%E6%8D%AE%2FV4L2%E7%94%A8%E6%88%B7%E6%80%81%E5%8F%96%E6%B5%81%2FDay6-%E8%BF%9E%E7%BB%AD100%E5%B8%A7%E4%B8%8EFPS%2FDay6-%E9%AA%8C%E6%94%B6%E8%AE%B0%E5%BD%95"
+    },
+    {
+      "title": "README",
+      "folder": "05-实验与证据/V4L2用户态取流/Day6-连续100帧与FPS",
+      "filePath": "05-实验与证据/V4L2用户态取流/Day6-连续100帧与FPS/README.md",
+      "webPath": "pages/notes/05-实验与证据--V4L2用户态取流--Day6-连续100帧与FPS--README.html",
+      "url": "obsidian://open?vault=RK3568&file=05-%E5%AE%9E%E9%AA%8C%E4%B8%8E%E8%AF%81%E6%8D%AE%2FV4L2%E7%94%A8%E6%88%B7%E6%80%81%E5%8F%96%E6%B5%81%2FDay6-%E8%BF%9E%E7%BB%AD100%E5%B8%A7%E4%B8%8EFPS%2FREADME"
+    },
+    {
       "title": "manifest",
       "folder": "05-实验与证据/assets",
       "filePath": "05-实验与证据/assets/manifest.md",
@@ -351,34 +567,6 @@ window.RK3568_VAULT_DATA = {
       "url": "obsidian://open?vault=RK3568&file=08-%E9%99%84%E5%BD%95%2F%E5%8F%82%E8%80%83%2FDTS%E5%9F%BA%E7%A1%80%E8%AF%AD%E6%B3%95"
     },
     {
-      "title": "Drawing 2026-06-02 09.30.23.excalidraw",
-      "folder": "08-附录/图源/Excalidraw",
-      "filePath": "08-附录/图源/Excalidraw/Drawing 2026-06-02 09.30.23.excalidraw.md",
-      "webPath": "pages/notes/08-附录--图源--Excalidraw--Drawing 2026-06-02 09.30.23.excalidraw.html",
-      "url": "obsidian://open?vault=RK3568&file=08-%E9%99%84%E5%BD%95%2F%E5%9B%BE%E6%BA%90%2FExcalidraw%2FDrawing%202026-06-02%2009.30.23.excalidraw"
-    },
-    {
-      "title": "Drawing 2026-06-02 09.46.25.excalidraw",
-      "folder": "08-附录/图源/Excalidraw",
-      "filePath": "08-附录/图源/Excalidraw/Drawing 2026-06-02 09.46.25.excalidraw.md",
-      "webPath": "pages/notes/08-附录--图源--Excalidraw--Drawing 2026-06-02 09.46.25.excalidraw.html",
-      "url": "obsidian://open?vault=RK3568&file=08-%E9%99%84%E5%BD%95%2F%E5%9B%BE%E6%BA%90%2FExcalidraw%2FDrawing%202026-06-02%2009.46.25.excalidraw"
-    },
-    {
-      "title": "Drawing 2026-06-02 09.46.26.excalidraw",
-      "folder": "08-附录/图源/Excalidraw",
-      "filePath": "08-附录/图源/Excalidraw/Drawing 2026-06-02 09.46.26.excalidraw.md",
-      "webPath": "pages/notes/08-附录--图源--Excalidraw--Drawing 2026-06-02 09.46.26.excalidraw.html",
-      "url": "obsidian://open?vault=RK3568&file=08-%E9%99%84%E5%BD%95%2F%E5%9B%BE%E6%BA%90%2FExcalidraw%2FDrawing%202026-06-02%2009.46.26.excalidraw"
-    },
-    {
-      "title": "Drawing 2026-06-02 09.46.38.excalidraw",
-      "folder": "08-附录/图源/Excalidraw",
-      "filePath": "08-附录/图源/Excalidraw/Drawing 2026-06-02 09.46.38.excalidraw.md",
-      "webPath": "pages/notes/08-附录--图源--Excalidraw--Drawing 2026-06-02 09.46.38.excalidraw.html",
-      "url": "obsidian://open?vault=RK3568&file=08-%E9%99%84%E5%BD%95%2F%E5%9B%BE%E6%BA%90%2FExcalidraw%2FDrawing%202026-06-02%2009.46.38.excalidraw"
-    },
-    {
       "title": "课程正文模板",
       "folder": "08-附录/模板",
       "filePath": "08-附录/模板/课程正文模板.md",
@@ -428,10 +616,17 @@ window.RK3568_VAULT_DATA = {
       "url": "obsidian://open?vault=RK3568&file=09-%E8%BE%93%E5%87%BA%E6%B2%89%E6%B7%80%2F04-V4L2%E4%B8%93%E9%A2%98-%E4%BB%80%E4%B9%88%E6%98%AFdev-video0"
     }
   ],
-  "warnings": []
+  "warnings": [
+    "Evidence record 05-实验与证据/V4L2用户态取流/Day1-设备能力与格式枚举/Day1-验收记录.md is missing metadata: id, collected-at, board, system, kernel, sdk-commit, dtb, device-ip, raw-output-file",
+    "Evidence record 05-实验与证据/V4L2用户态取流/Day2-设置NV12格式/Day2-验收记录.md is missing metadata: id, collected-at, board, system, kernel, sdk-commit, dtb, device-ip, raw-output-file",
+    "Evidence record 05-实验与证据/V4L2用户态取流/Day3-申请与映射Buffer/Day3-验收记录.md is missing metadata: id, collected-at, board, system, kernel, sdk-commit, dtb, device-ip, raw-output-file",
+    "Evidence record 05-实验与证据/V4L2用户态取流/Day4-QBUF与连续取帧/Day4-验收记录.md is missing metadata: id, collected-at, board, system, kernel, sdk-commit, dtb, device-ip, raw-output-file",
+    "Evidence record 05-实验与证据/V4L2用户态取流/Day5-保存NV12并验证图像/图像验证记录.md is missing metadata: id, collected-at, board, system, kernel, sdk-commit, dtb, device-ip, raw-output-file",
+    "Evidence record 05-实验与证据/V4L2用户态取流/Day6-连续100帧与FPS/Day6-验收记录.md is missing metadata: id, collected-at, board, system, kernel, sdk-commit, dtb, device-ip, raw-output-file"
+  ]
 };
 window.RK3568_COURSE = {
-  "currentStage": "05",
+  "currentStage": "08",
   "stages": [
     {
       "id": "00",
@@ -475,7 +670,7 @@ window.RK3568_COURSE = {
     },
     {
       "id": "05",
-      "maturity": "in-progress",
+      "maturity": "validated",
       "title": "V4L2 Subdev",
       "objective": "理解 Sensor 如何注册格式、controls、开流回调以及 Source Pad。",
       "sourcePath": "01-课程主线/05-V4L2-Subdev.md",
@@ -483,7 +678,7 @@ window.RK3568_COURSE = {
     },
     {
       "id": "06",
-      "maturity": "published",
+      "maturity": "validated",
       "title": "Media Controller",
       "objective": "读懂 entity、pad、link 和 media-ctl 输出，并沿数据链逐节点验证。",
       "sourcePath": "01-课程主线/06-Media-Controller.md",
@@ -491,7 +686,7 @@ window.RK3568_COURSE = {
     },
     {
       "id": "07",
-      "maturity": "published",
+      "maturity": "validated",
       "title": "RKISP",
       "objective": "解释 RAW Bayer 如何进入 RKISP，并经 mainpath/selfpath 形成可取流节点。",
       "sourcePath": "01-课程主线/07-RKISP.md",
@@ -499,7 +694,7 @@ window.RK3568_COURSE = {
     },
     {
       "id": "08",
-      "maturity": "published",
+      "maturity": "in-progress",
       "title": "V4L2 用户态取流",
       "objective": "掌握格式协商、buffer queue、STREAMON 和 v4l2-ctl 抓帧验证。",
       "sourcePath": "01-课程主线/08-V4L2用户态取流.md",

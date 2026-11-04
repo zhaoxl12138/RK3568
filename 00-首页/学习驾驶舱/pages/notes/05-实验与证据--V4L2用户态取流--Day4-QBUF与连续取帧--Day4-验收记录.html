@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Day4-验收记录 · RK3568</title><link rel="stylesheet" href="../../site.css?v=a5f6aba6cb"></head><body><div class="page-shell"><nav class="site-nav" data-site-nav aria-label="RK3568 Camera 课程导航"><a class="site-nav__brand" href="../../index.html"><span>RK3568</span><strong>Camera 课程</strong></a><div class="site-nav__links"><a href="../../index.html" data-nav-key="home">学习首页</a><a href="../learning-route.html" data-nav-key="route">完整路线</a><a href="../project.html" data-nav-key="project">项目</a></div><details class="site-nav__more course-menu"><summary>课程目录</summary><div class="site-nav__more-panel course-menu__grid"><a class="course-menu__item" href="../system-map.html"><span>00</span><strong>总览</strong></a><a class="course-menu__item" href="../../../../04-项目/15-Linux设备模型与总线分层.html"><span>01</span><strong>Linux Driver Model</strong></a><a class="course-menu__item" href="../../../../04-项目/20-DTS到运行时设备发现.html"><span>02</span><strong>DTS 与设备发现</strong></a><a class="course-menu__item" href="../../../../04-项目/16-IMX415-三层驱动调用流程.html"><span>03</span><strong>IMX415 Sensor</strong></a><a class="course-menu__item" href="../../../../04-项目/17-DPHY-从DTS到MediaGraph.html"><span>04</span><strong>MIPI CSI-2 / D-PHY</strong></a><a class="course-menu__item" href="../../../../04-项目/19-IMX415-v4l2-subdev注册与开流.html"><span>05</span><strong>V4L2 Subdev</strong></a><a class="course-menu__item" href="../../../../04-项目/21-MediaController-Entity-Pad-Link.html"><span>06</span><strong>Media Controller</strong></a><a class="course-menu__item" href="../../../../04-项目/22-RKISP-从RAW到VideoNode.html"><span>07</span><strong>RKISP</strong></a><a class="course-menu__item" href="../../../../04-项目/23-V4L2-VB2用户态取流.html"><span>08</span><strong>V4L2 用户态取流</strong></a><a class="course-menu__item" href="07-专项笔记--OpenCV--OpenCV读取Camera记录.html"><span>09</span><strong>GStreamer / OpenCV</strong></a><a class="course-menu__item" href="07-专项笔记--系统--AI Camera系统数据流与模块边界.html"><span>10</span><strong>RKNN / YOLO</strong></a><a class="course-menu__item" href="07-专项笔记--系统--AI Camera故障排查索引.html"><span>11</span><strong>Camera Bring-up 排障</strong></a></div></details><details class="site-nav__more reference-menu"><summary data-nav-key="reference" aria-current="page">资料与实验</summary><div class="site-nav__more-panel reference-menu__panel"><a href="../evidence.html" data-nav-key="evidence">实验依据</a><a href="../notes.html" data-nav-key="notes">专项笔记</a><a href="../environment.html" data-nav-key="environment">开发环境</a><a href="../phase0.html" data-nav-key="phase0">可视化参考</a><a href="../archive.html" data-nav-key="archive">归档</a><a href="obsidian://open?vault=RK3568&amp;file=00-%E9%A6%96%E9%A1%B5%2F00-RK3568%E5%AD%A6%E4%B9%A0%E4%B8%BB%E5%85%A5%E5%8F%A3">在 Obsidian 中打开</a></div></details><div class="site-nav__tools"><a class="site-nav__stage course-status" href="../learning-route.html#stage-08" title="当前学习阶段">当前 阶段 08 · V4L2 用户态取流</a></div></nav><main id="main-content" class="note-page"><header class="hero"><p class="hero__eyebrow">GENERATED NOTE · 05-实验与证据/V4L2用户态取流/Day4-QBUF与连续取帧</p><h1>Day4-验收记录 </h1><p>此页面由 Markdown 知识源自动生成，适合网页阅读；编辑仍请回到 Obsidian。</p><div class="hero__actions"><a class="button" href="obsidian://open?vault=RK3568&amp;file=05-%E5%AE%9E%E9%AA%8C%E4%B8%8E%E8%AF%81%E6%8D%AE%2FV4L2%E7%94%A8%E6%88%B7%E6%80%81%E5%8F%96%E6%B5%81%2FDay4-QBUF%E4%B8%8E%E8%BF%9E%E7%BB%AD%E5%8F%96%E5%B8%A7%2FDay4-%E9%AA%8C%E6%94%B6%E8%AE%B0%E5%BD%95">在 Obsidian 中打开</a></div></header><article class="note-content"><p>---<br>doc-type: evidence<br>title: V4L2 用户态编程 Day 4 验收记录<br>course-stage: &quot;08&quot;<br>learning-status: in-progress<br>evidence-status: verified<br>updated: 2026-08-30<br>---</p>
+<h2>V4L2 用户态编程 Day 4 验收记录</h2>
+<h2>今天已经实际完成</h2>
+<ul><li>将 4 个 MMAP Buffer 全部通过 <code>VIDIOC_QBUF</code> 交给驱动。</li><li>使用 <code>VIDIOC_STREAMON</code> 启动 Capture 队列和 Camera 管线。</li><li>使用带 2 秒超时的 <code>poll()</code> 等待完成帧，避免异常时无限阻塞。</li><li>连续执行 10 次 <code>VIDIOC_DQBUF</code>，打印 <code>index</code>、<code>sequence</code>、<code>timestamp</code>、<code>flags</code> 和 <code>bytesused</code>。</li><li>每次处理完成后重新 <code>QBUF</code>，维持 Buffer 循环。</li><li>使用 <code>VIDIOC_STREAMOFF</code> 停止管线，再依次释放映射和驱动 Buffer。</li><li>板端自动验收：<code>Day 4 QBUF/STREAMON/DQBUF acceptance: PASS</code>。</li></ul>
+<p>完整源码：capture_10_frames.c</p>
+<p>完整输出：capture-10.log</p>
+<p>实验说明：四个关键动作与推荐观看顺序</p>
+<h2>一、Day4 相比 Day3 真正多了什么</h2>
+<p>Day3 的结尾是：</p>
+<pre><code class="language-text">驱动已经建立 4 个 Buffer
+→ 应用已经 mmap 得到 4 个用户虚拟地址
+→ 但 Buffer 仍由应用持有
+→ Camera 管线尚未启动
+→ 没有有效帧证据</code></pre>
+<p>Day4 新增的是 <strong>Buffer 所有权循环和真实开流</strong>：</p>
+<pre><code class="language-text">应用持有空 Buffer
+        │
+        │ VIDIOC_QBUF
+        ▼
+驱动队列：QUEUED
+        │ 驱动选中它供硬件写入
+        ▼
+ACTIVE
+        │ ISP/MI/DMA 完成一帧
+        ▼
+DONE
+        │
+        │ VIDIOC_DQBUF
+        ▼
+应用重新持有完成 Buffer
+        │ 读取 index / bytesused / 映射地址
+        │
+        └─ VIDIOC_QBUF → 进入下一轮</code></pre>
+<p>白话解释：应用不是向驱动“索要一张临时图片”，而是提前准备几个可重复使用的容器。容器在应用和驱动之间循环，图像数据写进这些容器。</p>
+<h2>二、第一遍只追这条控制流</h2>
+<pre><code class="language-text">queue_all_buffers()
+        │ 对 buffer[0..3] 分别调用
+        ▼
+VIDIOC_QBUF
+        │ 空 Buffer 所有权交给驱动
+        ▼
+VIDIOC_STREAMON
+        │ 启动 Capture 队列及上游管线
+        ▼
+poll(fd, timeout=2000ms)
+        │ 只等待“有完成 Buffer 可取”
+        ▼
+VIDIOC_DQBUF
+        │ 驱动交还一个 DONE Buffer
+        ▼
+打印 index / sequence / timestamp / flags / bytesused
+        │ Day4 不保存图像
+        ▼
+VIDIOC_QBUF
+        │ 将用完的 Buffer 再次交给驱动
+        └──────── 重复 10 帧
+        ▼
+VIDIOC_STREAMOFF</code></pre>
+<p>不要先钻进 <code>xioctl()</code>、<code>mmap()</code> 和清理函数。它们分别是通用封装、Day3 内容和资源收尾，不是 Day4 新知识。</p>
+<h2>三、结合代码理解四个关键动作</h2>
+<h3>1. <code>QBUF</code>：交出去的是空 Buffer</h3>
+<pre><code class="language-c">buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+buf.memory = V4L2_MEMORY_MMAP;
+buf.index = index;
+buf.length = num_planes;
+buf.m.planes = planes;
+
+ioctl(fd, VIDIOC_QBUF, &amp;buf);</code></pre>
+<p>这里的 <code>index</code> 指定交出 <code>buffer[0]</code>、<code>buffer[1]</code>……中的哪一个。对于 Capture 队列，第一次 <code>QBUF</code> 交给驱动的是<strong>等待写入的空容器</strong>，不是应用已经准备好的图像。</p>
+<h3>2. <code>STREAMON</code>：启动调用链，不等于已经拿到帧</h3>
+<pre><code class="language-c">enum v4l2_buf_type type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+ioctl(fd, VIDIOC_STREAMON, &amp;type);</code></pre>
+<p><code>STREAMON</code> 返回 0 只能证明开流调用链没有立即报错。真实帧还要等待硬件完成写入，再由 <code>DQBUF</code> 返回；因此不能看到 <code>STREAMON=0</code> 就宣称“已经出图”。</p>
+<h3>3. <code>poll()</code>：等事件，不取 Buffer</h3>
+<pre><code class="language-c">pfd.fd = fd;
+pfd.events = POLLIN | POLLPRI;
+poll(&amp;pfd, 1, 2000);</code></pre>
+<p><code>poll</code> 的作用是等待 Video Node 变为可读，也就是通常已有完成 Buffer 可供 <code>DQBUF</code>。它不会复制图像，也不会改变 Buffer 所有权。2 秒超时让断流问题能够明确暴露，而不是让程序永远卡住。</p>
+<h3>4. <code>DQBUF</code>：取回一个完成 Buffer</h3>
+<pre><code class="language-c">buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+buf.memory = V4L2_MEMORY_MMAP;
+buf.length = VIDEO_MAX_PLANES;
+buf.m.planes = planes;
+
+ioctl(fd, VIDIOC_DQBUF, &amp;buf);</code></pre>
+<p>调用成功后重点读取：</p>
+<table><thead><tr><th>字段</th><th>本次含义</th></tr></thead><tbody><tr><td><code>buf.index</code></td><td>哪一个映射 Buffer 完成，应用应访问 <code>buffers[index]</code></td></tr><tr><td><code>buf.sequence</code></td><td>驱动记录的帧序号，可检查当前样本是否连续</td></tr><tr><td><code>buf.timestamp</code></td><td>当前帧时间戳，不应直接理解成墙上时钟时间</td></tr><tr><td><code>buf.flags</code></td><td>Buffer 状态、时间戳类型、错误等标记位</td></tr><tr><td><code>planes[p].bytesused</code></td><td>当前帧在该 Plane 中实际有效的数据字节数</td></tr></tbody></table>
+<p>应用处理完成后必须重新执行：</p>
+<pre><code class="language-c">ioctl(fd, VIDIOC_QBUF, &amp;buf);</code></pre>
+<p>否则可供驱动写入的 Buffer 会越来越少，最终全部被应用占住，连续采集就会停止。</p>
+<h2>四、板端输出怎样读</h2>
+<p>本次关键结果：</p>
+<pre><code class="language-text">driver buffers   : 4
+queued buffers   : 4
+stream status    : ON
+
+index     : 0 → 1 → 2 → 3 → 0 → 1 → 2 → 3 → 0 → 1
+sequence  : 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11
+bytesused : 每帧均为 12441600
+
+captured frames  : 10
+stream status    : OFF</code></pre>
+<p><code>12441600</code> 正好等于：</p>
+<pre><code class="language-text">3840 × 2160 × 3 / 2 = 12441600</code></pre>
+<p>这与 8-bit NV12 的理论帧大小一致。<code>sequence=2..11</code> 在本次取得的 10 帧内连续；它能证明该样本内没有序号跳变，但不能据此证明长时间运行永不丢帧。</p>
+<h2>五、Buffer 多大，以及录像时怎样循环</h2>
+<h3>1. Buffer 大小由协商后的图像格式决定</h3>
+<p>应用先执行 <code>VIDIOC_S_FMT</code>，驱动根据最终接受的宽高、像素格式、stride 和对齐要求回填：</p>
+<pre><code class="language-text">fmt.fmt.pix_mp.plane_fmt[p].sizeimage</code></pre>
+<p>对于当前 3840×2160、8-bit NV12：</p>
+<pre><code class="language-text">一帧理论数据量
+= 3840 × 2160 × 1.5
+= 12441600 字节</code></pre>
+<p>本板实际返回：</p>
+<pre><code class="language-text">planes[0].length = 12441600   // 这个 Plane 的分配容量
+planes[0].bytesused = 12441600 // 当前帧实际有效数据量</code></pre>
+<p>应用通过 <code>REQBUFS(count=4)</code> 请求数量；在 MMAP 模式下，RKISP/VB2 根据前面协商的 <code>sizeimage</code> 为每个 Buffer 准备足够容量。应用不需要在 <code>REQBUFS</code> 中再次填写 12441600。</p>
+<p>当前 4 个 Buffer 合计约占：</p>
+<pre><code class="language-text">12441600 × 4 = 49766400 字节，约 47.5 MiB</code></pre>
+<p>这里的大小不是每帧临时变化的。通常是在设置格式、建立队列时确定；如果更换分辨率或像素格式，一般要先 <code>STREAMOFF</code>，释放原队列，重新 <code>S_FMT</code> 和 <code>REQBUFS</code>。</p>
+<p>补充区别：NV12 这类未压缩格式的 <code>bytesused</code> 通常较固定；JPEG、H.264 等压缩数据每帧大小可能不同，此时 Buffer 分配的是最大容量，而每帧真正有效长度看 <code>bytesused</code>。</p>
+<h3>2. 录像时 Buffer 会一直循环，但不是把内存清零</h3>
+<p>可以先把状态简化成“空 → 满 → 空”，但工程上更准确的是所有权和有效性的循环：</p>
+<pre><code class="language-text">应用持有，可交给驱动
+        │ QBUF
+        ▼
+QUEUED：排队等待
+        ▼
+ACTIVE：硬件正在写入
+        ▼
+DONE：一帧已经写完
+        │ DQBUF
+        ▼
+应用持有并读取有效帧
+        │ 处理完成后再次 QBUF
+        └────────────────→ 下一轮</code></pre>
+<p>重新 <code>QBUF</code> 并不会先把整块内存清零。旧帧数据可能仍在里面，只是应用已经放弃该帧的所有权；下一次硬件使用这个 Buffer 时，会用新帧覆盖有效区域。</p>
+<p>录像时通常准备多个 Buffer 组成循环池。例如当前有 4 个：一个可能正在由 DMA 写入，几个在驱动队列中等待，一个可能刚刚 DONE 或正在被应用处理。这样硬件和应用可以并行工作。</p>
+<p>如果应用 <code>DQBUF</code> 后长期不重新 <code>QBUF</code>，驱动可用的 Buffer 会越来越少；全部被应用占住后，即使 Sensor 仍在送数据，也没有容器接收新帧，最终会停顿、超时或丢帧。</p>
+<h3>3. 30 FPS 与 Buffer 数量</h3>
+<p>30 FPS 表示理想情况下硬件每约 33.3 ms 完成一帧。因此持续处理每一帧时，应用每秒通常也会完成约 30 轮 <code>DQBUF → 处理 → QBUF</code>。</p>
+<p>这不表示 CPU 每秒把整帧复制两次。图像主要由 DMA 写入已经映射的 Buffer；<code>QBUF/DQBUF</code> 主要改变 Buffer 所有权和队列状态，应用通过 mmap 地址读取同一块底层内存。</p>
+<p>Buffer 数量不是越多越好：</p>
+<table><thead><tr><th>数量情况</th><th>影响</th></tr></thead><tbody><tr><td>太少</td><td>应用稍慢就会耗尽驱动可写 Buffer，容易停顿或丢帧</td></tr><tr><td>适中</td><td>硬件写帧与应用处理可以并行，并能吸收短时间调度抖动</td></tr><tr><td>太多</td><td>占用大量连续/DMA 内存；应用落后时队列积压，取到的帧更旧、延迟更高</td></tr></tbody></table>
+<p>实际数量受驱动最小队列深度、驱动允许上限和可用内存限制。应用填写的 <code>REQBUFS.count</code> 只是请求值，必须使用驱动返回的实际 <code>req.count</code>。</p>
+<p>当前 4K NV12 每个 Buffer 为 12441600 字节：4 个约 47.5 MiB，8 个约 94.9 MiB。对于普通连续采集，3～4 个常见；是否增加要看应用单帧处理时间和抖动，而不是靠堆 Buffer 提高 Sensor 帧率。</p>
+<p>当前板端时间戳每帧约相差 0.0333 秒，和 30 FPS 相符。4 个 Buffer 循环时，并不是每秒创建 30 个新 Buffer，而是同一组 Buffer 被反复复用。</p>
+<h2>六、能证明什么，不能证明什么</h2>
+<p>当前证据能够证明：</p>
+<ul><li><code>/dev/video0</code> 能启动 Capture 流。</li><li>驱动能够完成 Buffer 的 <code>QBUF → ACTIVE → DONE → DQBUF</code> 循环。</li><li>应用连续取回 10 个非空 Buffer。</li><li>本次 10 帧的 <code>sequence</code> 连续，<code>bytesused</code> 与 4K NV12 理论大小一致。</li></ul>
+<p>当前证据仍不能证明：</p>
+<ul><li>NV12 中的画面内容、亮度和颜色正确。</li><li>宽高、stride 或色彩解释绝对没有错误。</li><li>长时间运行不会丢帧、超时或内存泄漏。</li><li>自动曝光、自动白平衡和画质效果正确。</li></ul>
+<p>这些需要 Day5 保存并查看图像，以及后续稳定性实验。</p>
+<h2>七、你的 Day4 验收题</h2>
+<h3>1. 对 Capture 队列来说，第一次 <code>QBUF</code> 交给驱动的是空 Buffer，还是一张已经完成的图像？</h3>
+<p>我的回答：</p>
+<p>是空的。</p>
+<blockquote>[!success]- 正确答案（回答后再展开）<br>交出去的是等待硬件写入的空 Buffer。<code>QBUF</code> 把它的使用权交给驱动，随后驱动选择它成为 ACTIVE Buffer，并由 ISP/MI/DMA 写入一帧。</blockquote>
+<h3>2. <code>VIDIOC_STREAMON</code> 返回 0，为什么还不能单独证明已经有图像帧？</h3>
+<p>我的回答：</p>
+<p>只能证明开流动作是正常的，不能证明已经从 Sensor 取到数据。</p>
+<blockquote>[!success]- 正确答案（回答后再展开）<br>返回 0 只说明启动队列和上游管线的调用链没有立即失败。要证明已有帧，还需要 <code>poll</code> 就绪、<code>DQBUF</code> 成功、非零 <code>bytesused</code>，并进一步检查保存后的图像内容。</blockquote>
+<h3>3. 谁把 Buffer 从 ACTIVE 变为 DONE？<code>poll()</code> 会做这件事吗？</h3>
+<p>我的回答：</p>
+<p>不清楚。</p>
+<blockquote>[!success]- 正确答案（回答后再展开）<br>一帧由 ISP/MI/DMA 写入完成后，RKISP 驱动在帧完成/中断处理路径中把 VB2 Buffer 标记为 DONE。<code>poll()</code> 只等待并报告“已有完成 Buffer 可取”，它不完成 DMA，也不改变 Buffer 状态。</blockquote>
+<h3>4. <code>DQBUF</code> 取回的到底是什么？应用怎样找到这一帧的内存？</h3>
+<p>我的回答：</p>
+<p><code>DQBUF</code> 取回的是完成 Buffer 的描述和所有权，不是另外复制的一张图；应用通过 <code>buf.index</code> 找到已经 mmap 的内存。</p>
+<blockquote>[!success]- 正确答案（回答后再展开）<br><code>DQBUF</code> 取回的是一个已经完成的 Buffer 描述及其所有权，不是额外复制的一份图像。应用读取 <code>buf.index</code>，再访问 Day3 保存的 <code>buffers[buf.index].start[plane]</code> 映射地址；有效长度看 <code>planes[plane].bytesused</code>。</blockquote>
+<h3>5. 为什么处理完一帧后还要再次 <code>QBUF</code>？如果一直不归还会怎样？</h3>
+<p>我的回答：</p>
+<p>驱动端会报错吧。</p>
+<blockquote>[!success]- 正确答案（回答后再展开）<br>Buffer 数量是有限的。应用 DQBUF 后会占有它，只有重新 QBUF 才能让驱动再次使用。若持续取走但不归还，可写空 Buffer 会逐渐耗尽，最终管线没有容器接收新帧，连续采集停止或超时。</blockquote></article><footer class="footer"><a href="../notes.html">返回专项笔记导航</a> · <a href="../../index.html">返回驾驶舱首页</a></footer></main></div><script defer src="../../generated/vault-data.js?v=a5f6aba6cb"></script><script defer src="../../site.js?v=a5f6aba6cb"></script></body></html>

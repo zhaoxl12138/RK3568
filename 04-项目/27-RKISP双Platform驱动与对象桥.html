@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>阶段07专题 · RKISP 双 Platform Driver 与对象桥</title>
+  <link rel="stylesheet" href="../00-首页/学习驾驶舱/site.css?v=a5f6aba6cb">
+  <link rel="stylesheet" href="assets/v4l2-callgraph.css">
+  <script defer src="../00-首页/学习驾驶舱/generated/vault-data.js?v=a5f6aba6cb"></script>
+  <script defer src="../00-首页/学习驾驶舱/site.js?v=a5f6aba6cb"></script>
+</head>
+<body class="site-nav-offset">
+  <a class="skip-link" href="#main-content">跳到主要内容</a>
+  <nav class="site-nav" data-site-nav aria-label="RK3568 Camera 课程导航"><a class="site-nav__brand" href="../00-首页/学习驾驶舱/index.html"><span>RK3568</span><strong>Camera 课程</strong></a><div class="site-nav__links"><a href="../00-首页/学习驾驶舱/index.html" data-nav-key="home">学习首页</a><a href="../00-首页/学习驾驶舱/pages/learning-route.html" data-nav-key="route">完整路线</a><a href="../00-首页/学习驾驶舱/pages/project.html" data-nav-key="project">项目</a></div><details class="site-nav__more course-menu"><summary>课程目录</summary><div class="site-nav__more-panel course-menu__grid"><a class="course-menu__item" href="../00-首页/学习驾驶舱/pages/system-map.html"><span>00</span><strong>总览</strong></a><a class="course-menu__item" href="15-Linux设备模型与总线分层.html"><span>01</span><strong>Linux Driver Model</strong></a><a class="course-menu__item" href="20-DTS到运行时设备发现.html"><span>02</span><strong>DTS 与设备发现</strong></a><a class="course-menu__item" href="16-IMX415-三层驱动调用流程.html"><span>03</span><strong>IMX415 Sensor</strong></a><a class="course-menu__item" href="17-DPHY-从DTS到MediaGraph.html"><span>04</span><strong>MIPI CSI-2 / D-PHY</strong></a><a class="course-menu__item" href="19-IMX415-v4l2-subdev注册与开流.html"><span>05</span><strong>V4L2 Subdev</strong></a><a class="course-menu__item" href="21-MediaController-Entity-Pad-Link.html"><span>06</span><strong>Media Controller</strong></a><a class="course-menu__item" href="22-RKISP-从RAW到VideoNode.html"><span>07</span><strong>RKISP</strong></a><a class="course-menu__item" href="23-V4L2-VB2用户态取流.html"><span>08</span><strong>V4L2 用户态取流</strong></a><a class="course-menu__item" href="../00-首页/学习驾驶舱/pages/notes/07-专项笔记--OpenCV--OpenCV读取Camera记录.html"><span>09</span><strong>GStreamer / OpenCV</strong></a><a class="course-menu__item" href="../00-首页/学习驾驶舱/pages/notes/07-专项笔记--系统--AI Camera系统数据流与模块边界.html"><span>10</span><strong>RKNN / YOLO</strong></a><a class="course-menu__item" href="../00-首页/学习驾驶舱/pages/notes/07-专项笔记--系统--AI Camera故障排查索引.html"><span>11</span><strong>Camera Bring-up 排障</strong></a></div></details><details class="site-nav__more reference-menu"><summary data-nav-key="reference" aria-current="page">资料与实验</summary><div class="site-nav__more-panel reference-menu__panel"><a href="../00-首页/学习驾驶舱/pages/evidence.html" data-nav-key="evidence">实验依据</a><a href="../00-首页/学习驾驶舱/pages/notes.html" data-nav-key="notes">专项笔记</a><a href="../00-首页/学习驾驶舱/pages/environment.html" data-nav-key="environment">开发环境</a><a href="../00-首页/学习驾驶舱/pages/phase0.html" data-nav-key="phase0">可视化参考</a><a href="../00-首页/学习驾驶舱/pages/archive.html" data-nav-key="archive">归档</a><a href="obsidian://open?vault=RK3568&amp;file=00-%E9%A6%96%E9%A1%B5%2F00-RK3568%E5%AD%A6%E4%B9%A0%E4%B8%BB%E5%85%A5%E5%8F%A3">在 Obsidian 中打开</a></div></details><div class="site-nav__tools"><a class="site-nav__stage course-status" href="../00-首页/学习驾驶舱/pages/learning-route.html#stage-08" title="当前学习阶段">当前 阶段 08 · V4L2 用户态取流</a></div></nav>
+
+  <header class="hero">
+    <p class="eyebrow">阶段 07 · 专题 1/3</p>
+    <h1>双 Platform Driver 与对象桥</h1>
+    <p>一个模块初始化函数发布两个 Platform Driver；Platform 总线框架再分别匹配两个 DTS 设备并回调两个 probe。HW probe 不会直接调用逻辑 probe。</p>
+  </header>
+
+  <main id="main-content">
+    <nav class="topic-map" aria-label="本页阅读顺序"><a href="#register"><b>图 1 · 发布 Driver</b><code>module_init → rkisp_hw_drv_init → register × 2</code></a><a href="#probe"><b>图 2 · 两次匹配</b>两个 of_match_table 对应两个 platform_device</a><a href="#attach"><b>图 3 · 对象桥</b>逻辑对象沿 phandle 取回 HW drvdata</a></nav>
+    <div class="card-grid"><article class="plain-card"><h3>直接调用</h3><p>函数体中明确写出的调用，用灰蓝实线。</p></article><article class="plain-card"><h3>框架回调</h3><p>Platform 总线完成 match 后调用 <code>.probe</code>，用紫色虚线。</p></article><article class="plain-card"><h3>对象关系 / 对象共享</h3><p><code>rockchip,hw</code>、pdev、drvdata 和指针桥用绿色线，不冒充函数调用。</p></article></div>
+
+    <section id="register">
+      <h2>图 1：一个 init 函数发布两个 Driver</h2>
+      <div class="legend"><span><i class="legend-line"></i>直接调用</span><span><i class="legend-line callback"></i>框架回调</span><span><i class="legend-line data"></i>对象共享</span></div>
+      <div class="diagram"><svg viewBox="0 0 1200 430" role="img" aria-labelledby="r-title r-desc">
+        <title id="r-title">RKISP 双 Platform Driver 注册</title><desc id="r-desc">内核 module init 调用 rkisp_hw_drv_init，函数依次注册 HW 和逻辑 Platform Driver。</desc>
+        <defs><marker id="d1" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#8498aa"/></marker><marker id="c1" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#aa8be9"/></marker><marker id="o1" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#64a66f"/></marker></defs>
+        <rect class="node" x="45" y="70" width="250" height="100" rx="16"/><text class="node-title" x="170" y="108">module_init(...)</text><text class="node-note" x="170" y="140">内核模块初始化入口</text>
+        <rect class="node rkisp" x="365" y="70" width="270" height="100" rx="16"/><text class="node-title" x="500" y="108">rkisp_hw_drv_init()</text><text class="node-note" x="500" y="140">hw.c 中的 init 函数</text>
+        <path class="edge callback" marker-end="url(#c1)" d="M295 120H365"/><text class="edge-label" x="330" y="102">内核调用</text>
+        <rect class="node rkisp" x="720" y="45" width="435" height="110" rx="16"/><text class="node-title" x="937" y="84">platform_driver_register(&amp;rkisp_hw_drv)</text><text class="node-note" x="937" y="118">先发布物理资源 Driver</text>
+        <rect class="node rkisp" x="720" y="230" width="435" height="110" rx="16"/><text class="node-title" x="937" y="269">platform_driver_register(&amp;rkisp_plat_drv)</text><text class="node-note" x="937" y="303">前一步成功后发布逻辑管线 Driver</text>
+        <path class="edge direct" marker-end="url(#d1)" d="M635 100H720"/><path class="edge direct" marker-end="url(#d1)" d="M500 170V285H720"/>
+        <path class="edge data" marker-end="url(#o1)" d="M937 155V230"/><text class="edge-label" x="1040" y="197">注册顺序，不是 probe 调用</text>
+      </svg></div>
+      <div class="mobile-flow" aria-label="双Driver注册纵向链"><div class="mobile-step callback"><code>module_init(rkisp_hw_drv_init)</code>：内核初始化时进入</div><div class="mobile-step"><code>rkisp_hw_drv_init()</code></div><div class="mobile-step"><code>platform_driver_register(&amp;rkisp_hw_drv)</code>：发布 HW driver</div><div class="mobile-step data"><code>platform_driver_register(&amp;rkisp_plat_drv)</code>：成功后发布逻辑 driver；尚不能说明 probe 已运行</div></div>
+      <article class="source-card"><h3>白话解释</h3><p>这一步像把两份“招聘信息”登记到 Platform 总线框架。登记时只交出 driver 名称、<code>of_match_table</code> 和 <code>.probe</code> 地址；真正发现匹配设备后，框架才会分别打电话回调 probe。</p></article>
+    </section>
+
+    <section id="probe">
+      <h2>图 2：Platform 总线分别匹配两个设备</h2>
+      <div class="diagram"><svg viewBox="0 0 1200 560" role="img" aria-labelledby="p-title p-desc">
+        <title id="p-title">RKISP 两次独立 Platform 匹配</title><desc id="p-desc">HW 节点匹配 HW driver 后回调 HW probe，逻辑节点匹配逻辑 driver 后回调逻辑 probe。</desc>
+        <defs><marker id="d2" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#8498aa"/></marker><marker id="c2" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#aa8be9"/></marker><marker id="o2" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#64a66f"/></marker></defs>
+        <rect class="node data" x="35" y="60" width="260" height="115" rx="16"/><text class="node-title" x="165" y="97">ISP HW DTS 节点</text><text class="node-note" x="165" y="129">寄存器 / IRQ / clocks</text><text class="node-note" x="165" y="153">一个 HW platform_device</text>
+        <rect class="node rkisp" x="395" y="60" width="330" height="115" rx="16"/><text class="node-title" x="560" y="97">rkisp_hw_drv.of_match_table</text><text class="node-note" x="560" y="129">compatible 匹配表</text>
+        <rect class="node rkisp" x="825" y="60" width="330" height="115" rx="16"/><text class="node-title" x="990" y="97">rkisp_hw_probe()</text><text class="node-note" x="990" y="129">创建 struct rkisp_hw_dev</text>
+        <path class="edge data" marker-end="url(#o2)" d="M295 117H395"/><path class="edge callback" marker-end="url(#c2)" d="M725 117H825"/>
+        <rect class="node data" x="35" y="335" width="260" height="115" rx="16"/><text class="node-title" x="165" y="372">rkisp-vir DTS 节点</text><text class="node-note" x="165" y="404">Media / stream 管线</text><text class="node-note" x="165" y="428">另一个逻辑 platform_device</text>
+        <rect class="node rkisp" x="395" y="335" width="330" height="115" rx="16"/><text class="node-title" x="560" y="372">rkisp_plat_drv.of_match_table</text><text class="node-note" x="560" y="404">逻辑 compatible 匹配表</text>
+        <rect class="node rkisp" x="825" y="335" width="330" height="115" rx="16"/><text class="node-title" x="990" y="372">rkisp_plat_probe()</text><text class="node-note" x="990" y="404">创建 struct rkisp_device</text>
+        <path class="edge data" marker-end="url(#o2)" d="M295 392H395"/><path class="edge callback" marker-end="url(#c2)" d="M725 392H825"/>
+        <path class="edge direct" marker-end="url(#d2)" d="M990 175V270"/><text class="edge-label" x="990" y="248">没有直接调用到下面 probe</text>
+        <path class="edge callback" d="M940 270H1040"/><text class="edge-label" x="600" y="268">两个 probe 都由 Platform 总线框架独立回调</text>
+      </svg></div>
+      <div class="mobile-flow" aria-label="两次Platform匹配纵向说明"><div class="mobile-step data">HW DTS 节点形成 HW platform_device</div><div class="mobile-step callback">匹配 <code>rkisp_hw_drv.of_match_table</code> 后回调 <code>rkisp_hw_probe()</code></div><div class="mobile-step data">rkisp-vir 节点形成逻辑 platform_device</div><div class="mobile-step callback">匹配 <code>rkisp_plat_drv.of_match_table</code> 后回调 <code>rkisp_plat_probe()</code></div></div>
+    </section>
+
+    <section id="attach">
+      <h2>图 3：逻辑 probe 沿 phandle 取回同一个 HW 对象</h2>
+      <div class="diagram"><svg viewBox="0 0 1200 610" role="img" aria-labelledby="a-title a-desc">
+        <title id="a-title">RKISP HW 与逻辑对象桥</title><desc id="a-desc">HW probe 保存 drvdata，逻辑 probe 通过 rockchip hw phandle 找到 HW platform device，再读取相同对象指针。</desc>
+        <defs><marker id="d3" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#8498aa"/></marker><marker id="c3" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#aa8be9"/></marker><marker id="o3" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#64a66f"/></marker></defs>
+        <rect class="node rkisp" x="50" y="55" width="260" height="100" rx="16"/><text class="node-title" x="180" y="93">rkisp_hw_probe()</text><text class="node-note" x="180" y="125">创建 hw_dev</text>
+        <rect class="node data" x="455" y="55" width="290" height="100" rx="16"/><text class="node-title" x="600" y="93">dev_set_drvdata()</text><text class="node-note" x="600" y="125">HW dev 保存 hw_dev 指针</text>
+        <rect class="node data" x="890" y="55" width="260" height="100" rx="16"/><text class="node-title" x="1020" y="93">struct rkisp_hw_dev</text><text class="node-note" x="1020" y="125">物理资源对象</text>
+        <path class="edge direct" marker-end="url(#d3)" d="M310 105H455"/><path class="edge data" marker-end="url(#o3)" d="M745 105H890"/>
+        <rect class="node rkisp" x="50" y="320" width="260" height="100" rx="16"/><text class="node-title" x="180" y="358">rkisp_plat_probe()</text><text class="node-note" x="180" y="390">持有 isp_dev</text>
+        <rect class="node rkisp" x="405" y="320" width="300" height="100" rx="16"/><text class="node-title" x="555" y="358">rkisp_attach_hw()</text><text class="node-note" x="555" y="390">对象桥直接调用入口</text>
+        <path class="edge direct" marker-end="url(#d3)" d="M310 370H405"/>
+        <rect class="node data" x="800" y="260" width="350" height="90" rx="16"/><text class="node-title" x="975" y="294">of_parse_phandle()</text><text class="node-note" x="975" y="324">解析 rockchip,hw → HW node</text>
+        <rect class="node data" x="800" y="390" width="350" height="90" rx="16"/><text class="node-title" x="975" y="424">platform_get_drvdata()</text><text class="node-note" x="975" y="454">从 HW pdev 取回 hw_dev 指针</text>
+        <path class="edge direct" marker-end="url(#d3)" d="M705 350L800 305"/><path class="edge direct" marker-end="url(#d3)" d="M975 350V390"/>
+        <rect class="node done" x="340" y="510" width="520" height="80" rx="16"/><text class="node-title" x="600" y="544">isp_dev→hw_dev = hw；hw→isp[] = isp_dev</text><text class="node-note" x="600" y="572">共享同一个对象指针，不复制物理资源</text>
+        <path class="edge data" marker-end="url(#o3)" d="M975 480C975 545 900 550 860 550"/><path class="edge data" marker-end="url(#o3)" d="M1020 155C1020 205 1120 205 1120 435"/><path class="edge callback" marker-end="url(#c3)" d="M340 550C210 550 180 490 180 420"/>
+      </svg></div>
+      <div class="mobile-flow" aria-label="RKISP对象桥纵向链"><div class="mobile-step"><code>rkisp_hw_probe()</code> 创建 <code>rkisp_hw_dev</code></div><div class="mobile-step data"><code>dev_set_drvdata()</code> 把指针保存在 HW device</div><div class="mobile-step"><code>rkisp_plat_probe()</code> 直接调用 <code>rkisp_attach_hw()</code></div><div class="mobile-step data"><code>of_parse_phandle()</code> 沿 <code>rockchip,hw</code> 找 HW node</div><div class="mobile-step"><code>platform_get_drvdata()</code> 取回同一 <code>hw_dev</code></div><div class="mobile-step callback">双向记录 <code>isp_dev→hw_dev</code> 与 <code>hw→isp[]</code></div></div>
+      <div class="card-grid"><article class="plain-card"><h3>为什么不在 HW probe 一次做完？</h3><p>物理寄存器、IRQ、时钟跟 SoC HW 生命周期走；Media Graph、Sensor、stream 跟逻辑管线生命周期走，职责不同。</p></article><article class="plain-card"><h3>是不是一对一？</h3><p>当前板级配置可能看起来是一对一，但结构使用 <code>hw→isp[]</code>；设计上不要把共享 HW 与逻辑实例写死为一对一。</p></article><article class="plain-card"><h3>对象桥证明什么？</h3><p>证明软件已把逻辑对象关联到 HW 资源对象；不能证明寄存器数据正确、Media Link 完整或有帧。</p></article></div>
+    </section>
+
+    <section id="source-insight"><h2>Source Insight 只追三个入口</h2><div class="card-grid"><article class="source-card"><h3>hw.c</h3><p><code>rkisp_hw_drv_init()</code>、<code>rkisp_hw_probe()</code>：看两个 driver 注册和 HW 对象保存。</p></article><article class="source-card"><h3>dev.c</h3><p><code>rkisp_plat_probe()</code>：看逻辑对象创建及调用对象桥的位置。</p></article><article class="source-card"><h3>common.c</h3><p><code>rkisp_attach_hw()</code>：看 phandle、HW pdev、drvdata 和双向指针关系。</p></article></div></section>
+
+    <section id="proof"><h2>证据逐级增强</h2><div class="card-grid"><article class="plain-card"><h3>driver register 返回 0</h3><p>只证明 driver 已发布给 Platform 总线框架。</p></article><article class="plain-card"><h3>两个 probe 日志成功</h3><p>证明两个设备分别匹配并初始化；仍不等于它们已通过对象桥关联。</p></article><article class="plain-card"><h3><code>isp_dev→hw_dev</code> 非空</h3><p>证明对象桥成立；下一页再追内部节点注册和外部 Async 建链。</p></article></div></section>
+
+    <nav class="stage-nav"><a href="22-RKISP-从RAW到VideoNode.html">← 阶段07总览</a><a href="../00-首页/学习驾驶舱/pages/learning-route.html">返回完整路线</a><a href="28-RKISP内部节点注册与外部Async建链.html">专题2：节点注册与建链 →</a></nav>
+  </main>
+</body>
+</html>

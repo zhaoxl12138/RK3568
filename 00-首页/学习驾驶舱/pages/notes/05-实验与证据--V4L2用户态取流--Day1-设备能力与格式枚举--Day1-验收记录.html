@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Day1-验收记录 · RK3568</title><link rel="stylesheet" href="../../site.css?v=a5f6aba6cb"></head><body><div class="page-shell"><nav class="site-nav" data-site-nav aria-label="RK3568 Camera 课程导航"><a class="site-nav__brand" href="../../index.html"><span>RK3568</span><strong>Camera 课程</strong></a><div class="site-nav__links"><a href="../../index.html" data-nav-key="home">学习首页</a><a href="../learning-route.html" data-nav-key="route">完整路线</a><a href="../project.html" data-nav-key="project">项目</a></div><details class="site-nav__more course-menu"><summary>课程目录</summary><div class="site-nav__more-panel course-menu__grid"><a class="course-menu__item" href="../system-map.html"><span>00</span><strong>总览</strong></a><a class="course-menu__item" href="../../../../04-项目/15-Linux设备模型与总线分层.html"><span>01</span><strong>Linux Driver Model</strong></a><a class="course-menu__item" href="../../../../04-项目/20-DTS到运行时设备发现.html"><span>02</span><strong>DTS 与设备发现</strong></a><a class="course-menu__item" href="../../../../04-项目/16-IMX415-三层驱动调用流程.html"><span>03</span><strong>IMX415 Sensor</strong></a><a class="course-menu__item" href="../../../../04-项目/17-DPHY-从DTS到MediaGraph.html"><span>04</span><strong>MIPI CSI-2 / D-PHY</strong></a><a class="course-menu__item" href="../../../../04-项目/19-IMX415-v4l2-subdev注册与开流.html"><span>05</span><strong>V4L2 Subdev</strong></a><a class="course-menu__item" href="../../../../04-项目/21-MediaController-Entity-Pad-Link.html"><span>06</span><strong>Media Controller</strong></a><a class="course-menu__item" href="../../../../04-项目/22-RKISP-从RAW到VideoNode.html"><span>07</span><strong>RKISP</strong></a><a class="course-menu__item" href="../../../../04-项目/23-V4L2-VB2用户态取流.html"><span>08</span><strong>V4L2 用户态取流</strong></a><a class="course-menu__item" href="07-专项笔记--OpenCV--OpenCV读取Camera记录.html"><span>09</span><strong>GStreamer / OpenCV</strong></a><a class="course-menu__item" href="07-专项笔记--系统--AI Camera系统数据流与模块边界.html"><span>10</span><strong>RKNN / YOLO</strong></a><a class="course-menu__item" href="07-专项笔记--系统--AI Camera故障排查索引.html"><span>11</span><strong>Camera Bring-up 排障</strong></a></div></details><details class="site-nav__more reference-menu"><summary data-nav-key="reference" aria-current="page">资料与实验</summary><div class="site-nav__more-panel reference-menu__panel"><a href="../evidence.html" data-nav-key="evidence">实验依据</a><a href="../notes.html" data-nav-key="notes">专项笔记</a><a href="../environment.html" data-nav-key="environment">开发环境</a><a href="../phase0.html" data-nav-key="phase0">可视化参考</a><a href="../archive.html" data-nav-key="archive">归档</a><a href="obsidian://open?vault=RK3568&amp;file=00-%E9%A6%96%E9%A1%B5%2F00-RK3568%E5%AD%A6%E4%B9%A0%E4%B8%BB%E5%85%A5%E5%8F%A3">在 Obsidian 中打开</a></div></details><div class="site-nav__tools"><a class="site-nav__stage course-status" href="../learning-route.html#stage-08" title="当前学习阶段">当前 阶段 08 · V4L2 用户态取流</a></div></nav><main id="main-content" class="note-page"><header class="hero"><p class="hero__eyebrow">GENERATED NOTE · 05-实验与证据/V4L2用户态取流/Day1-设备能力与格式枚举</p><h1>Day1-验收记录 </h1><p>此页面由 Markdown 知识源自动生成，适合网页阅读；编辑仍请回到 Obsidian。</p><div class="hero__actions"><a class="button" href="obsidian://open?vault=RK3568&amp;file=05-%E5%AE%9E%E9%AA%8C%E4%B8%8E%E8%AF%81%E6%8D%AE%2FV4L2%E7%94%A8%E6%88%B7%E6%80%81%E5%8F%96%E6%B5%81%2FDay1-%E8%AE%BE%E5%A4%87%E8%83%BD%E5%8A%9B%E4%B8%8E%E6%A0%BC%E5%BC%8F%E6%9E%9A%E4%B8%BE%2FDay1-%E9%AA%8C%E6%94%B6%E8%AE%B0%E5%BD%95">在 Obsidian 中打开</a></div></header><article class="note-content"><p>---<br>doc-type: evidence<br>title: V4L2 用户态编程 Day 1 验收记录<br>course-stage: &quot;08&quot;<br>learning-status: completed<br>evidence-status: verified<br>updated: 2026-08-29<br>---</p>
+<h2>V4L2 用户态编程 Day 1 验收记录</h2>
+<h2>今天已经实际完成</h2>
+<ul><li>使用 <code>v4l2-ctl</code> 查询板端 <code>/dev/video0</code> 的能力、当前格式和格式列表。</li><li>编写并交叉编译 <code>query_device.c</code>，在 RK3568 上运行成功。</li><li>程序依次调用 <code>VIDIOC_QUERYCAP</code>、<code>VIDIOC_ENUM_FMT</code>、<code>VIDIOC_G_FMT</code>。</li><li>自动验收结果：<code>Day 1 query_device acceptance: PASS</code>。</li><li>当前事实：<code>rkisp_mainpath</code>、3840×2160、NV12、Multiplanar API、<code>num_planes=1</code>。</li></ul>
+<p>实验说明：代码阅读、编译与运行说明</p>
+<h2>先按这个顺序看代码</h2>
+<pre><code class="language-text">main()
+  → open(&quot;/dev/video0&quot;, O_RDWR)
+  → query_capabilities()
+       └─ ioctl(VIDIOC_QUERYCAP)
+  → enumerate_formats()
+       └─ ioctl(VIDIOC_ENUM_FMT)，改变 index 反复查询
+  → get_current_format()
+       └─ ioctl(VIDIOC_G_FMT)
+  → close()</code></pre>
+<p>第一遍只确认：<strong>应用把哪一个结构体地址交给哪个 ioctl，驱动又回填了哪些字段。</strong></p>
+<h2>你的 Day 1 验收题</h2>
+<h3>1. <code>/dev/video0</code> 为什么不是 IMX415 Sensor？</h3>
+<p>我的回答：Sensor 是最底层的，需要通过好几层映射之后才到 mainpath 节点。</p>
+<p>评价：方向基本正确，但“最底层”和“映射”不够准确。IMX415 更适合称为整条图像管线的上游数据源；图像不是被简单映射成 <code>/dev/video0</code>，而是经过 D-PHY、CSI 和 ISP 的接收、传输与处理后，由 mainpath Video Node 通过 Buffer 交给应用。</p>
+<blockquote>[!success]- 正确答案（回答后再展开）<br><code>/dev/video0</code> 的 driver 是 <code>rkisp_v5</code>，card/entity 是 <code>rkisp_mainpath</code>，它是 RKISP 处理后给应用取帧的 Video Node。IMX415 是上游 Sensor subdev，不直接作为 <code>/dev/video0</code> 给应用读取图像 Buffer。</blockquote>
+<h3>2. <code>VIDIOC_QUERYCAP</code> 查询的是什么？</h3>
+<p>我的回答：IMX415。</p>
+<p>评价：错误。程序执行的是 <code>open(&quot;/dev/video0&quot;)</code>，所以得到的 <code>fd</code> 指向 <code>rkisp_mainpath</code>。随后对这个 <code>fd</code> 执行 <code>VIDIOC_QUERYCAP</code>，查询的是 <code>/dev/video0</code> 这个 Video Node 的能力，不会越过 RKISP 去查询 IMX415。</p>
+<blockquote>[!success]- 正确答案（回答后再展开）<br>查询当前 Video Node 向用户态声明的能力，例如驱动名、设备名、总线信息，以及是否支持 Capture、Multiplanar API 和 Streaming。它不是查询 IMX415 的芯片 ID。</blockquote>
+<h3>3. <code>Video Capture Multiplanar</code> 对代码意味着什么？</h3>
+<p>我的回答：有录像、拍照的能力；不能说明 NV12 一定有两个内存 Plane。</p>
+<p>评价：后一半正确，前一半需要修正。<code>Video Capture</code> 表示节点能够把视频帧采集到内存；拍照或录像是应用拿到帧以后选择保存一帧还是连续保存，不是这个能力位直接区分的。<code>Multiplanar</code> 说明程序必须使用 MPlane API。</p>
+<blockquote>[!success]- 正确答案（回答后再展开）<br>ioctl 使用 <code>V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE</code>；格式字段使用 <code>fmt.fmt.pix_mp</code>；后续 Buffer ioctl 还要提供 <code>struct v4l2_plane[]</code>。它不代表当前格式一定返回多个内存 Plane；本板 NV12 当前就是 <code>num_planes=1</code>。</blockquote>
+<h3>4. FourCC 为 NV12 说明什么？</h3>
+<p>我的回答：NV12，不是 IMX415 直接输出的 RAW10，是转换过后的数据。</p>
+<p>评价：正确。还可以补充：NV12 属于 YUV 4:2:0 半平面格式，内存中先保存 Y 分量，后面保存交错排列的 UV 分量；当前转换工作由 RKISP 完成。</p>
+<blockquote>[!success]- 正确答案（回答后再展开）<br>当前 Video Node 输出 YUV 4:2:0 半平面格式：先保存 Y，再保存交错 UV。它是 RKISP 给应用的输出格式，不是 IMX415 在 MIPI 链路上传输的 RAW10 Bayer。</blockquote>
+<h3>5. 查询成功为什么不能证明能够抓到图？</h3>
+<p>我的回答：不清楚。</p>
+<p>评价：查询能力和格式时，驱动只需返回软件中保存的能力表和当前配置，不要求 Sensor 此刻真的输出图像。要证明能够抓帧，至少还要申请并映射 Buffer、把 Buffer 入队、启动数据流、取回一帧完成 Buffer，并检查 <code>bytesused</code>、<code>sequence</code> 和图像内容。</p>
+<blockquote>[!success]- 正确答案（回答后再展开）<br>查询只证明节点存在、驱动能响应并返回能力或格式。程序还没有申请 Buffer、QBUF、STREAMON 或 DQBUF，因此不能证明整条 Camera 管线正在持续出帧。</blockquote>
+<h2>Day 1 验收结论</h2>
+<ul><li>编程实验：通过。</li><li>板端自动验收：通过。</li><li>五道题：已回答并完成纠正。</li><li>仍需加强：区分“驱动返回静态能力/配置”和“硬件管线已经产生真实帧”。</li><li>下一步：Day 2 使用 <code>VIDIOC_S_FMT</code> 请求 NV12，并只相信驱动回填结果。</li></ul></article><footer class="footer"><a href="../notes.html">返回专项笔记导航</a> · <a href="../../index.html">返回驾驶舱首页</a></footer></main></div><script defer src="../../generated/vault-data.js?v=a5f6aba6cb"></script><script defer src="../../site.js?v=a5f6aba6cb"></script></body></html>

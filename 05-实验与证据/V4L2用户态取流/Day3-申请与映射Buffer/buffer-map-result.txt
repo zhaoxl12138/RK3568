@@ -1,0 +1,14 @@
+Board: ATK-DLRK3568 / Linux 4.19.232 / 2026-08-30
+Program: /tmp/map_buffers /dev/video0
+
+Day 3 buffer mapping acceptance: PASS
+format            : NV12 3840x2160, planes=1
+requested buffers : 4
+driver buffers    : 4
+buffer[0] plane[0]: length=12441600, offset=0x0, address=0x7f99a9a000
+buffer[1] plane[0]: length=12441600, offset=0xbde000, address=0x7f98ebc000
+buffer[2] plane[0]: length=12441600, offset=0x17bc000, address=0x7f982de000
+buffer[3] plane[0]: length=12441600, offset=0x239a000, address=0x7f97700000
+all buffers unmapped and released
+
+Note: address values are process virtual addresses and may change every run.

@@ -3,7 +3,7 @@ id: course-05-v4l2-subdev
 doc-type: course
 title: V4L2 Subdev
 course-stage: "05"
-learning-status: in-progress
+learning-status: understood
 evidence-status: partial
 publish-status: published
 updated: 2026-08-12

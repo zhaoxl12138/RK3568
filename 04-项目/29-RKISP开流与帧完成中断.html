@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>阶段07专题 · RKISP 开流与帧完成中断</title>
+  <link rel="stylesheet" href="../00-首页/学习驾驶舱/site.css?v=a5f6aba6cb">
+  <link rel="stylesheet" href="assets/v4l2-callgraph.css">
+  <script defer src="../00-首页/学习驾驶舱/generated/vault-data.js?v=a5f6aba6cb"></script>
+  <script defer src="../00-首页/学习驾驶舱/site.js?v=a5f6aba6cb"></script>
+</head>
+<body class="site-nav-offset">
+  <a class="skip-link" href="#main-content">跳到主要内容</a>
+  <nav class="site-nav" data-site-nav aria-label="RK3568 Camera 课程导航"><a class="site-nav__brand" href="../00-首页/学习驾驶舱/index.html"><span>RK3568</span><strong>Camera 课程</strong></a><div class="site-nav__links"><a href="../00-首页/学习驾驶舱/index.html" data-nav-key="home">学习首页</a><a href="../00-首页/学习驾驶舱/pages/learning-route.html" data-nav-key="route">完整路线</a><a href="../00-首页/学习驾驶舱/pages/project.html" data-nav-key="project">项目</a></div><details class="site-nav__more course-menu"><summary>课程目录</summary><div class="site-nav__more-panel course-menu__grid"><a class="course-menu__item" href="../00-首页/学习驾驶舱/pages/system-map.html"><span>00</span><strong>总览</strong></a><a class="course-menu__item" href="15-Linux设备模型与总线分层.html"><span>01</span><strong>Linux Driver Model</strong></a><a class="course-menu__item" href="20-DTS到运行时设备发现.html"><span>02</span><strong>DTS 与设备发现</strong></a><a class="course-menu__item" href="16-IMX415-三层驱动调用流程.html"><span>03</span><strong>IMX415 Sensor</strong></a><a class="course-menu__item" href="17-DPHY-从DTS到MediaGraph.html"><span>04</span><strong>MIPI CSI-2 / D-PHY</strong></a><a class="course-menu__item" href="19-IMX415-v4l2-subdev注册与开流.html"><span>05</span><strong>V4L2 Subdev</strong></a><a class="course-menu__item" href="21-MediaController-Entity-Pad-Link.html"><span>06</span><strong>Media Controller</strong></a><a class="course-menu__item" href="22-RKISP-从RAW到VideoNode.html"><span>07</span><strong>RKISP</strong></a><a class="course-menu__item" href="23-V4L2-VB2用户态取流.html"><span>08</span><strong>V4L2 用户态取流</strong></a><a class="course-menu__item" href="../00-首页/学习驾驶舱/pages/notes/07-专项笔记--OpenCV--OpenCV读取Camera记录.html"><span>09</span><strong>GStreamer / OpenCV</strong></a><a class="course-menu__item" href="../00-首页/学习驾驶舱/pages/notes/07-专项笔记--系统--AI Camera系统数据流与模块边界.html"><span>10</span><strong>RKNN / YOLO</strong></a><a class="course-menu__item" href="../00-首页/学习驾驶舱/pages/notes/07-专项笔记--系统--AI Camera故障排查索引.html"><span>11</span><strong>Camera Bring-up 排障</strong></a></div></details><details class="site-nav__more reference-menu"><summary data-nav-key="reference" aria-current="page">资料与实验</summary><div class="site-nav__more-panel reference-menu__panel"><a href="../00-首页/学习驾驶舱/pages/evidence.html" data-nav-key="evidence">实验依据</a><a href="../00-首页/学习驾驶舱/pages/notes.html" data-nav-key="notes">专项笔记</a><a href="../00-首页/学习驾驶舱/pages/environment.html" data-nav-key="environment">开发环境</a><a href="../00-首页/学习驾驶舱/pages/phase0.html" data-nav-key="phase0">可视化参考</a><a href="../00-首页/学习驾驶舱/pages/archive.html" data-nav-key="archive">归档</a><a href="obsidian://open?vault=RK3568&amp;file=00-%E9%A6%96%E9%A1%B5%2F00-RK3568%E5%AD%A6%E4%B9%A0%E4%B8%BB%E5%85%A5%E5%8F%A3">在 Obsidian 中打开</a></div></details><div class="site-nav__tools"><a class="site-nav__stage course-status" href="../00-首页/学习驾驶舱/pages/learning-route.html#stage-08" title="当前学习阶段">当前 阶段 08 · V4L2 用户态取流</a></div></nav>
+
+  <header class="hero">
+    <p class="eyebrow">阶段 07 · 专题 3/3</p>
+    <h1>开流与帧完成中断</h1>
+    <p>把两件事彻底分开：STREAMON 是控制流从应用向上游逐层启动；帧结束中断则是像素真正写入内存后，buffer 从硬件返回应用。</p>
+  </header>
+
+  <main id="main-content">
+    <nav class="topic-map" aria-label="本页阅读顺序"><a href="#streamon"><b>图 1 · 进入 RKISP</b>V4L2/VB2 如何回调 <code>rkisp_start_streaming()</code></a><a href="#upstream"><b>图 2 · 两段启动</b>先配置本地 MI，再通过 pipeline 启动上游 subdev</a><a href="#frame-done"><b>图 3 · 真实帧</b>MI 中断怎样把 ACTIVE buffer 交回 VB2</a></nav>
+    <div class="card-grid"><article class="plain-card"><h3>直接调用</h3><p>RKISP 驱动函数内部按源码顺序调用，用灰蓝实线。</p></article><article class="plain-card"><h3>框架回调</h3><p>V4L2/VB2 或函数指针间接进入驱动，用紫色虚线。</p></article><article class="plain-card"><h3>数据流 / Buffer 所有权</h3><p>RAW、DMA 与 buffer 状态返回，用绿色线。</p></article></div>
+
+    <section id="streamon">
+      <h2>图 1：STREAMON 怎样进入 RKISP</h2>
+      <div class="legend"><span><i class="legend-line"></i>直接调用</span><span><i class="legend-line callback"></i>框架回调</span><span><i class="legend-line data"></i>数据流</span></div>
+      <div class="diagram"><svg viewBox="0 0 1200 480" role="img" aria-labelledby="s-title s-desc">
+        <title id="s-title">从 VIDIOC STREAMON 到 RKISP start streaming</title><desc id="s-desc">应用发出 ioctl，经 V4L2 和 VB2 通用层，最终通过 queue ops 回调 RKISP 驱动。</desc>
+        <defs><marker id="sd" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#8498aa"/></marker><marker id="sc" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#aa8be9"/></marker><marker id="so" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#64a66f"/></marker></defs>
+        <rect class="node data" x="35" y="70" width="250" height="110" rx="16"/><text class="node-title" x="160" y="110">VIDIOC_STREAMON</text><text class="node-note" x="160" y="142">应用操作 /dev/videoX</text>
+        <rect class="node vb2" x="335" y="70" width="250" height="110" rx="16"/><text class="node-title" x="460" y="110">V4L2 ioctl 分发</text><text class="node-note" x="460" y="142">找到 video_device ioctl_ops</text>
+        <rect class="node vb2" x="635" y="70" width="250" height="110" rx="16"/><text class="node-title" x="760" y="110">VB2 Core</text><text class="node-note" x="760" y="142">检查 queue 与已排队 buffer</text>
+        <rect class="node rkisp" x="935" y="70" width="230" height="110" rx="16"/><text class="node-title" x="1050" y="110">rkisp_start_streaming()</text><text class="node-note" x="1050" y="142">RKISP VB2 回调入口</text>
+        <path class="edge direct" marker-end="url(#sd)" d="M285 125H335"/><path class="edge direct" marker-end="url(#sd)" d="M585 125H635"/><path class="edge callback" marker-end="url(#sc)" d="M885 125H935"/>
+        <rect class="node done" x="335" y="300" width="530" height="100" rx="16"/><text class="node-title" x="600" y="340">返回 0：启动调用链没有立即报错</text><text class="node-note" x="600" y="372">不等于 Sensor 已送帧，也不等于用户已经 DQBUF</text>
+        <path class="edge data" marker-end="url(#so)" d="M1050 180C1050 350 960 350 865 350"/>
+      </svg></div>
+      <div class="mobile-flow" aria-label="STREAMON进入RKISP纵向链"><div class="mobile-step"><code>VIDIOC_STREAMON</code></div><div class="mobile-step">V4L2 ioctl 分发</div><div class="mobile-step">VB2 检查 queue / buffer</div><div class="mobile-step callback"><code>q-&gt;ops-&gt;start_streaming</code> 回调</div><div class="mobile-step"><code>rkisp_start_streaming()</code></div><div class="mobile-step data">返回 0 只证明控制链未立即失败</div></div>
+    </section>
+
+    <section id="upstream">
+      <h2>图 2：先启动 RKISP 本地采集，再启动整条上游管线</h2>
+      <div class="diagram"><svg viewBox="0 0 1200 560" role="img" aria-labelledby="u-title u-desc">
+        <title id="u-title">RKISP 两段式启动顺序</title><desc id="u-desc">start streaming 先配置 RKISP 本地 stream，再通过 pipe set stream 函数指针进入 pipeline 并依次调用上游 subdev。</desc>
+        <defs><marker id="ud" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#8498aa"/></marker><marker id="uc" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#aa8be9"/></marker><marker id="uo" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#64a66f"/></marker></defs>
+        <rect class="node rkisp" x="35" y="65" width="260" height="105" rx="16"/><text class="node-title" x="165" y="104">rkisp_start_streaming()</text><text class="node-note" x="165" y="137">VB2 进入 RKISP 的总入口</text>
+        <rect class="node rkisp" x="355" y="65" width="250" height="105" rx="16"/><text class="node-title" x="480" y="104">rkisp_stream_start()</text><text class="node-note" x="480" y="137">先配置 MI / resize / DMA</text>
+        <rect class="node vb2" x="665" y="65" width="220" height="105" rx="16"/><text class="node-title" x="775" y="104">pipe.set_stream</text><text class="node-note" x="775" y="137">probe 时保存的函数指针</text>
+        <rect class="node rkisp" x="945" y="65" width="230" height="105" rx="16"/><text class="node-title" x="1060" y="104">rkisp_pipeline_set_stream()</text><text class="node-note" x="1060" y="137">整条 pipeline 启停汇合点</text>
+        <path class="edge direct" marker-end="url(#ud)" d="M295 118H355"/><path class="edge direct" marker-end="url(#ud)" d="M605 118H665"/><path class="edge callback" marker-end="url(#uc)" d="M885 118H945"/>
+        <rect class="node vb2" x="70" y="340" width="230" height="105" rx="16"/><text class="node-title" x="185" y="380">RKISP ISP</text><text class="node-note" x="185" y="412">s_stream(1)</text>
+        <rect class="node vb2" x="350" y="340" width="230" height="105" rx="16"/><text class="node-title" x="465" y="380">RKISP CSI</text><text class="node-note" x="465" y="412">s_stream(1)</text>
+        <rect class="node vb2" x="630" y="340" width="230" height="105" rx="16"/><text class="node-title" x="745" y="380">D-PHY</text><text class="node-note" x="745" y="412">s_stream(1)</text>
+        <rect class="node data" x="910" y="340" width="230" height="105" rx="16"/><text class="node-title" x="1025" y="380">IMX415 Sensor</text><text class="node-note" x="1025" y="412">退出 Standby，开始发 RAW</text>
+        <path class="edge direct" marker-end="url(#ud)" d="M1060 170C1060 265 185 265 185 340"/><path class="edge callback" marker-end="url(#uc)" d="M300 392H350"/><path class="edge callback" marker-end="url(#uc)" d="M580 392H630"/><path class="edge callback" marker-end="url(#uc)" d="M860 392H910"/>
+        <path class="edge data" marker-end="url(#uo)" d="M1025 445C1025 510 185 510 185 445"/><text class="edge-label" x="600" y="535">像素数据方向与控制调用方向相反：Sensor → D-PHY → CSI → ISP → MI</text>
+      </svg></div>
+      <div class="mobile-flow" aria-label="RKISP两段启动纵向链"><div class="mobile-step"><code>rkisp_start_streaming()</code></div><div class="mobile-step"><code>rkisp_stream_start()</code>：先准备本地 MI/DMA</div><div class="mobile-step callback"><code>pipe.set_stream(..., true)</code></div><div class="mobile-step"><code>rkisp_pipeline_set_stream()</code></div><div class="mobile-step callback">ISP → CSI → D-PHY → Sensor：各模块 <code>s_stream(1)</code></div><div class="mobile-step data">RAW 数据再从 Sensor 反向流回 MI</div></div>
+      <article class="source-card"><h3>为什么本地先启动？</h3><p>先准备 DMA 地址和接收状态，再让 Sensor 发帧，可以避免第一批像素到达时没有可写 buffer。这里是源码顺序，不是两条并行初始化线。</p></article>
+    </section>
+
+    <section id="frame-done">
+      <h2>图 3：真正一帧怎样变成可 DQBUF 的 DONE buffer</h2>
+      <div class="diagram"><svg viewBox="0 0 1200 500" role="img" aria-labelledby="f-title f-desc">
+        <title id="f-title">RKISP 帧完成中断与 buffer 返回</title><desc id="f-desc">RAW 经 ISP 和 MI 写入 ACTIVE buffer，帧结束中断进入 v21 ISR，完成 buffer 后唤醒用户。</desc>
+        <defs><marker id="fd" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#8498aa"/></marker><marker id="fc" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#aa8be9"/></marker><marker id="fo" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#64a66f"/></marker></defs>
+        <rect class="node data" x="25" y="70" width="210" height="110" rx="16"/><text class="node-title" x="130" y="110">RAW → ISP → MI</text><text class="node-note" x="130" y="142">DMA 写 ACTIVE buffer</text>
+        <rect class="node rkisp" x="275" y="70" width="240" height="110" rx="16"/><text class="node-title" x="395" y="110">MI frame-end IRQ</text><text class="node-note" x="395" y="142">硬件帧结束事件</text>
+        <rect class="node rkisp" x="555" y="70" width="250" height="110" rx="16"/><text class="node-title" x="680" y="110">rkisp_mi_v21_isr()</text><text class="node-note" x="680" y="142">识别是哪个 stream 完成</text>
+        <rect class="node rkisp" x="845" y="70" width="230" height="110" rx="16"/><text class="node-title" x="960" y="110">mi_frame_end()</text><text class="node-note" x="960" y="142">更新序号并切换 buffer</text>
+        <path class="edge data" marker-end="url(#fo)" d="M235 125H275"/><path class="edge callback" marker-end="url(#fc)" d="M515 125H555"/><path class="edge direct" marker-end="url(#fd)" d="M805 125H845"/>
+        <rect class="node done" x="200" y="315" width="280" height="105" rx="16"/><text class="node-title" x="340" y="355">vb2_buffer_done(DONE)</text><text class="node-note" x="340" y="387">ACTIVE → DONE</text>
+        <rect class="node vb2" x="560" y="315" width="250" height="105" rx="16"/><text class="node-title" x="685" y="355">VB2 done_list</text><text class="node-note" x="685" y="387">保存完成 buffer 并唤醒等待者</text>
+        <rect class="node data" x="890" y="315" width="250" height="105" rx="16"/><text class="node-title" x="1015" y="355">VIDIOC_DQBUF</text><text class="node-note" x="1015" y="387">应用取回 index/bytesused/sequence</text>
+        <path class="edge direct" marker-end="url(#fd)" d="M960 180C960 260 340 260 340 315"/><path class="edge data" marker-end="url(#fo)" d="M480 368H560"/><path class="edge callback" marker-end="url(#fc)" d="M810 368H890"/>
+      </svg></div>
+      <div class="mobile-flow" aria-label="帧完成中断纵向链"><div class="mobile-step data">RAW 经 ISP/MI 写入 ACTIVE buffer</div><div class="mobile-step callback">MI frame-end IRQ</div><div class="mobile-step"><code>rkisp_mi_v21_isr()</code></div><div class="mobile-step"><code>mi_frame_end()</code></div><div class="mobile-step data"><code>vb2_buffer_done(DONE)</code>：ACTIVE → DONE</div><div class="mobile-step callback">应用 <code>VIDIOC_DQBUF</code> 取回该帧</div></div>
+    </section>
+
+    <section id="source-insight"><h2>Source Insight 只追三组</h2><div class="card-grid"><article class="source-card"><h3>capture_v21.c · 启动</h3><p><code>rkisp_start_streaming()</code> → <code>rkisp_stream_start()</code> → <code>pipe.set_stream</code>。</p></article><article class="source-card"><h3>dev.c · 上游</h3><p><code>rkisp_pipeline_set_stream()</code>：看函数指针如何变成各 subdev 的 <code>s_stream(1)</code>。</p></article><article class="source-card"><h3>capture_v21.c · 完帧</h3><p><code>rkisp_mi_v21_isr()</code> → <code>mi_frame_end()</code> → <code>vb2_buffer_done(DONE)</code>。</p></article></div></section>
+
+    <section id="proof"><h2>证据强度</h2><div class="card-grid"><article class="plain-card"><h3>STREAMON 返回 0</h3><p>证明软件启动链没有立即失败；不能证明已经收到一帧。</p></article><article class="plain-card"><h3>MI frame-end IRQ</h3><p>证明 RKISP MI 看到了帧完成事件；比开流成功更接近真实数据证据。</p></article><article class="plain-card"><h3>连续 DQBUF</h3><p>证明 buffer 被反复填充并交回应用；下一阶段继续看 VB2 状态机和用户态循环。</p></article></div></section>
+
+    <nav class="stage-nav"><a href="28-RKISP内部节点注册与外部Async建链.html">← 专题2：节点与建链</a><a href="22-RKISP-从RAW到VideoNode.html">返回阶段07总览</a><a href="23-V4L2-VB2用户态取流.html">进入阶段08：用户态取流 →</a></nav>
+  </main>
+</body>
+</html>

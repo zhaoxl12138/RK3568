@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>阶段07专题 · RKISP 内部节点注册与外部 Async 建链</title>
+  <link rel="stylesheet" href="../00-首页/学习驾驶舱/site.css?v=a5f6aba6cb">
+  <link rel="stylesheet" href="assets/v4l2-callgraph.css">
+  <script defer src="../00-首页/学习驾驶舱/generated/vault-data.js?v=a5f6aba6cb"></script>
+  <script defer src="../00-首页/学习驾驶舱/site.js?v=a5f6aba6cb"></script>
+</head>
+<body class="site-nav-offset">
+  <a class="skip-link" href="#main-content">跳到主要内容</a>
+  <nav class="site-nav" data-site-nav aria-label="RK3568 Camera 课程导航"><a class="site-nav__brand" href="../00-首页/学习驾驶舱/index.html"><span>RK3568</span><strong>Camera 课程</strong></a><div class="site-nav__links"><a href="../00-首页/学习驾驶舱/index.html" data-nav-key="home">学习首页</a><a href="../00-首页/学习驾驶舱/pages/learning-route.html" data-nav-key="route">完整路线</a><a href="../00-首页/学习驾驶舱/pages/project.html" data-nav-key="project">项目</a></div><details class="site-nav__more course-menu"><summary>课程目录</summary><div class="site-nav__more-panel course-menu__grid"><a class="course-menu__item" href="../00-首页/学习驾驶舱/pages/system-map.html"><span>00</span><strong>总览</strong></a><a class="course-menu__item" href="15-Linux设备模型与总线分层.html"><span>01</span><strong>Linux Driver Model</strong></a><a class="course-menu__item" href="20-DTS到运行时设备发现.html"><span>02</span><strong>DTS 与设备发现</strong></a><a class="course-menu__item" href="16-IMX415-三层驱动调用流程.html"><span>03</span><strong>IMX415 Sensor</strong></a><a class="course-menu__item" href="17-DPHY-从DTS到MediaGraph.html"><span>04</span><strong>MIPI CSI-2 / D-PHY</strong></a><a class="course-menu__item" href="19-IMX415-v4l2-subdev注册与开流.html"><span>05</span><strong>V4L2 Subdev</strong></a><a class="course-menu__item" href="21-MediaController-Entity-Pad-Link.html"><span>06</span><strong>Media Controller</strong></a><a class="course-menu__item" href="22-RKISP-从RAW到VideoNode.html"><span>07</span><strong>RKISP</strong></a><a class="course-menu__item" href="23-V4L2-VB2用户态取流.html"><span>08</span><strong>V4L2 用户态取流</strong></a><a class="course-menu__item" href="../00-首页/学习驾驶舱/pages/notes/07-专项笔记--OpenCV--OpenCV读取Camera记录.html"><span>09</span><strong>GStreamer / OpenCV</strong></a><a class="course-menu__item" href="../00-首页/学习驾驶舱/pages/notes/07-专项笔记--系统--AI Camera系统数据流与模块边界.html"><span>10</span><strong>RKNN / YOLO</strong></a><a class="course-menu__item" href="../00-首页/学习驾驶舱/pages/notes/07-专项笔记--系统--AI Camera故障排查索引.html"><span>11</span><strong>Camera Bring-up 排障</strong></a></div></details><details class="site-nav__more reference-menu"><summary data-nav-key="reference" aria-current="page">资料与实验</summary><div class="site-nav__more-panel reference-menu__panel"><a href="../00-首页/学习驾驶舱/pages/evidence.html" data-nav-key="evidence">实验依据</a><a href="../00-首页/学习驾驶舱/pages/notes.html" data-nav-key="notes">专项笔记</a><a href="../00-首页/学习驾驶舱/pages/environment.html" data-nav-key="environment">开发环境</a><a href="../00-首页/学习驾驶舱/pages/phase0.html" data-nav-key="phase0">可视化参考</a><a href="../00-首页/学习驾驶舱/pages/archive.html" data-nav-key="archive">归档</a><a href="obsidian://open?vault=RK3568&amp;file=00-%E9%A6%96%E9%A1%B5%2F00-RK3568%E5%AD%A6%E4%B9%A0%E4%B8%BB%E5%85%A5%E5%8F%A3">在 Obsidian 中打开</a></div></details><div class="site-nav__tools"><a class="site-nav__stage course-status" href="../00-首页/学习驾驶舱/pages/learning-route.html#stage-08" title="当前学习阶段">当前 阶段 08 · V4L2 用户态取流</a></div></nav>
+
+  <header class="hero">
+    <p class="eyebrow">阶段 07 · 专题 2/3</p>
+    <h1>内部节点注册与外部 Async 建链</h1>
+    <p>RKISP 先创建自身的 ISP、CSI、stream 等内部对象；Sensor 和 D-PHY 则独立 probe，随后通过 V4L2 Async 到齐。两个“汇合点”不是一回事。</p>
+  </header>
+
+  <main id="main-content">
+    <nav class="topic-map" aria-label="本页阅读顺序"><a href="#internal"><b>图 1 · 内部对象</b><code>rkisp_register_platform_subdevs()</code> 组装 ISP/CSI/stream</a><a href="#video-node"><b>图 2 · Video Node</b>stream 怎样挂 fops/ioctl_ops/queue 并生成 <code>/dev/videoX</code></a><a href="#external"><b>图 3 · 外部对象</b>Async bound/complete 后才创建外部 Media Link</a></nav>
+    <div class="card-grid"><article class="plain-card"><h3>直接调用</h3><p>逻辑 probe 内部的注册函数顺序，用灰蓝实线。</p></article><article class="plain-card"><h3>框架回调</h3><p>V4L2 Async 根据等待条件回调 bound/complete，用紫色虚线。</p></article><article class="plain-card"><h3>对象关系 / 数据流</h3><p>vdev 的函数表、queue 以及最终 Media Link 用绿色线表示关联。</p></article></div>
+
+    <section id="internal">
+      <h2>图 1：逻辑 probe 先组装 RKISP 内部对象</h2>
+      <div class="legend"><span><i class="legend-line"></i>直接调用</span><span><i class="legend-line callback"></i>框架回调</span><span><i class="legend-line data"></i>对象关系</span></div>
+      <div class="diagram"><svg viewBox="0 0 1200 560" role="img" aria-labelledby="i-title i-desc">
+        <title id="i-title">RKISP 内部对象注册</title><desc id="i-desc">逻辑 probe 注册 V4L2 和 Media 根对象后，进入 platform subdev 汇合点，依次创建 ISP、CSI、bridge 和 stream。</desc>
+        <defs><marker id="d1" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#8498aa"/></marker><marker id="c1" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#aa8be9"/></marker><marker id="o1" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#64a66f"/></marker></defs>
+        <rect class="node rkisp" x="40" y="65" width="240" height="100" rx="16"/><text class="node-title" x="160" y="103">rkisp_plat_probe()</text><text class="node-note" x="160" y="135">逻辑实例入口</text>
+        <rect class="node" x="355" y="65" width="230" height="100" rx="16"/><text class="node-title" x="470" y="103">V4L2 / Media 根对象</text><text class="node-note" x="470" y="135">v4l2_device + media_device</text>
+        <rect class="node rkisp" x="660" y="65" width="490" height="100" rx="16"/><text class="node-title" x="905" y="103">rkisp_register_platform_subdevs()</text><text class="node-note" x="905" y="135">驱动内部对象注册汇合点</text>
+        <path class="edge direct" marker-end="url(#d1)" d="M280 115H355"/><path class="edge direct" marker-end="url(#d1)" d="M585 115H660"/>
+        <rect class="node vb2" x="35" y="330" width="250" height="105" rx="16"/><text class="node-title" x="160" y="368">rkisp_register_isp_subdev()</text><text class="node-note" x="160" y="400">ISP entity / pads / ops</text>
+        <rect class="node vb2" x="330" y="330" width="250" height="105" rx="16"/><text class="node-title" x="455" y="368">rkisp_register_csi_subdev()</text><text class="node-note" x="455" y="400">CSI entity / pads / ops</text>
+        <rect class="node vb2" x="625" y="330" width="250" height="105" rx="16"/><text class="node-title" x="750" y="368">bridge subdev</text><text class="node-note" x="750" y="400">可选内部桥节点</text>
+        <rect class="node done" x="920" y="330" width="250" height="105" rx="16"/><text class="node-title" x="1045" y="368">rkisp_register_stream_vdevs()</text><text class="node-note" x="1045" y="400">mainpath / selfpath 等</text>
+        <path class="edge direct" marker-end="url(#d1)" d="M905 165C905 230 160 230 160 330"/><path class="edge direct" marker-end="url(#d1)" d="M905 165C905 245 455 245 455 330"/><path class="edge direct" marker-end="url(#d1)" d="M905 165C905 260 750 260 750 330"/><path class="edge direct" marker-end="url(#d1)" d="M905 165C905 260 1045 260 1045 330"/>
+        <path class="edge data" marker-end="url(#o1)" d="M160 435V495H1045V435"/><text class="edge-label" x="600" y="520">共同挂到同一个 rkisp_device / media_device</text>
+        <path class="edge callback" d="M470 165V285"/><text class="edge-label" x="470" y="305">后续 V4L2/Media Core 使用这些对象</text>
+      </svg></div>
+      <div class="mobile-flow" aria-label="内部对象注册纵向链"><div class="mobile-step"><code>rkisp_plat_probe()</code> 创建逻辑 <code>rkisp_device</code></div><div class="mobile-step">注册 V4L2/Media 根对象</div><div class="mobile-step"><code>rkisp_register_platform_subdevs()</code></div><div class="mobile-step"><code>rkisp_register_isp_subdev()</code></div><div class="mobile-step"><code>rkisp_register_csi_subdev()</code></div><div class="mobile-step data"><code>rkisp_register_stream_vdevs()</code> 创建采集 stream</div></div>
+      <article class="source-card"><h3>先分清三个名词</h3><p><code>rkisp_device</code> 是一套逻辑管线总对象；ISP/CSI 是加入 Media Graph 的 <code>v4l2_subdev</code>；mainpath/selfpath 是面向应用的 stream/video node。三者不能统称为同一种“节点”。</p></article>
+    </section>
+
+    <section id="video-node">
+      <h2>图 2：stream 怎样成为 <code>/dev/videoX</code></h2>
+      <div class="diagram"><svg viewBox="0 0 1200 590" role="img" aria-labelledby="v-title v-desc">
+        <title id="v-title">RKISP Video Node 注册链</title><desc id="v-desc">通用 stream 注册函数按 ISP 版本进入 v2.1 实现，再组装 video device 函数表与 queue 并发布设备节点。</desc>
+        <defs><marker id="d2" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#8498aa"/></marker><marker id="c2" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#aa8be9"/></marker><marker id="o2" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#64a66f"/></marker></defs>
+        <rect class="node rkisp" x="35" y="60" width="300" height="100" rx="16"/><text class="node-title" x="185" y="98">rkisp_register_stream_vdevs()</text><text class="node-note" x="185" y="130">按 isp_ver 选择版本实现</text>
+        <rect class="node rkisp" x="450" y="60" width="300" height="100" rx="16"/><text class="node-title" x="600" y="98">rkisp_register_stream_v21()</text><text class="node-note" x="600" y="130">初始化 MP / SP / RAW streams</text>
+        <rect class="node rkisp" x="865" y="60" width="300" height="100" rx="16"/><text class="node-title" x="1015" y="98">rkisp_register_stream_vdev()</text><text class="node-note" x="1015" y="130">组装单个 stream 的 vdev</text>
+        <path class="edge direct" marker-end="url(#d2)" d="M335 110H450"/><path class="edge direct" marker-end="url(#d2)" d="M750 110H865"/>
+        <rect class="node vb2" x="120" y="300" width="280" height="130" rx="16"/><text class="node-title" x="260" y="338">vdev 字段赋值</text><text class="node-note" x="260" y="370">fops = rkisp_fops</text><text class="node-note" x="260" y="396">ioctl_ops = rkisp_v4l2_ioctl_ops</text>
+        <rect class="node vb2" x="460" y="300" width="280" height="130" rx="16"/><text class="node-title" x="600" y="338">queue 对象关联</text><text class="node-note" x="600" y="370">vdev→queue = &amp;buf_queue</text><text class="node-note" x="600" y="396">drv_priv → rkisp_stream</text>
+        <rect class="node rkisp" x="800" y="300" width="330" height="130" rx="16"/><text class="node-title" x="965" y="338">video_register_device()</text><text class="node-note" x="965" y="370">VFL_TYPE_GRABBER，minor=-1</text><text class="node-note" x="965" y="396">真正发布 video_device</text>
+        <path class="edge callback" marker-end="url(#c2)" d="M1015 160C1015 230 260 230 260 300"/><path class="edge data" marker-end="url(#o2)" d="M1015 160C1015 245 600 245 600 300"/><path class="edge direct" marker-end="url(#d2)" d="M1015 160V300"/>
+        <rect class="node done" x="380" y="490" width="440" height="80" rx="16"/><text class="node-title" x="600" y="524">rkisp_mainpath / selfpath → /dev/videoX</text><text class="node-note" x="600" y="551">编号动态分配；节点出现不等于已出帧</text>
+        <path class="edge data" marker-end="url(#o2)" d="M965 430C965 530 875 530 820 530"/>
+      </svg></div>
+      <div class="mobile-flow" aria-label="Video Node注册纵向链"><div class="mobile-step"><code>rkisp_register_stream_vdevs()</code> 按版本分发</div><div class="mobile-step"><code>rkisp_register_stream_v21()</code> 初始化各 stream</div><div class="mobile-step"><code>rkisp_register_stream_vdev()</code> 组装单个 vdev</div><div class="mobile-step callback">赋值 <code>fops</code>、<code>ioctl_ops</code>、<code>queue</code>；这是对象关系</div><div class="mobile-step"><code>video_register_device()</code></div><div class="mobile-step data">生成 rkisp_mainpath/selfpath 对应的 <code>/dev/videoX</code></div></div>
+    </section>
+
+    <section id="external">
+      <h2>图 3：外部 Sensor / D-PHY 到齐后才完成建链</h2>
+      <div class="diagram"><svg viewBox="0 0 1200 560" role="img" aria-labelledby="e-title e-desc">
+        <title id="e-title">RKISP 外部 V4L2 Async 建链</title><desc id="e-desc">RKISP notifier 保存等待条件，外部 subdev 独立注册后逐个 bound，全部到齐触发 complete 并创建 Media Links。</desc>
+        <defs><marker id="d3" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#8498aa"/></marker><marker id="c3" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#aa8be9"/></marker><marker id="o3" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#64a66f"/></marker></defs>
+        <rect class="node vb2" x="40" y="65" width="260" height="110" rx="16"/><text class="node-title" x="170" y="103">RKISP notifier</text><text class="node-note" x="170" y="135">waiting_list 匹配条件</text>
+        <rect class="node data" x="390" y="65" width="300" height="110" rx="16"/><text class="node-title" x="540" y="103">Sensor / D-PHY subdev</text><text class="node-note" x="540" y="135">各自由自己的 probe 注册</text>
+        <rect class="node vb2" x="780" y="65" width="370" height="110" rx="16"/><text class="node-title" x="965" y="103">bound()：逐个对象相遇</text><text class="node-note" x="965" y="135">只说明一个匹配完成</text>
+        <path class="edge data" marker-end="url(#o3)" d="M300 120H390"/><path class="edge callback" marker-end="url(#c3)" d="M690 120H780"/>
+        <rect class="node rkisp" x="180" y="330" width="360" height="110" rx="16"/><text class="node-title" x="360" y="368">subdev_notifier_complete()</text><text class="node-note" x="360" y="400">所需外部 subdev 全部到齐</text>
+        <rect class="node rkisp" x="660" y="330" width="320" height="110" rx="16"/><text class="node-title" x="820" y="368">rkisp_create_links()</text><text class="node-note" x="820" y="400">创建外部 Media Links</text>
+        <path class="edge callback" marker-end="url(#c3)" d="M965 175C965 260 360 260 360 330"/><path class="edge direct" marker-end="url(#d3)" d="M540 385H660"/>
+        <rect class="node done" x="390" y="480" width="420" height="65" rx="16"/><text class="node-title" x="600" y="520">完整上游 Media Graph 成立</text>
+        <path class="edge data" marker-end="url(#o3)" d="M820 440C820 510 760 512 810 512"/>
+      </svg></div>
+      <div class="mobile-flow" aria-label="外部Async建链纵向链"><div class="mobile-step">RKISP notifier 保存 waiting_list</div><div class="mobile-step data">Sensor / D-PHY subdev 各自独立注册</div><div class="mobile-step callback"><code>bound()</code>：每匹配一个对象可能调用一次</div><div class="mobile-step callback"><code>subdev_notifier_complete()</code>：全部到齐后调用一次</div><div class="mobile-step"><code>rkisp_create_links()</code></div><div class="mobile-step data">外部 Media Graph 完整</div></div>
+      <div class="card-grid"><article class="plain-card"><h3>内部汇合</h3><p><code>rkisp_register_platform_subdevs()</code> 创建 RKISP 自己拥有的 ISP、CSI、stream 对象。</p></article><article class="plain-card"><h3>外部汇合</h3><p><code>subdev_notifier_complete()</code> 等 Sensor、D-PHY 等独立对象到齐，再建外部 link。</p></article><article class="plain-card"><h3>为什么 videoX 可先出现？</h3><p>Video Node 在内部 stream 注册阶段即可发布；外部 Async complete 可能尚未发生。</p></article></div>
+    </section>
+
+    <section id="source-insight"><h2>Source Insight 只追三组</h2><div class="card-grid"><article class="source-card"><h3>dev.c</h3><p><code>rkisp_register_platform_subdevs()</code>：看内部对象注册顺序与错误回退。</p></article><article class="source-card"><h3>capture.c / capture_v21.c</h3><p><code>rkisp_register_stream_vdevs()</code> → <code>rkisp_register_stream_v21()</code> → <code>rkisp_register_stream_vdev()</code>。</p></article><article class="source-card"><h3>dev.c Async 回调</h3><p><code>subdev_notifier_complete()</code>、<code>rkisp_create_links()</code>：看外部对象到齐后的建链。</p></article></div></section>
+
+    <section id="proof"><h2>证据边界</h2><div class="card-grid"><article class="plain-card"><h3><code>/dev/videoX</code> 存在</h3><p>证明一个 <code>video_device</code> 已发布；不能证明外部 Media Links 完整。</p></article><article class="plain-card"><h3>Async complete 日志</h3><p>证明软件匹配和建链流程走到 complete；不能证明 MIPI 物理信号或真实帧。</p></article><article class="plain-card"><h3><code>media-ctl -p</code> link ENABLED</h3><p>证明软件拓扑和启用状态；下一页继续追 STREAMON 与中断。</p></article></div></section>
+
+    <nav class="stage-nav"><a href="27-RKISP双Platform驱动与对象桥.html">← 专题1：双Driver与对象桥</a><a href="22-RKISP-从RAW到VideoNode.html">返回阶段07总览</a><a href="29-RKISP开流与帧完成中断.html">专题3：开流与中断 →</a></nav>
+  </main>
+</body>
+</html>

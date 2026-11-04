@@ -39,8 +39,8 @@ test('course runtime is generated from the single course map', () => {
   const { contract, source } = loadCourseContract();
 
   assert.deepEqual(JSON.parse(JSON.stringify(contract.stages)), courseMap.stages);
-  assert.equal(courseMap.currentStage, '05');
-  assert.equal(contract.currentStage, '05');
+  assert.equal(courseMap.currentStage, '08');
+  assert.equal(contract.currentStage, '08');
   assert.equal(fs.existsSync(path.join(repoRoot, '00-首页', '00-当前学习状态.md')), false);
   assert.doesNotMatch(source, /COURSE_CURRENT_STAGE|var\s+COURSE_STAGES\s*=|MIPI CSI-2 \/ D-PHY[\s\S]*?path:/u);
 });
@@ -53,7 +53,7 @@ test('course runtime defines one ordered 00-11 route', () => {
     '00', '01', '02', '03', '04', '05',
     '06', '07', '08', '09', '10', '11',
   ]);
-  assert.equal(contract.currentStage, '05');
+  assert.equal(contract.currentStage, '08');
   assert.equal(new Set(Array.from(contract.stages, ({ path: stagePath }) => stagePath)).size, 12);
   assert.ok(contract.stages.every(({ objective }) => typeof objective === 'string' && objective.length > 10));
 });
@@ -93,9 +93,12 @@ test('capability matrix uses C01-C10 and maps every capability to course stages'
   }
 });
 
-test('main entry points directly to the current source-reading index', () => {
+test('main entry leads to the task board and its current source-reading index', () => {
   const entry = read('00-首页/00-RK3568学习主入口.md');
-  assert.match(entry, /\[\[02-源码陪读\/05-V4L2-Subdev\/00-源码陪读索引(?:\||\]\])/u);
+  const taskBoard = read('06-任务/01-下一步任务看板.md');
+  const { currentStage } = JSON.parse(read('00-首页/course-map.json'));
+  assert.match(entry, /\[\[01-下一步任务看板(?:\||\]\])/u);
+  assert.ok(taskBoard.includes(`[[02-源码陪读/${currentStage}-`));
   assert.doesNotMatch(entry, /\[\[00-当前学习状态/u);
   assert.doesNotMatch(entry, /Camera驱动第2章-MIPI-DPHY与CSI2/u);
 });

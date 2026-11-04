@@ -1,0 +1,17 @@
+format           : NV12 3840x2160, planes=1
+driver buffers   : 4
+queued buffers   : 4
+stream status    : ON
+frame[00] index=0 sequence=2 timestamp=20211.170352 flags=0x00002001 plane[0].bytesused=12441600
+frame[01] index=1 sequence=3 timestamp=20211.203693 flags=0x00002001 plane[0].bytesused=12441600
+frame[02] index=2 sequence=4 timestamp=20211.237025 flags=0x00002001 plane[0].bytesused=12441600
+frame[03] index=3 sequence=5 timestamp=20211.270355 flags=0x00002001 plane[0].bytesused=12441600
+frame[04] index=0 sequence=6 timestamp=20211.303759 flags=0x00002001 plane[0].bytesused=12441600
+frame[05] index=1 sequence=7 timestamp=20211.337054 flags=0x00002001 plane[0].bytesused=12441600
+frame[06] index=2 sequence=8 timestamp=20211.370369 flags=0x00002001 plane[0].bytesused=12441600
+frame[07] index=3 sequence=9 timestamp=20211.403676 flags=0x00002001 plane[0].bytesused=12441600
+frame[08] index=0 sequence=10 timestamp=20211.437082 flags=0x00002001 plane[0].bytesused=12441600
+frame[09] index=1 sequence=11 timestamp=20211.470356 flags=0x00002001 plane[0].bytesused=12441600
+captured frames  : 10
+stream status    : OFF
+

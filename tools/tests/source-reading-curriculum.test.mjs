@@ -15,10 +15,10 @@ const stageSpecs = [
   ['02', '02-DTS与设备发现', 'review-needed', '../../04-项目/20-DTS到运行时设备发现.html'],
   ['03', '03-IMX415-Sensor', 'review-needed', '../../04-项目/16-IMX415-三层驱动调用流程.html'],
   ['04', '04-DPHY', 'understood', '../../04-项目/17-DPHY-从DTS到MediaGraph.html'],
-  ['05', '05-V4L2-Subdev', 'in-progress', '../../04-项目/19-IMX415-v4l2-subdev注册与开流.html'],
-  ['06', '06-Media-Controller', 'not-started', '../../04-项目/21-MediaController-Entity-Pad-Link.html'],
-  ['07', '07-RKISP', 'not-started', '../../04-项目/22-RKISP-从RAW到VideoNode.html'],
-  ['08', '08-V4L2用户态取流', 'not-started', '../../04-项目/23-V4L2-VB2用户态取流.html'],
+  ['05', '05-V4L2-Subdev', 'understood', '../../04-项目/19-IMX415-v4l2-subdev注册与开流.html'],
+  ['06', '06-Media-Controller', 'understood', '../../04-项目/21-MediaController-Entity-Pad-Link.html'],
+  ['07', '07-RKISP', 'understood', '../../04-项目/22-RKISP-从RAW到VideoNode.html'],
+  ['08', '08-V4L2用户态取流', 'in-progress', '../../04-项目/23-V4L2-VB2用户态取流.html'],
 ];
 
 const chapterNames = [
@@ -128,16 +128,16 @@ test('every kernel source path named by source-reading notes exists in both lear
   }
 });
 
-test('course map is the single current-stage source and generated runtime keeps stage 05', () => {
+test('course map is the single current-stage source and generated runtime keeps stage 08', () => {
   const statePath = path.join(repoRoot, '00-首页', '00-当前学习状态.md');
   const courseMap = JSON.parse(read(path.join(repoRoot, '00-首页', 'course-map.json')));
   const buildSource = read(path.join(repoRoot, 'tools', 'build-dashboard.mjs'));
   const contract = readCourseContract();
 
   assert.equal(fs.existsSync(statePath), false, 'legacy learning-state note must be removed');
-  assert.equal(courseMap.currentStage, '05');
+  assert.equal(courseMap.currentStage, '08');
   assert.doesNotMatch(buildSource, /learningState|00-当前学习状态\.md/u);
-  assert.equal(contract.currentStage, '05');
+  assert.equal(contract.currentStage, '08');
   assert.deepEqual(JSON.parse(JSON.stringify(contract.stages)), courseMap.stages);
 });
 

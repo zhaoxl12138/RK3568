@@ -1,0 +1,8 @@
+Board: ATK-DLRK3568 / Linux 4.19.232 / 2026-08-30
+Program: /tmp/set_format /dev/video0
+
+Day 2 set_format acceptance: PASS
+request fmt  : NV12 3840x2160
+driver fmt   : NV12 3840x2160, planes=1
+field        : 1 (V4L2_FIELD_NONE)
+plane[0]     : bytesperline=3840, sizeimage=12441600

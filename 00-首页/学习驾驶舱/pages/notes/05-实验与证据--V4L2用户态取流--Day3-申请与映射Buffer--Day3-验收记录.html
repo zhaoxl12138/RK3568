@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Day3-验收记录 · RK3568</title><link rel="stylesheet" href="../../site.css?v=a5f6aba6cb"></head><body><div class="page-shell"><nav class="site-nav" data-site-nav aria-label="RK3568 Camera 课程导航"><a class="site-nav__brand" href="../../index.html"><span>RK3568</span><strong>Camera 课程</strong></a><div class="site-nav__links"><a href="../../index.html" data-nav-key="home">学习首页</a><a href="../learning-route.html" data-nav-key="route">完整路线</a><a href="../project.html" data-nav-key="project">项目</a></div><details class="site-nav__more course-menu"><summary>课程目录</summary><div class="site-nav__more-panel course-menu__grid"><a class="course-menu__item" href="../system-map.html"><span>00</span><strong>总览</strong></a><a class="course-menu__item" href="../../../../04-项目/15-Linux设备模型与总线分层.html"><span>01</span><strong>Linux Driver Model</strong></a><a class="course-menu__item" href="../../../../04-项目/20-DTS到运行时设备发现.html"><span>02</span><strong>DTS 与设备发现</strong></a><a class="course-menu__item" href="../../../../04-项目/16-IMX415-三层驱动调用流程.html"><span>03</span><strong>IMX415 Sensor</strong></a><a class="course-menu__item" href="../../../../04-项目/17-DPHY-从DTS到MediaGraph.html"><span>04</span><strong>MIPI CSI-2 / D-PHY</strong></a><a class="course-menu__item" href="../../../../04-项目/19-IMX415-v4l2-subdev注册与开流.html"><span>05</span><strong>V4L2 Subdev</strong></a><a class="course-menu__item" href="../../../../04-项目/21-MediaController-Entity-Pad-Link.html"><span>06</span><strong>Media Controller</strong></a><a class="course-menu__item" href="../../../../04-项目/22-RKISP-从RAW到VideoNode.html"><span>07</span><strong>RKISP</strong></a><a class="course-menu__item" href="../../../../04-项目/23-V4L2-VB2用户态取流.html"><span>08</span><strong>V4L2 用户态取流</strong></a><a class="course-menu__item" href="07-专项笔记--OpenCV--OpenCV读取Camera记录.html"><span>09</span><strong>GStreamer / OpenCV</strong></a><a class="course-menu__item" href="07-专项笔记--系统--AI Camera系统数据流与模块边界.html"><span>10</span><strong>RKNN / YOLO</strong></a><a class="course-menu__item" href="07-专项笔记--系统--AI Camera故障排查索引.html"><span>11</span><strong>Camera Bring-up 排障</strong></a></div></details><details class="site-nav__more reference-menu"><summary data-nav-key="reference" aria-current="page">资料与实验</summary><div class="site-nav__more-panel reference-menu__panel"><a href="../evidence.html" data-nav-key="evidence">实验依据</a><a href="../notes.html" data-nav-key="notes">专项笔记</a><a href="../environment.html" data-nav-key="environment">开发环境</a><a href="../phase0.html" data-nav-key="phase0">可视化参考</a><a href="../archive.html" data-nav-key="archive">归档</a><a href="obsidian://open?vault=RK3568&amp;file=00-%E9%A6%96%E9%A1%B5%2F00-RK3568%E5%AD%A6%E4%B9%A0%E4%B8%BB%E5%85%A5%E5%8F%A3">在 Obsidian 中打开</a></div></details><div class="site-nav__tools"><a class="site-nav__stage course-status" href="../learning-route.html#stage-08" title="当前学习阶段">当前 阶段 08 · V4L2 用户态取流</a></div></nav><main id="main-content" class="note-page"><header class="hero"><p class="hero__eyebrow">GENERATED NOTE · 05-实验与证据/V4L2用户态取流/Day3-申请与映射Buffer</p><h1>Day3-验收记录 </h1><p>此页面由 Markdown 知识源自动生成，适合网页阅读；编辑仍请回到 Obsidian。</p><div class="hero__actions"><a class="button" href="obsidian://open?vault=RK3568&amp;file=05-%E5%AE%9E%E9%AA%8C%E4%B8%8E%E8%AF%81%E6%8D%AE%2FV4L2%E7%94%A8%E6%88%B7%E6%80%81%E5%8F%96%E6%B5%81%2FDay3-%E7%94%B3%E8%AF%B7%E4%B8%8E%E6%98%A0%E5%B0%84Buffer%2FDay3-%E9%AA%8C%E6%94%B6%E8%AE%B0%E5%BD%95">在 Obsidian 中打开</a></div></header><article class="note-content"><p>---<br>doc-type: evidence<br>title: V4L2 用户态编程 Day 3 验收记录<br>course-stage: &quot;08&quot;<br>learning-status: in-progress<br>evidence-status: verified<br>updated: 2026-08-30<br>---</p>
+<h2>V4L2 用户态编程 Day 3 验收记录</h2>
+<h2>今天已经实际完成</h2>
+<ul><li>使用 <code>VIDIOC_REQBUFS</code> 请求 4 个 MMAP Buffer，驱动实际返回 4 个。</li><li>为 Multiplanar API 准备 <code>struct v4l2_plane planes[VIDEO_MAX_PLANES]</code>。</li><li>对每个 Buffer 调用 <code>VIDIOC_QUERYBUF</code>，获得 Plane 数、长度和 mmap offset。</li><li>对 4 个 Buffer 的 <code>plane[0]</code> 分别执行 <code>mmap()</code>。</li><li>退出前执行 <code>munmap()</code>，再用 <code>REQBUFS(count=0)</code> 释放驱动队列。</li><li>板端自动验收：<code>Day 3 buffer mapping acceptance: PASS</code>。</li></ul>
+<p>实验说明：三个关键动作与边界</p>
+<h2>实测对象关系</h2>
+<pre><code class="language-text">一个Video Node文件描述符 fd
+└─ 一条VB2 Capture Queue
+   ├─ buffer[0] ─ plane[0]：12441600字节 → 用户虚拟地址A
+   ├─ buffer[1] ─ plane[0]：12441600字节 → 用户虚拟地址B
+   ├─ buffer[2] ─ plane[0]：12441600字节 → 用户虚拟地址C
+   └─ buffer[3] ─ plane[0]：12441600字节 → 用户虚拟地址D</code></pre>
+<p>当前只是“内存准备好并且应用能够访问”，还没有把 Buffer 排入驱动，也没有启动图像数据流。</p>
+<h2>结合代码看三个关键动作</h2>
+<p>完整源码：map_buffers.c</p>
+<p>第一遍只看下面三段，不需要先看 <code>xioctl()</code>、错误处理和清理函数。</p>
+<h3>1. <code>REQBUFS</code>：请求驱动建立 Buffer 队列</h3>
+<pre><code class="language-c">struct v4l2_requestbuffers req;
+
+memset(&amp;req, 0, sizeof(req));
+
+req.count = 4;
+// 应用希望获得 4 个 Buffer；这只是请求值。
+
+req.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+// 必须与 /dev/video0 的 Video Capture Multiplanar 类型一致。
+
+req.memory = V4L2_MEMORY_MMAP;
+// 选择 MMAP 内存交换方式，后面会用 mmap 建立用户态映射。
+
+ioctl(fd, VIDIOC_REQBUFS, &amp;req);
+// fd 找到 /dev/video0；驱动建立/分配 Buffer 队列，
+// 并把实际数量写回 req.count。
+
+count = req.count;
+// 后续循环必须使用驱动回填值，不能继续固定使用 4。</code></pre>
+<p>执行后，本板返回：</p>
+<pre><code class="language-text">请求值 req.count：4
+回填值 req.count：4</code></pre>
+<p>这次两者相等，但 API 仍然要求应用相信回填值。</p>
+<h3>2. <code>QUERYBUF</code>：查询指定 Buffer 的内存信息</h3>
+<pre><code class="language-c">struct v4l2_buffer buf;
+struct v4l2_plane planes[VIDEO_MAX_PLANES];
+
+memset(&amp;buf, 0, sizeof(buf));
+memset(planes, 0, sizeof(planes));
+
+buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+buf.memory = V4L2_MEMORY_MMAP;
+buf.index = index;
+// index 表示本次查询 buffer[0]、buffer[1]……中的哪一个。
+
+buf.length = VIDEO_MAX_PLANES;
+buf.m.planes = planes;
+// Multiplanar API 要求 m.planes 指向一组 Plane 描述结构体；
+// 当前实际只有一个 Plane，但调用前仍要提供数组及容量。
+
+ioctl(fd, VIDIOC_QUERYBUF, &amp;buf);
+// 驱动回填 buf.length（实际 Plane 数）以及每个 planes[] 的
+// length、m.mem_offset 等信息；这里没有复制图像。</code></pre>
+<p>本板每次查询得到：</p>
+<pre><code class="language-text">buf.length = 1
+planes[0].length = 12441600
+planes[0].m.mem_offset = 当前Buffer的mmap偏移量</code></pre>
+<p>这里有两个容易混淆的 <code>length</code>：</p>
+<table><thead><tr><th>字段</th><th>当前含义</th></tr></thead><tbody><tr><td><code>buf.length</code></td><td>当前 Buffer 有几个 V4L2 内存 Plane，本板为 1</td></tr><tr><td><code>planes[0].length</code></td><td>第 0 个内存 Plane 占多少字节，本板为 12441600</td></tr></tbody></table>
+<h3>3. <code>mmap()</code>：让应用得到可访问的虚拟地址</h3>
+<pre><code class="language-c">buffers[index].start[plane] = mmap(
+    NULL,
+    planes[plane].length,
+    PROT_READ | PROT_WRITE,
+    MAP_SHARED,
+    fd,
+    planes[plane].m.mem_offset
+);</code></pre>
+<p>逐项理解：</p>
+<pre><code class="language-text">NULL
+→ 由内核选择当前进程中的虚拟地址
+
+planes[plane].length
+→ 映射多大的内存区域
+
+PROT_READ | PROT_WRITE
+→ 应用允许读写这段映射
+
+MAP_SHARED
+→ 应用与驱动共享同一块底层 Buffer，不创建私有副本
+
+fd + mem_offset
+→ 告诉内核要映射 /dev/video0 的哪一个 Buffer Plane</code></pre>
+<p>返回值保存到：</p>
+<pre><code class="language-c">buffers[index].start[plane]</code></pre>
+<p>它是当前进程能够访问的<strong>用户虚拟地址</strong>，不是 Camera 硬件地址，也不是物理地址。<code>mmap()</code> 只建立地址映射关系，不会在每一帧执行一次图像复制。</p>
+<h3>4. 当前完整执行顺序</h3>
+<pre><code class="language-text">REQBUFS(count=4)
+→ 驱动实际返回 req.count=4
+→ QUERYBUF(index=0)
+→ mmap buffer[0].plane[0]
+→ QUERYBUF(index=1)
+→ mmap buffer[1].plane[0]
+→ QUERYBUF(index=2)
+→ mmap buffer[2].plane[0]
+→ QUERYBUF(index=3)
+→ mmap buffer[3].plane[0]
+→ 当前只完成内存准备，没有 QBUF、STREAMON 和有效帧</code></pre>
+<p>程序演示结束后还会执行：</p>
+<pre><code class="language-text">munmap 每一段用户虚拟地址
+→ REQBUFS(count=0) 释放驱动 Buffer 队列
+→ close(fd)</code></pre>
+<h2>你的 Day 3 验收题</h2>
+<h3>1. 应用请求 4 个 Buffer，为什么后续不能固定认为驱动一定返回 4 个？</h3>
+<p>我的回答：</p>
+<blockquote>[!success]- 正确答案（回答后再展开）<br><code>REQBUFS</code> 中的 <code>count=4</code> 是应用请求值。驱动可能受最小队列深度、内存资源或自身策略影响回填不同数量，因此后续循环和数组大小必须使用 <code>req.count</code> 的实际返回值。</blockquote>
+<h3>2. <code>VIDIOC_QUERYBUF</code> 查询了什么？是否把图像复制给了应用？</h3>
+<p>我的回答：</p>
+<blockquote>[!success]- 正确答案（回答后再展开）<br>它查询指定 index 的 Buffer 元数据，包括内存 Plane 数量、每个 Plane 长度以及供 mmap 使用的 offset；它不复制图像，也不表示 Buffer 中已有有效帧。</blockquote>
+<h3>3. <code>mmap()</code> 做了什么？它是否每帧复制一次图像？</h3>
+<p>我的回答：</p>
+<blockquote>[!success]- 正确答案（回答后再展开）<br><code>mmap</code> 在当前进程的虚拟地址空间建立到驱动 Buffer 的映射。后续硬件/DMA 写入该 Buffer 后，应用通过映射地址访问同一块 Buffer；<code>mmap</code> 本身不是每帧 memcpy。</blockquote>
+<h3>4. 当前 <code>num_planes=1</code>，为什么代码仍然需要 <code>struct v4l2_plane[]</code>？</h3>
+<p>我的回答：</p>
+<blockquote>[!success]- 正确答案（回答后再展开）<br>因为该节点使用 Multiplanar API，<code>struct v4l2_buffer.m.planes</code> 必须指向 Plane 描述数组。数组容量支持多个 Plane，但当前驱动回填 <code>buf.length=1</code>，循环只处理 <code>planes[0]</code>。</blockquote>
+<h3>5. 已经成功 mmap，为什么还不能读取并保存一帧有效图像？</h3>
+<p>我的回答：</p>
+<blockquote>[!success]- 正确答案（回答后再展开）<br>Buffer 还没有通过 <code>QBUF</code> 交给驱动，管线也没有 <code>STREAMON</code>。当前只建立了内存和地址关系，尚无证据表明 DMA 已向其中写入一帧；要等后续 <code>DQBUF</code> 返回完成 Buffer 才能处理有效数据。</blockquote></article><footer class="footer"><a href="../notes.html">返回专项笔记导航</a> · <a href="../../index.html">返回驾驶舱首页</a></footer></main></div><script defer src="../../generated/vault-data.js?v=a5f6aba6cb"></script><script defer src="../../site.js?v=a5f6aba6cb"></script></body></html>

@@ -1,0 +1,20 @@
+RK3568 + IMX415 V4L2 Day 6 FPS result
+Date: 2026-08-30
+Device: /dev/video0
+Format: NV12 3840x2160, 1 memory plane
+Requested buffers: 4
+
+Automated acceptance run 1: 29.985 FPS
+Automated acceptance run 2: 29.957 FPS
+
+Saved evidence run:
+  captured frames : 100
+  elapsed seconds : 3.300023
+  actual fps      : 30.000
+  sequence        : 2..101
+  sequence gaps   : 0
+  poll timeouts   : 0
+  bytesused min   : 12441600
+  bytesused max   : 12441600
+
+Result: PASS

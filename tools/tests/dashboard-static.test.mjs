@@ -74,9 +74,9 @@ test('generated data syntax and course cockpit contracts are present', async () 
   const data = globals.RK3568_VAULT_DATA;
   const course = globals.RK3568_COURSE;
   assert.equal(typeof data.currentStage, 'string');
-  assert.equal(data.currentStage, '05');
+  assert.equal(data.currentStage, '08');
   assert.ok(Array.isArray(data.currentTasks));
-  assert.equal(course.currentStage, '05');
+  assert.equal(course.currentStage, '08');
   assert.deepEqual(Array.from(course.stages, ({ id }) => id), [
     '00', '01', '02', '03', '04', '05',
     '06', '07', '08', '09', '10', '11',

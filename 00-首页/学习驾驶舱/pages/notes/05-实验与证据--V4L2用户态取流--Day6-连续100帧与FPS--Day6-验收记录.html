@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Day6-验收记录 · RK3568</title><link rel="stylesheet" href="../../site.css?v=a5f6aba6cb"></head><body><div class="page-shell"><nav class="site-nav" data-site-nav aria-label="RK3568 Camera 课程导航"><a class="site-nav__brand" href="../../index.html"><span>RK3568</span><strong>Camera 课程</strong></a><div class="site-nav__links"><a href="../../index.html" data-nav-key="home">学习首页</a><a href="../learning-route.html" data-nav-key="route">完整路线</a><a href="../project.html" data-nav-key="project">项目</a></div><details class="site-nav__more course-menu"><summary>课程目录</summary><div class="site-nav__more-panel course-menu__grid"><a class="course-menu__item" href="../system-map.html"><span>00</span><strong>总览</strong></a><a class="course-menu__item" href="../../../../04-项目/15-Linux设备模型与总线分层.html"><span>01</span><strong>Linux Driver Model</strong></a><a class="course-menu__item" href="../../../../04-项目/20-DTS到运行时设备发现.html"><span>02</span><strong>DTS 与设备发现</strong></a><a class="course-menu__item" href="../../../../04-项目/16-IMX415-三层驱动调用流程.html"><span>03</span><strong>IMX415 Sensor</strong></a><a class="course-menu__item" href="../../../../04-项目/17-DPHY-从DTS到MediaGraph.html"><span>04</span><strong>MIPI CSI-2 / D-PHY</strong></a><a class="course-menu__item" href="../../../../04-项目/19-IMX415-v4l2-subdev注册与开流.html"><span>05</span><strong>V4L2 Subdev</strong></a><a class="course-menu__item" href="../../../../04-项目/21-MediaController-Entity-Pad-Link.html"><span>06</span><strong>Media Controller</strong></a><a class="course-menu__item" href="../../../../04-项目/22-RKISP-从RAW到VideoNode.html"><span>07</span><strong>RKISP</strong></a><a class="course-menu__item" href="../../../../04-项目/23-V4L2-VB2用户态取流.html"><span>08</span><strong>V4L2 用户态取流</strong></a><a class="course-menu__item" href="07-专项笔记--OpenCV--OpenCV读取Camera记录.html"><span>09</span><strong>GStreamer / OpenCV</strong></a><a class="course-menu__item" href="07-专项笔记--系统--AI Camera系统数据流与模块边界.html"><span>10</span><strong>RKNN / YOLO</strong></a><a class="course-menu__item" href="07-专项笔记--系统--AI Camera故障排查索引.html"><span>11</span><strong>Camera Bring-up 排障</strong></a></div></details><details class="site-nav__more reference-menu"><summary data-nav-key="reference" aria-current="page">资料与实验</summary><div class="site-nav__more-panel reference-menu__panel"><a href="../evidence.html" data-nav-key="evidence">实验依据</a><a href="../notes.html" data-nav-key="notes">专项笔记</a><a href="../environment.html" data-nav-key="environment">开发环境</a><a href="../phase0.html" data-nav-key="phase0">可视化参考</a><a href="../archive.html" data-nav-key="archive">归档</a><a href="obsidian://open?vault=RK3568&amp;file=00-%E9%A6%96%E9%A1%B5%2F00-RK3568%E5%AD%A6%E4%B9%A0%E4%B8%BB%E5%85%A5%E5%8F%A3">在 Obsidian 中打开</a></div></details><div class="site-nav__tools"><a class="site-nav__stage course-status" href="../learning-route.html#stage-08" title="当前学习阶段">当前 阶段 08 · V4L2 用户态取流</a></div></nav><main id="main-content" class="note-page"><header class="hero"><p class="hero__eyebrow">GENERATED NOTE · 05-实验与证据/V4L2用户态取流/Day6-连续100帧与FPS</p><h1>Day6-验收记录 </h1><p>此页面由 Markdown 知识源自动生成，适合网页阅读；编辑仍请回到 Obsidian。</p><div class="hero__actions"><a class="button" href="obsidian://open?vault=RK3568&amp;file=05-%E5%AE%9E%E9%AA%8C%E4%B8%8E%E8%AF%81%E6%8D%AE%2FV4L2%E7%94%A8%E6%88%B7%E6%80%81%E5%8F%96%E6%B5%81%2FDay6-%E8%BF%9E%E7%BB%AD100%E5%B8%A7%E4%B8%8EFPS%2FDay6-%E9%AA%8C%E6%94%B6%E8%AE%B0%E5%BD%95">在 Obsidian 中打开</a></div></header><article class="note-content"><p>---<br>doc-type: evidence<br>title: V4L2 用户态编程 Day 6 连续取帧验收记录<br>course-stage: &quot;08&quot;<br>learning-status: in-progress<br>evidence-status: verified<br>updated: 2026-08-30<br>---</p>
+<h2>V4L2 用户态编程 Day 6 连续取帧验收记录</h2>
+<h2>今天已经实际完成</h2>
+<ul><li>在 RK3568 板端从 <code>/dev/video0</code> 连续取得 100 帧 3840×2160 NV12。</li><li>4 个 MMAP Buffer 以 <code>0 → 1 → 2 → 3</code> 的顺序循环复用。</li><li>保存每帧的 <code>index</code>、<code>sequence</code>、<code>timestamp</code>、<code>bytesused</code> 和 <code>flags</code>。</li><li>用应用侧单调时钟统计 100 帧之间的 99 个时间间隔。</li><li>检查 sequence 缺口、poll 超时和 bytesused 范围。</li><li>完成统一错误出口与 <code>STREAMOFF → munmap → REQBUFS(0) → free → close</code>。</li><li>自动验收连续执行两遍均成功：<code>29.985 FPS</code>、<code>29.957 FPS</code>。</li></ul>
+<p>完整源码：capture_100_frames.c</p>
+<p>板端日志：capture.log</p>
+<p>FPS 汇总：fps-result.txt</p>
+<p>学习入口：推荐观看顺序</p>
+<h2>一、本次实际结果</h2>
+<pre><code class="language-text">格式             ：NV12 3840×2160
+内存 Plane       ：1
+Buffer 数量      ：4
+连续完成帧数     ：100
+统计时长         ：3.300023 秒
+实际帧率         ：30.000 FPS
+sequence         ：2 → 101
+sequence gap     ：0
+poll timeout     ：0
+bytesused 最小值 ：12441600
+bytesused 最大值 ：12441600</code></pre>
+<p>100 个帧采样点之间只有 99 个间隔，所以程序采用：</p>
+<pre><code class="language-text">FPS = (100 - 1) / (最后一帧时刻 - 第一帧时刻)
+    = 99 / 3.300023
+    ≈ 30.000</code></pre>
+<p>不是用 <code>100 / 3.3</code>。计时从第一帧到达时才开始，第一帧之前的启动等待不属于这 99 个帧间隔。</p>
+<h2>二、两个递增编号不要混淆</h2>
+<p>日志开头是：</p>
+<pre><code class="language-text">frame[000] index=0 sequence=2
+frame[001] index=1 sequence=3
+frame[002] index=2 sequence=4
+frame[003] index=3 sequence=5
+frame[004] index=0 sequence=6</code></pre>
+<p>它们的含义不同：</p>
+<table><thead><tr><th>字段</th><th>谁维护</th><th>含义</th></tr></thead><tbody><tr><td><code>frame[000..099]</code></td><td>当前测试程序</td><td>本程序本轮成功处理了第几帧</td></tr><tr><td><code>buf.index</code></td><td>VB2/驱动队列</td><td>当前完成的是 4 个 Buffer 中的哪一个</td></tr><tr><td><code>buf.sequence</code></td><td>驱动</td><td>Camera 流中的帧序号，用于观察不连续</td></tr></tbody></table>
+<p>白话理解：</p>
+<pre><code class="language-text">4 个 Buffer = 4 个可以反复使用的周转箱
+100 个 sequence = 100 批依次到达的货物</code></pre>
+<p>不是“一帧永久占用一个 Buffer”。应用 DQBUF 处理完后立即 QBUF，驱动便能把同一个周转箱用于后续新帧。</p>
+<h2>三、100 帧循环里发生了什么</h2>
+<pre><code class="language-text">poll(fd)
+  │ 只等待：队列中是否出现 DONE Buffer
+  ▼
+VIDIOC_DQBUF
+  │ 驱动把一个完成 Buffer 的所有权交给应用
+  ├─ index：去哪个 mmap 地址读
+  ├─ sequence：检查帧编号是否连续
+  ├─ timestamp：驱动记录的帧时间
+  └─ bytesused：当前帧有效字节数
+  ▼
+update_stats()
+  │ 更新首尾时间、缺口、最小/最大有效长度
+  ▼
+VIDIOC_QBUF
+  │ 应用用完，把空 Buffer 还给驱动
+  └─ 下一帧继续循环</code></pre>
+<p>在 30 FPS 下，平均约每 33.3 ms 完成一帧。应用不需要每秒重新申请 30 个 Buffer，而是让有限 Buffer 在驱动和应用之间不断交换所有权。</p>
+<p>Buffer 也不是越多越好：数量太少容易因应用处理抖动让驱动无容器可写；数量太多会增加内存占用，并可能增加排队延迟。当前 4 个 Buffer 足以完成本次直接取帧测试。</p>
+<h2>四、错误路径为什么统一进入 cleanup</h2>
+<p>初始化可能停在任何一步：</p>
+<pre><code class="language-text">open 成功，但 S_FMT 失败
+REQBUFS 成功，但某个 mmap 失败
+STREAMON 成功，但 DQBUF 失败
+100 帧成功，但 STREAMOFF 失败</code></pre>
+<p>如果每个函数直接 <code>exit()</code>，后面已取得的资源可能没有机会释放。Day6 把状态保存在 <code>capture_context</code>：</p>
+<pre><code class="language-c">struct capture_context {
+    int fd;
+    struct mapped_buffer *buffers;
+    unsigned int buffer_count;
+    bool queue_allocated;
+    bool streaming;
+};</code></pre>
+<p>任何失败都返回到 <code>main()</code> 的同一个 <code>cleanup:</code> 标签。<code>cleanup_capture()</code> 根据标志只释放已经成功取得的资源，并按逆序处理：</p>
+<pre><code class="language-text">STREAMOFF
+→ munmap 每个已映射 Plane
+→ REQBUFS(count=0) 释放 VB2 队列
+→ free 应用登记表
+→ close fd</code></pre>
+<p><code>goto cleanup</code> 在这里不是随意跳转，而是 C 系统程序中常见的集中资源回收方式。自动脚本连续运行程序两次，就是为了发现“第一次成功、退出没清干净、第二次失败”的问题。</p>
+<h2>五、能证明什么，不能证明什么</h2>
+<p>当前证据能够证明：</p>
+<ul><li>在约 3.3 秒观察窗口内，<code>/dev/video0</code> 连续返回了 100 个完成 Buffer。</li><li>应用观察到的 sequence 从 2 连续增长到 101，没有序号缺口。</li><li>100 帧的 <code>bytesused</code> 都是 12441600，没有空帧或长度波动。</li><li>本轮没有 poll 超时，实测帧率接近配置目标 30 FPS。</li><li>程序完整退出后可以立刻再次运行，正常路径的资源释放有效。</li></ul>
+<p>当前证据不能单独证明：</p>
+<ul><li>数小时或数天运行仍然零丢帧、零超时。</li><li>Sensor、MIPI 和 ISP 内部从未发生过任何可恢复错误。</li><li>每一帧图像内容、曝光和颜色都正确；图像内容由 Day5 的 PNG 验证。</li><li>应用做复杂算法时仍能保持 30 FPS；本程序每帧只统计元数据并立即 QBUF。</li><li>断线、驱动报错或强制杀进程等异常情形都已覆盖。</li></ul>
+<h2>六、你的 Day6 验收题</h2>
+<h3>1. 程序只申请了 4 个 Buffer，为什么仍然能连续取得 100 帧？</h3>
+<p>我的回答：</p>
+<p>四个 Buffer 轮转复用。</p>
+<blockquote>[!success]- 正确答案（回答后再展开）<br>Buffer 是循环复用的容器，不是一帧绑定一个永久 Buffer。驱动写满后应用 DQBUF，应用处理完再 QBUF 归还；同一组 Buffer 可以不断承载后续帧。</blockquote>
+<h3>2. <code>buf.index</code> 和 <code>buf.sequence</code> 分别表示什么？为什么日志中的 index 会重复，而 sequence 持续增加？</h3>
+<p>我的回答：</p>
+<p><code>buf.index</code> 表示 Buffer 在有限队列中的位置；<code>buf.sequence</code> 是驱动给当前帧记录的连续帧序号。index 因为 Buffer 被循环复用而重复，sequence 随着新帧持续增加。</p>
+<blockquote>[!success]- 正确答案（回答后再展开）<br>index 是当前完成 Buffer 在有限队列中的下标，用于找到对应 mmap 地址，所以会循环复用；sequence 是驱动维护的帧序号，用于观察帧顺序和缺口，因此随新帧持续增加。</blockquote>
+<h3>3. <code>STREAMON</code> 返回 0，与“100 帧、sequence gap=0、poll timeout=0”相比，各自能证明什么？</h3>
+<p>我的回答：</p>
+<p><code>STREAMON</code> 只能证明开流操作成功，不能保证一定已经出图。连续取得 100 帧，且 sequence 没有缺口、poll 没有超时，说明当前测试时间内实际取流成功并且保持连续。</p>
+<blockquote>[!success]- 正确答案（回答后再展开）<br>STREAMON 返回 0 只证明启动调用链没有立即报错；后者证明在当前约 3.3 秒窗口中持续得到了完成 Buffer，并且应用观察到的序号连续、等待未超时。</blockquote>
+<h3>4. 为什么程序用 99 除以第一帧到最后一帧的时长，而不是用 100？</h3>
+<p>我的回答：</p>
+<p>开始时不懂；解释后明白：10 帧的第一帧到第 10 帧之间有 9 个间隔，因此 100 帧对应 99 个间隔。</p>
+<blockquote>[!success]- 正确答案（回答后再展开）<br>100 个帧时刻之间只有 99 个相邻时间间隔。计时从第一帧时刻开始，到第 100 帧时刻结束，因此应使用 99 个间隔计算平均 FPS。</blockquote>
+<h3>5. 为什么验收脚本要把程序连续运行两次？</h3>
+<p>我的回答：</p>
+<p>最开始认为是为了让数据更加权威、准确。补充后理解：更主要是验证第一次退出时是否正确完成 <code>STREAMOFF</code>、<code>munmap</code>、<code>REQBUFS(0)</code> 和 <code>close</code>；如果资源残留，第二次打开或开流可能失败。</p>
+<blockquote>[!success]- 正确答案（回答后再展开）<br>为了发现正常退出时遗漏 STREAMOFF、munmap、REQBUFS(0) 或 close 等清理造成的残留占用。第二次仍能立即开流，说明正常路径的资源回收至少通过了重复运行验证。</blockquote></article><footer class="footer"><a href="../notes.html">返回专项笔记导航</a> · <a href="../../index.html">返回驾驶舱首页</a></footer></main></div><script defer src="../../generated/vault-data.js?v=a5f6aba6cb"></script><script defer src="../../site.js?v=a5f6aba6cb"></script></body></html>

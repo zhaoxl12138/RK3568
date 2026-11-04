@@ -1,0 +1,15 @@
+device       : /dev/video0
+=== VIDIOC_QUERYCAP ===
+driver       : rkisp_v5
+card         : rkisp_mainpath
+bus          : platform:rkisp-vir0
+capabilities : 0x84201000
+device_caps  : 0x04201000
+capture type : Video Capture Multiplanar
+streaming    : yes
+
+=== VIDIOC_G_FMT ===
+current fmt  : NV12 3840x2160, planes=1
+plane[0]     : bytesperline=3840, sizeimage=12441600
+
+VIDIOC_ENUM_FMT enumerated 23 formats; see formats.txt.

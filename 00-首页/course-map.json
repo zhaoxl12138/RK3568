@@ -1,5 +1,5 @@
 {
-  "currentStage": "05",
+  "currentStage": "08",
   "stages": [
     {
       "id": "00",
@@ -43,7 +43,7 @@
     },
     {
       "id": "05",
-      "maturity": "in-progress",
+      "maturity": "validated",
       "title": "V4L2 Subdev",
       "objective": "理解 Sensor 如何注册格式、controls、开流回调以及 Source Pad。",
       "sourcePath": "01-课程主线/05-V4L2-Subdev.md",
@@ -51,7 +51,7 @@
     },
     {
       "id": "06",
-      "maturity": "published",
+      "maturity": "validated",
       "title": "Media Controller",
       "objective": "读懂 entity、pad、link 和 media-ctl 输出，并沿数据链逐节点验证。",
       "sourcePath": "01-课程主线/06-Media-Controller.md",
@@ -59,7 +59,7 @@
     },
     {
       "id": "07",
-      "maturity": "published",
+      "maturity": "validated",
       "title": "RKISP",
       "objective": "解释 RAW Bayer 如何进入 RKISP，并经 mainpath/selfpath 形成可取流节点。",
       "sourcePath": "01-课程主线/07-RKISP.md",
@@ -67,7 +67,7 @@
     },
     {
       "id": "08",
-      "maturity": "published",
+      "maturity": "in-progress",
       "title": "V4L2 用户态取流",
       "objective": "掌握格式协商、buffer queue、STREAMON 和 v4l2-ctl 抓帧验证。",
       "sourcePath": "01-课程主线/08-V4L2用户态取流.md",

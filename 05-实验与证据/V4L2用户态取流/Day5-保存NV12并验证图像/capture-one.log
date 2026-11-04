@@ -1,0 +1,11 @@
+format           : NV12 3840x2160, planes=1
+format plane[0] : bytesperline=3840 sizeimage=12441600
+driver buffers   : 4
+queued buffers   : 4
+stream status    : ON
+dequeued frame   : index=0 sequence=2 planes=1
+saved plane[0]  : bytesused=12441600 data_offset=0 written=12441600
+saved frame      : /tmp/frame_000.nv12
+bytes written    : 12441600
+stream status    : OFF
+

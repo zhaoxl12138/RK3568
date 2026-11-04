@@ -1,0 +1,18 @@
+Command: v4l2-ctl -d /dev/video0 --all
+Board: ATK-DLRK3568 / Linux 4.19.232 / 2026-08-29
+
+Driver name      : rkisp_v5
+Card type        : rkisp_mainpath
+Bus info         : platform:rkisp-vir0
+Capabilities     : 0x84201000
+Device Caps      : 0x04201000
+Capture API      : Video Capture Multiplanar
+Streaming        : supported
+Width/Height     : 3840/2160
+Pixel Format     : NV12 (Y/CbCr 4:2:0)
+Number of planes : 1
+Bytes per Line   : 3840
+Size Image       : 12441600
+Media entity     : rkisp_mainpath
+Remote entity    : rkisp-isp-subdev
+Media link       : Enabled

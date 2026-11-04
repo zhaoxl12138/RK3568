@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>阶段08专题 · V4L2 QBUF 到 DQBUF 取流闭环</title>
+  <link rel="stylesheet" href="../00-首页/学习驾驶舱/site.css?v=a5f6aba6cb">
+  <link rel="stylesheet" href="assets/v4l2-callgraph.css">
+  <script defer src="../00-首页/学习驾驶舱/generated/vault-data.js?v=a5f6aba6cb"></script>
+  <script defer src="../00-首页/学习驾驶舱/site.js?v=a5f6aba6cb"></script>
+</head>
+<body class="site-nav-offset">
+  <a class="skip-link" href="#main-content">跳到主要内容</a>
+  <nav class="site-nav" data-site-nav aria-label="RK3568 Camera 课程导航"><a class="site-nav__brand" href="../00-首页/学习驾驶舱/index.html"><span>RK3568</span><strong>Camera 课程</strong></a><div class="site-nav__links"><a href="../00-首页/学习驾驶舱/index.html" data-nav-key="home">学习首页</a><a href="../00-首页/学习驾驶舱/pages/learning-route.html" data-nav-key="route">完整路线</a><a href="../00-首页/学习驾驶舱/pages/project.html" data-nav-key="project">项目</a></div><details class="site-nav__more course-menu"><summary>课程目录</summary><div class="site-nav__more-panel course-menu__grid"><a class="course-menu__item" href="../00-首页/学习驾驶舱/pages/system-map.html"><span>00</span><strong>总览</strong></a><a class="course-menu__item" href="15-Linux设备模型与总线分层.html"><span>01</span><strong>Linux Driver Model</strong></a><a class="course-menu__item" href="20-DTS到运行时设备发现.html"><span>02</span><strong>DTS 与设备发现</strong></a><a class="course-menu__item" href="16-IMX415-三层驱动调用流程.html"><span>03</span><strong>IMX415 Sensor</strong></a><a class="course-menu__item" href="17-DPHY-从DTS到MediaGraph.html"><span>04</span><strong>MIPI CSI-2 / D-PHY</strong></a><a class="course-menu__item" href="19-IMX415-v4l2-subdev注册与开流.html"><span>05</span><strong>V4L2 Subdev</strong></a><a class="course-menu__item" href="21-MediaController-Entity-Pad-Link.html"><span>06</span><strong>Media Controller</strong></a><a class="course-menu__item" href="22-RKISP-从RAW到VideoNode.html"><span>07</span><strong>RKISP</strong></a><a class="course-menu__item" href="23-V4L2-VB2用户态取流.html"><span>08</span><strong>V4L2 用户态取流</strong></a><a class="course-menu__item" href="../00-首页/学习驾驶舱/pages/notes/07-专项笔记--OpenCV--OpenCV读取Camera记录.html"><span>09</span><strong>GStreamer / OpenCV</strong></a><a class="course-menu__item" href="../00-首页/学习驾驶舱/pages/notes/07-专项笔记--系统--AI Camera系统数据流与模块边界.html"><span>10</span><strong>RKNN / YOLO</strong></a><a class="course-menu__item" href="../00-首页/学习驾驶舱/pages/notes/07-专项笔记--系统--AI Camera故障排查索引.html"><span>11</span><strong>Camera Bring-up 排障</strong></a></div></details><details class="site-nav__more reference-menu"><summary data-nav-key="reference" aria-current="page">资料与实验</summary><div class="site-nav__more-panel reference-menu__panel"><a href="../00-首页/学习驾驶舱/pages/evidence.html" data-nav-key="evidence">实验依据</a><a href="../00-首页/学习驾驶舱/pages/notes.html" data-nav-key="notes">专项笔记</a><a href="../00-首页/学习驾驶舱/pages/environment.html" data-nav-key="environment">开发环境</a><a href="../00-首页/学习驾驶舱/pages/phase0.html" data-nav-key="phase0">可视化参考</a><a href="../00-首页/学习驾驶舱/pages/archive.html" data-nav-key="archive">归档</a><a href="obsidian://open?vault=RK3568&amp;file=00-%E9%A6%96%E9%A1%B5%2F00-RK3568%E5%AD%A6%E4%B9%A0%E4%B8%BB%E5%85%A5%E5%8F%A3">在 Obsidian 中打开</a></div></details><div class="site-nav__tools"><a class="site-nav__stage course-status" href="../00-首页/学习驾驶舱/pages/learning-route.html#stage-08" title="当前学习阶段">当前 阶段 08 · V4L2 用户态取流</a></div></nav>
+
+  <header class="hero">
+    <p class="eyebrow">阶段 08 · 专题 2/3</p>
+    <h1>QBUF → STREAMON → IRQ → DQBUF</h1>
+    <p>上半程追“启动命令怎样进入驱动”，下半程追“真实图像怎样写满 Buffer 并返回应用”。两条线合起来才是取流闭环。</p>
+  </header>
+
+  <main id="main-content">
+    <nav class="topic-map" aria-label="本页阅读顺序">
+      <a href="#app-loop"><b>图 1 · 应用循环</b>先交空 Buffer，再开流，再不断取回和归还</a>
+      <a href="#streamon-chain"><b>图 2 · STREAMON 控制流</b>V4L2/VB2 怎样回调 RKISP 与上游 subdev</a>
+      <a href="#frame-return"><b>图 3 · 帧完成数据流</b>DMA、IRQ、DONE、DQBUF 怎样闭环</a>
+    </nav>
+    <div class="card-grid">
+      <article class="plain-card"><h3>直接调用</h3><p>函数体里明确写出的普通调用，用灰蓝实线表示。</p></article>
+      <article class="plain-card"><h3>框架回调</h3><p>VB2 查 <code>q→ops</code>、RKISP 查 <code>pipe.set_stream</code> 后调用，用紫色虚线表示。</p></article>
+      <article class="plain-card"><h3>数据流 / Buffer 所有权</h3><p>绿色线表示 RAW 帧写入和 Buffer 返回应用，不是假装成函数调用。</p></article>
+    </div>
+
+    <section id="app-loop">
+      <h2>图 1：应用先交 Buffer，再循环取回</h2>
+      <div class="legend"><span><i class="legend-line"></i>直接调用</span><span><i class="legend-line callback"></i>框架回调</span><span><i class="legend-line data"></i>Buffer 所有权</span></div>
+      <div class="diagram">
+        <svg viewBox="0 0 1200 430" role="img" aria-labelledby="app-title app-desc">
+          <title id="app-title">用户程序的取流闭环</title><desc id="app-desc">先 QBUF 全部空 Buffer，STREAMON，再 poll、DQBUF、处理并重新 QBUF。</desc>
+          <defs><marker id="b1" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#8498aa"/></marker><marker id="b1c" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#aa8be9"/></marker><marker id="b1d" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#64a66f"/></marker></defs>
+          <rect class="node user" x="35" y="70" width="230" height="100" rx="16"/><text class="node-title" x="150" y="110">queue_all_buffers()</text><text class="node-note" x="150" y="140">遍历全部 Buffer</text>
+          <rect class="node user" x="325" y="70" width="230" height="100" rx="16"/><text class="node-title" x="440" y="110">queue_one_buffer()</text><text class="node-note" x="440" y="140">VIDIOC_QBUF</text>
+          <rect class="node user" x="615" y="70" width="230" height="100" rx="16"/><text class="node-title" x="730" y="110">start_streaming()</text><text class="node-note" x="730" y="140">VIDIOC_STREAMON</text>
+          <rect class="node user" x="905" y="70" width="250" height="100" rx="16"/><text class="node-title" x="1030" y="110">capture_frames()</text><text class="node-note" x="1030" y="140">进入连续取帧循环</text>
+          <path class="edge direct" marker-end="url(#b1)" d="M265 120H325"/><path class="edge direct" marker-end="url(#b1)" d="M555 120H615"/><path class="edge direct" marker-end="url(#b1)" d="M845 120H905"/>
+          <rect class="node user" x="820" y="270" width="270" height="100" rx="16"/><text class="node-title" x="955" y="307">wait_until_frame_ready()</text><text class="node-note" x="955" y="337">poll() 等待可读事件</text>
+          <rect class="node done" x="465" y="270" width="270" height="100" rx="16"/><text class="node-title" x="600" y="307">VIDIOC_DQBUF</text><text class="node-note" x="600" y="337">拿到 DONE Buffer</text>
+          <rect class="node user" x="110" y="270" width="270" height="100" rx="16"/><text class="node-title" x="245" y="307">处理后重新 QBUF</text><text class="node-note" x="245" y="337">归还给驱动继续写</text>
+          <path class="edge direct" marker-end="url(#b1)" d="M1030 170V220H955V270"/><path class="edge direct" marker-end="url(#b1)" d="M820 320H735"/><path class="edge data" marker-end="url(#b1d)" d="M465 320H380"/><text class="edge-label" x="422" y="303">应用拥有</text>
+          <path class="edge callback" marker-end="url(#b1c)" d="M245 270C245 220 440 220 440 170"/><text class="edge-label" x="355" y="215">下一轮归还</text>
+        </svg>
+      </div>
+      <div class="mobile-flow" aria-label="用户程序取流闭环"><div class="mobile-step">① <code>queue_all_buffers()</code>：把所有空 Buffer <code>QBUF</code> 给驱动</div><div class="mobile-step">② <code>start_streaming()</code>：发送 <code>VIDIOC_STREAMON</code></div><div class="mobile-step">③ <code>capture_frames()</code>：<code>poll()</code> 等待帧完成</div><div class="mobile-step data">④ <code>VIDIOC_DQBUF</code> 取回 DONE Buffer，处理后再次 <code>QBUF</code></div></div>
+    </section>
+
+    <section id="streamon-chain">
+      <h2>图 2：STREAMON 怎样逐层启动 RKISP 和上游</h2>
+      <p><strong>先记主链：</strong>V4L2 Core 分发命令，VB2 管队列状态，RKISP 启动采集硬件，pipeline 回调再让 ISP、CSI、D-PHY、Sensor 开流。</p>
+      <div class="diagram">
+        <svg viewBox="0 0 1200 650" role="img" aria-labelledby="stream-title stream-desc">
+          <title id="stream-title">STREAMON 控制流</title><desc id="stream-desc">从应用 ioctl 经 V4L2 Core、VB2 回调 RKISP，再反向启动上游 subdev。</desc>
+          <defs><marker id="b2" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#8498aa"/></marker><marker id="b2c" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#aa8be9"/></marker><marker id="b2d" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#64a66f"/></marker></defs>
+          <rect class="node user" x="35" y="70" width="230" height="100" rx="16"/><text class="node-title" x="150" y="108">xioctl(STREAMON)</text><text class="node-note" x="150" y="140">用户态系统调用</text>
+          <rect class="node" x="335" y="70" width="230" height="100" rx="16"/><text class="node-title" x="450" y="108">video_ioctl2()</text><text class="node-note" x="450" y="140">V4L2 命令分发</text>
+          <rect class="node vb2" x="635" y="70" width="230" height="100" rx="16"/><text class="node-title" x="750" y="108">vb2_ioctl_streamon()</text><text class="node-note" x="750" y="140">进入 VB2 队列层</text>
+          <rect class="node vb2" x="935" y="70" width="230" height="100" rx="16"/><text class="node-title" x="1050" y="108">vb2_core_streamon()</text><text class="node-note" x="1050" y="140">检查 queued Buffer</text>
+          <path class="edge direct" marker-end="url(#b2)" d="M265 120H335"/><path class="edge direct" marker-end="url(#b2)" d="M565 120H635"/><path class="edge direct" marker-end="url(#b2)" d="M865 120H935"/>
+          <rect class="node vb2" x="870" y="285" width="260" height="100" rx="16"/><text class="node-title" x="1000" y="323">vb2_start_streaming()</text><text class="node-note" x="1000" y="353">查 q→ops</text>
+          <rect class="node rkisp" x="535" y="285" width="260" height="100" rx="16"/><text class="node-title" x="665" y="323">rkisp_start_streaming()</text><text class="node-note" x="665" y="353">VB2 框架回调</text>
+          <rect class="node rkisp" x="200" y="285" width="260" height="100" rx="16"/><text class="node-title" x="330" y="323">rkisp_stream_start()</text><text class="node-note" x="330" y="353">配置 MI / DMA</text>
+          <path class="edge direct" marker-end="url(#b2)" d="M1050 170V285"/><path class="edge callback" marker-end="url(#b2c)" d="M870 335H795"/><path class="edge direct" marker-end="url(#b2)" d="M535 335H460"/>
+          <rect class="node rkisp" x="315" y="500" width="290" height="100" rx="16"/><text class="node-title" x="460" y="538">rkisp_pipeline_set_stream()</text><text class="node-note" x="460" y="568">pipe.set_stream 回调</text>
+          <rect class="node data" x="700" y="500" width="370" height="100" rx="16"/><text class="node-title" x="885" y="538">各上游 subdev → s_stream(1)</text><text class="node-note" x="885" y="568">ISP → CSI → D-PHY → IMX415</text>
+          <path class="edge callback" marker-end="url(#b2c)" d="M665 385C665 445 525 445 460 500"/><path class="edge callback" marker-end="url(#b2c)" d="M605 550H700"/><path class="edge data" marker-end="url(#b2d)" d="M885 500C885 440 700 440 665 385"/><text class="edge-label" x="820" y="430">管线具备接收 RAW 的条件</text>
+        </svg>
+      </div>
+      <div class="mobile-flow" aria-label="STREAMON纵向控制流"><div class="mobile-step"><code>video_ioctl2()</code>：识别 STREAMON</div><div class="mobile-step"><code>vb2_ioctl_streamon()</code> → <code>vb2_core_streamon()</code></div><div class="mobile-step callback"><code>q→ops→start_streaming</code> 回调 <code>rkisp_start_streaming()</code></div><div class="mobile-step"><code>rkisp_stream_start()</code>：配置 MI / DMA</div><div class="mobile-step callback"><code>rkisp_pipeline_set_stream()</code>：通知上游 <code>s_stream(1)</code></div></div>
+    </section>
+
+    <section id="frame-return">
+      <h2>图 3：真实一帧怎样从硬件回到 DQBUF</h2>
+      <div class="diagram">
+        <svg viewBox="0 0 1200 500" role="img" aria-labelledby="return-title return-desc">
+          <title id="return-title">帧完成与 Buffer 返回</title><desc id="return-desc">RAW 经 DMA 写入 Buffer，帧结束中断将 Buffer 标记 DONE，DQBUF 才能取回。</desc>
+          <defs><marker id="b3" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#8498aa"/></marker><marker id="b3c" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#aa8be9"/></marker><marker id="b3d" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#64a66f"/></marker></defs>
+          <rect class="node data" x="35" y="70" width="225" height="100" rx="16"/><text class="node-title" x="147" y="108">Sensor → ISP</text><text class="node-note" x="147" y="140">真实 RAW 帧</text>
+          <rect class="node rkisp" x="325" y="70" width="225" height="100" rx="16"/><text class="node-title" x="437" y="108">MI / DMA</text><text class="node-note" x="437" y="140">写入 ACTIVE Buffer</text>
+          <rect class="node rkisp" x="615" y="70" width="250" height="100" rx="16"/><text class="node-title" x="740" y="108">rkisp_mi_v21_isr()</text><text class="node-note" x="740" y="140">frame-end IRQ</text>
+          <rect class="node vb2" x="930" y="70" width="235" height="100" rx="16"/><text class="node-title" x="1047" y="108">mi_frame_end()</text><text class="node-note" x="1047" y="140">提交完成 Buffer</text>
+          <path class="edge data" marker-end="url(#b3d)" d="M260 120H325"/><path class="edge data" marker-end="url(#b3d)" d="M550 120H615"/><path class="edge direct" marker-end="url(#b3)" d="M865 120H930"/>
+          <rect class="node done" x="800" y="315" width="300" height="100" rx="16"/><text class="node-title" x="950" y="353">vb2_buffer_done(DONE)</text><text class="node-note" x="950" y="383">ACTIVE → DONE，唤醒等待者</text>
+          <rect class="node vb2" x="450" y="315" width="270" height="100" rx="16"/><text class="node-title" x="585" y="353">vb2_core_dqbuf()</text><text class="node-note" x="585" y="383">从 done_list 取出</text>
+          <rect class="node user" x="100" y="315" width="270" height="100" rx="16"/><text class="node-title" x="235" y="353">VIDIOC_DQBUF</text><text class="node-note" x="235" y="383">应用获得 index / sequence</text>
+          <path class="edge direct" marker-end="url(#b3)" d="M1047 170V315"/><path class="edge callback" marker-end="url(#b3c)" d="M800 365H720"/><path class="edge data" marker-end="url(#b3d)" d="M450 365H370"/><text class="edge-label" x="410" y="348">所有权返回应用</text>
+        </svg>
+      </div>
+      <div class="mobile-flow" aria-label="帧完成纵向数据流"><div class="mobile-step data">RAW 经 ISP，MI / DMA 写入 ACTIVE Buffer</div><div class="mobile-step"><code>rkisp_mi_v21_isr()</code>：收到 frame-end IRQ</div><div class="mobile-step"><code>mi_frame_end()</code> → <code>vb2_buffer_done(DONE)</code></div><div class="mobile-step callback"><code>vb2_core_dqbuf()</code> 从 done_list 取出并返回应用</div></div>
+    </section>
+
+    <section id="source-insight">
+      <h2>结合代码只追三段</h2>
+      <div class="card-grid">
+        <article class="source-card"><h3>用户程序</h3><p><code>capture_100_frames.c</code></p><p><code>queue_all_buffers()</code> → <code>start_streaming()</code> → <code>capture_frames()</code> → <code>queue_one_buffer()</code></p></article>
+        <article class="source-card"><h3>V4L2 / VB2</h3><p><code>v4l2-ioctl.c</code>、<code>videobuf2-v4l2.c</code>、<code>videobuf2-core.c</code></p><p><code>video_ioctl2()</code> → <code>vb2_ioctl_streamon()</code> → <code>vb2_core_streamon()</code></p></article>
+        <article class="source-card"><h3>RKISP</h3><p><code>capture_v21.c</code>、<code>dev.c</code></p><p><code>rkisp_start_streaming()</code>、<code>rkisp_mi_v21_isr()</code>、<code>rkisp_pipeline_set_stream()</code></p></article>
+      </div>
+    </section>
+
+    <section id="evidence-boundary">
+      <h2>最重要的证据边界</h2>
+      <div class="card-grid"><article class="plain-card"><h3>STREAMON 返回 0</h3><p>只能证明启动调用链没有立即报错，不能证明已经收到一帧。</p></article><article class="plain-card"><h3>一次 DQBUF 成功</h3><p>证明至少有一个 Buffer 被硬件写完并交回应用。</p></article><article class="plain-card"><h3>连续 DQBUF + sequence 连续</h3><p>才是稳定取流的更强证据；专题 3 用 100 帧数据完成验证。</p></article></div>
+    </section>
+
+    <nav class="stage-nav"><a href="24-V4L2用户程序初始化与Buffer映射.html">← 专题1：初始化与映射</a><a href="23-V4L2-VB2用户态取流.html">返回阶段08总览</a><a href="26-V4L2连续100帧统计与资源清理.html">专题3：100帧与清理 →</a></nav>
+  </main>
+</body>
+</html>

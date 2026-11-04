@@ -1,0 +1,27 @@
+Command: v4l2-ctl -d /dev/video0 --list-formats-ext
+Type: Video Capture Multiplanar
+Size range: 32x16 - 3840x2160, step 8/8
+
+[00] UYVY  UYVY 4:2:2
+[01] 422P  Planar YUV 4:2:2
+[02] NV16  Y/CbCr 4:2:2
+[03] NV61  Y/CrCb 4:2:2
+[04] YM16  Planar YUV 4:2:2 (N-C)
+[05] NV21  Y/CrCb 4:2:0
+[06] NV12  Y/CbCr 4:2:0
+[07] NM21  Y/CrCb 4:2:0 (N-C)
+[08] NM12  Y/CbCr 4:2:0 (N-C)
+[09] YU12  Planar YUV 4:2:0
+[10] YM24  Planar YUV 4:4:4 (N-C)
+[11] RGGB  8-bit Bayer RGRG/GBGB
+[12] GRBG  8-bit Bayer GRGR/BGBG
+[13] GBRG  8-bit Bayer GBGB/RGRG
+[14] BA81  8-bit Bayer BGBG/GRGR
+[15] RG10  10-bit Bayer RGRG/GBGB
+[16] BA10  10-bit Bayer GRGR/GBGB
+[17] GB10  10-bit Bayer GBGB/RGRG
+[18] BG10  10-bit Bayer BGBG/GRGR
+[19] RG12  12-bit Bayer RGRG/GBGB
+[20] BA12  12-bit Bayer GRGR/GBGB
+[21] GB12  12-bit Bayer GBGB/RGRG
+[22] BG12  12-bit Bayer BGBG/GRGR

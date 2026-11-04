@@ -9,6 +9,22 @@ async function readPage(fileName) {
   return readFile(path.join(vaultRoot, "04-项目", fileName), "utf8");
 }
 
+function escapeRegex(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+}
+
+function assertLinkTo(html, href, message) {
+  const uncommentedHtml = html.replace(/<!--[\s\S]*?-->/gu, "");
+  const linkPattern = new RegExp(
+    `<a(?=[\\s/>])[^>]*\\shref\\s*=\\s*(["'])${escapeRegex(href)}\\1[^>]*>`,
+    "iu",
+  );
+  assert.ok(
+    linkPattern.test(uncommentedHtml),
+    message ?? `应包含指向 ${href} 的链接`,
+  );
+}
+
 test("Media Controller 原页面保留课程入口，并拆开 Async 调用与证据边界", async () => {
   const html = await readPage("21-MediaController-Entity-Pad-Link.html");
 
@@ -235,6 +251,14 @@ test("阶段 08 用三张图区分挂表、取流闭环与单 buffer 状态机",
       html,
       new RegExp(required.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&"), "u"),
     );
+  }
+
+  for (const [href, message] of [
+    ["24-V4L2用户程序初始化与Buffer映射.html", "阶段 08 总览应链接到专题 24"],
+    ["25-V4L2-QBUF到DQBUF取流闭环.html", "阶段 08 总览应链接到专题 25"],
+    ["26-V4L2连续100帧统计与资源清理.html", "阶段 08 总览应链接到专题 26"],
+  ]) {
+    assertLinkTo(html, href, message);
   }
 
   assert.doesNotMatch(

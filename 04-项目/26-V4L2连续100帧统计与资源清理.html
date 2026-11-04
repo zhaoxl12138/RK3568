@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>阶段08专题 · V4L2 连续 100 帧统计与资源清理</title>
+  <link rel="stylesheet" href="../00-首页/学习驾驶舱/site.css?v=a5f6aba6cb">
+  <link rel="stylesheet" href="assets/v4l2-callgraph.css">
+  <script defer src="../00-首页/学习驾驶舱/generated/vault-data.js?v=a5f6aba6cb"></script>
+  <script defer src="../00-首页/学习驾驶舱/site.js?v=a5f6aba6cb"></script>
+</head>
+<body class="site-nav-offset">
+  <a class="skip-link" href="#main-content">跳到主要内容</a>
+  <nav class="site-nav" data-site-nav aria-label="RK3568 Camera 课程导航"><a class="site-nav__brand" href="../00-首页/学习驾驶舱/index.html"><span>RK3568</span><strong>Camera 课程</strong></a><div class="site-nav__links"><a href="../00-首页/学习驾驶舱/index.html" data-nav-key="home">学习首页</a><a href="../00-首页/学习驾驶舱/pages/learning-route.html" data-nav-key="route">完整路线</a><a href="../00-首页/学习驾驶舱/pages/project.html" data-nav-key="project">项目</a></div><details class="site-nav__more course-menu"><summary>课程目录</summary><div class="site-nav__more-panel course-menu__grid"><a class="course-menu__item" href="../00-首页/学习驾驶舱/pages/system-map.html"><span>00</span><strong>总览</strong></a><a class="course-menu__item" href="15-Linux设备模型与总线分层.html"><span>01</span><strong>Linux Driver Model</strong></a><a class="course-menu__item" href="20-DTS到运行时设备发现.html"><span>02</span><strong>DTS 与设备发现</strong></a><a class="course-menu__item" href="16-IMX415-三层驱动调用流程.html"><span>03</span><strong>IMX415 Sensor</strong></a><a class="course-menu__item" href="17-DPHY-从DTS到MediaGraph.html"><span>04</span><strong>MIPI CSI-2 / D-PHY</strong></a><a class="course-menu__item" href="19-IMX415-v4l2-subdev注册与开流.html"><span>05</span><strong>V4L2 Subdev</strong></a><a class="course-menu__item" href="21-MediaController-Entity-Pad-Link.html"><span>06</span><strong>Media Controller</strong></a><a class="course-menu__item" href="22-RKISP-从RAW到VideoNode.html"><span>07</span><strong>RKISP</strong></a><a class="course-menu__item" href="23-V4L2-VB2用户态取流.html"><span>08</span><strong>V4L2 用户态取流</strong></a><a class="course-menu__item" href="../00-首页/学习驾驶舱/pages/notes/07-专项笔记--OpenCV--OpenCV读取Camera记录.html"><span>09</span><strong>GStreamer / OpenCV</strong></a><a class="course-menu__item" href="../00-首页/学习驾驶舱/pages/notes/07-专项笔记--系统--AI Camera系统数据流与模块边界.html"><span>10</span><strong>RKNN / YOLO</strong></a><a class="course-menu__item" href="../00-首页/学习驾驶舱/pages/notes/07-专项笔记--系统--AI Camera故障排查索引.html"><span>11</span><strong>Camera Bring-up 排障</strong></a></div></details><details class="site-nav__more reference-menu"><summary data-nav-key="reference" aria-current="page">资料与实验</summary><div class="site-nav__more-panel reference-menu__panel"><a href="../00-首页/学习驾驶舱/pages/evidence.html" data-nav-key="evidence">实验依据</a><a href="../00-首页/学习驾驶舱/pages/notes.html" data-nav-key="notes">专项笔记</a><a href="../00-首页/学习驾驶舱/pages/environment.html" data-nav-key="environment">开发环境</a><a href="../00-首页/学习驾驶舱/pages/phase0.html" data-nav-key="phase0">可视化参考</a><a href="../00-首页/学习驾驶舱/pages/archive.html" data-nav-key="archive">归档</a><a href="obsidian://open?vault=RK3568&amp;file=00-%E9%A6%96%E9%A1%B5%2F00-RK3568%E5%AD%A6%E4%B9%A0%E4%B8%BB%E5%85%A5%E5%8F%A3">在 Obsidian 中打开</a></div></details><div class="site-nav__tools"><a class="site-nav__stage course-status" href="../00-首页/学习驾驶舱/pages/learning-route.html#stage-08" title="当前学习阶段">当前 阶段 08 · V4L2 用户态取流</a></div></nav>
+
+  <header class="hero">
+    <p class="eyebrow">阶段 08 · 专题 3/3</p>
+    <h1>连续 100 帧：证据、统计与清理</h1>
+    <p>这一页把“能出一帧”升级成“稳定出流”：看 100 次 DQBUF、sequence 连续性、FPS、bytesused，再沿创建顺序的反方向释放资源。</p>
+  </header>
+
+  <main id="main-content">
+    <nav class="topic-map" aria-label="本页阅读顺序">
+      <a href="#hundred-loop"><b>图 1 · 100 帧循环</b>每帧统计什么，Buffer 为什么必须重新 QBUF</a>
+      <a href="#evidence"><b>图 2 · 真实证据</b>100、30.000、2 → 101 分别证明什么</a>
+      <a href="#cleanup"><b>图 3 · 逆序清理</b>STREAMOFF、munmap、REQBUFS(0)、close</a>
+    </nav>
+    <div class="card-grid">
+      <article class="plain-card"><h3>直接调用</h3><p>用户程序自身的循环和清理顺序，用灰蓝实线表示。</p></article>
+      <article class="plain-card"><h3>框架回调</h3><p><code>DQBUF</code>、<code>STREAMOFF</code> 等 ioctl 最终由 V4L2/VB2 回调驱动，用紫色虚线表示。</p></article>
+      <article class="plain-card"><h3>数据流 / Buffer 所有权</h3><p>绿色线表示 Buffer 在应用与驱动之间往返，以及统计值由帧元数据产生。</p></article>
+    </div>
+
+    <section id="hundred-loop">
+      <h2>图 1：一帧循环 100 次，形成稳定性证据</h2>
+      <div class="legend"><span><i class="legend-line"></i>直接调用</span><span><i class="legend-line callback"></i>框架回调</span><span><i class="legend-line data"></i>统计/所有权</span></div>
+      <div class="diagram">
+        <svg viewBox="0 0 1200 560" role="img" aria-labelledby="loop-title loop-desc">
+          <title id="loop-title">连续一百帧程序调用关系</title><desc id="loop-desc">capture_frames 循环等待、DQBUF、统计和重新 QBUF，最终打印汇总。</desc>
+          <defs><marker id="c1" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#8498aa"/></marker><marker id="c1c" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#aa8be9"/></marker><marker id="c1d" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#64a66f"/></marker></defs>
+          <rect class="node user" x="35" y="65" width="215" height="100" rx="16"/><text class="node-title" x="142" y="103">capture_frames()</text><text class="node-note" x="142" y="135">目标 frame_count=100</text>
+          <rect class="node user" x="300" y="65" width="235" height="100" rx="16"/><text class="node-title" x="417" y="103">wait_until_frame_ready()</text><text class="node-note" x="417" y="135">poll timeout 计数</text>
+          <rect class="node vb2" x="585" y="65" width="215" height="100" rx="16"/><text class="node-title" x="692" y="103">VIDIOC_DQBUF</text><text class="node-note" x="692" y="135">取得 index / sequence</text>
+          <rect class="node data" x="850" y="65" width="315" height="100" rx="16"/><text class="node-title" x="1007" y="103">total_bytesused</text><text class="node-note" x="1007" y="135">各 plane bytesused 求和</text>
+          <path class="edge direct" marker-end="url(#c1)" d="M250 115H300"/><path class="edge callback" marker-end="url(#c1c)" d="M535 115H585"/><path class="edge data" marker-end="url(#c1d)" d="M800 115H850"/>
+          <rect class="node user" x="850" y="285" width="315" height="100" rx="16"/><text class="node-title" x="1007" y="323">clock_gettime()</text><text class="node-note" x="1007" y="353">记录本帧时间戳</text>
+          <rect class="node user" x="500" y="285" width="280" height="100" rx="16"/><text class="node-title" x="640" y="323">update_stats()</text><text class="node-note" x="640" y="353">检测 sequence gap / FPS</text>
+          <rect class="node user" x="150" y="285" width="280" height="100" rx="16"/><text class="node-title" x="290" y="323">queue_one_buffer()</text><text class="node-note" x="290" y="353">重新 QBUF 给驱动</text>
+          <path class="edge direct" marker-end="url(#c1)" d="M1007 165V285"/><path class="edge direct" marker-end="url(#c1)" d="M850 335H780"/><path class="edge direct" marker-end="url(#c1)" d="M500 335H430"/>
+          <path class="edge data" marker-end="url(#c1d)" d="M290 285C290 220 692 220 692 165"/><text class="edge-label" x="485" y="215">Buffer 归还，下一帧继续</text>
+          <rect class="node done" x="460" y="445" width="300" height="90" rx="16"/><text class="node-title" x="610" y="480">print_summary()</text><text class="node-note" x="610" y="510">循环结束后输出总证据</text>
+          <path class="edge direct" marker-end="url(#c1)" d="M640 385V445"/>
+        </svg>
+      </div>
+      <div class="mobile-flow" aria-label="连续100帧纵向流程"><div class="mobile-step"><code>capture_frames()</code> 循环 100 次</div><div class="mobile-step"><code>poll()</code> → <code>VIDIOC_DQBUF</code></div><div class="mobile-step data">累计 bytesused，记录 sequence、时间戳和 timeout</div><div class="mobile-step"><code>update_stats()</code> 后 <code>queue_one_buffer()</code></div><div class="mobile-step"><code>print_summary()</code> 输出总体结果</div></div>
+    </section>
+
+    <section id="evidence">
+      <h2>图 2：把日志数字翻译成工程结论</h2>
+      <div class="diagram">
+        <svg viewBox="0 0 1200 430" role="img" aria-labelledby="evidence-title evidence-desc">
+          <title id="evidence-title">连续取流证据解释</title><desc id="evidence-desc">四组日志证据共同证明稳定取流。</desc>
+          <defs><marker id="c2" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#8498aa"/></marker><marker id="c2c" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#aa8be9"/></marker><marker id="c2d" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#64a66f"/></marker></defs>
+          <rect class="node data" x="45" y="65" width="250" height="105" rx="16"/><text class="node-title" x="170" y="103">captured frames = 100</text><text class="node-note" x="170" y="137">100 次 DQBUF 成功</text>
+          <rect class="node data" x="335" y="65" width="250" height="105" rx="16"/><text class="node-title" x="460" y="103">FPS = 30.000</text><text class="node-note" x="460" y="137">时间跨度符合 30 fps</text>
+          <rect class="node data" x="625" y="65" width="250" height="105" rx="16"/><text class="node-title" x="750" y="103">sequence 2 → 101</text><text class="node-note" x="750" y="137">连续递增，无丢帧间隙</text>
+          <rect class="node data" x="915" y="65" width="250" height="105" rx="16"/><text class="node-title" x="1040" y="103">bytesused 12441600</text><text class="node-note" x="1040" y="137">每帧有有效负载</text>
+          <rect class="node done" x="390" y="285" width="420" height="100" rx="16"/><text class="node-title" x="600" y="323">稳定取流证据成立</text><text class="node-note" x="600" y="353">sequence gap = 0，poll timeout = 0</text>
+          <path class="edge data" marker-end="url(#c2d)" d="M170 170C170 240 420 240 470 285"/><path class="edge data" marker-end="url(#c2d)" d="M460 170V285"/><path class="edge data" marker-end="url(#c2d)" d="M750 170V285"/><path class="edge data" marker-end="url(#c2d)" d="M1040 170C1040 240 790 240 730 285"/>
+          <path class="edge direct" marker-end="url(#c2)" d="M390 335H330"/><path class="edge callback" marker-end="url(#c2c)" d="M810 335H870"/>
+        </svg>
+      </div>
+      <div class="mobile-flow" aria-label="100帧证据卡片"><div class="mobile-step data"><strong>captured frames 100：</strong>连续取回 100 个完成 Buffer</div><div class="mobile-step data"><strong>30.000 FPS：</strong>帧完成节奏符合目标</div><div class="mobile-step data"><strong>sequence 2 → 101：</strong>sequence gap = 0</div><div class="mobile-step data"><strong>12441600 bytesused：</strong>每帧不是空壳；poll timeout = 0</div></div>
+      <div class="card-grid">
+        <article class="plain-card"><h3>index 不是帧号</h3><p><code>buf.index</code> 只表示有限 Buffer 池里的槽位，会在 0、1、2、3 间循环。</p></article>
+        <article class="plain-card"><h3>sequence 才是帧序号</h3><p><code>buf.sequence</code> 随采集帧递增，用它判断中间是否跳号。</p></article>
+        <article class="plain-card"><h3>FPS 计算</h3><p>100 帧只有 99 个时间间隔，所以约为 <code>(100-1) / 3.300023 ≈ 30.000</code>。</p></article>
+      </div>
+    </section>
+
+    <section id="cleanup">
+      <h2>图 3：资源按创建顺序的反方向清理</h2>
+      <div class="diagram">
+        <svg viewBox="0 0 1200 390" role="img" aria-labelledby="cleanup-title cleanup-desc">
+          <title id="cleanup-title">V4L2资源清理调用链</title><desc id="cleanup-desc">先停流，再解除映射，归还驱动 Buffer 池，最后关闭文件描述符。</desc>
+          <defs><marker id="c3" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#8498aa"/></marker><marker id="c3c" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#aa8be9"/></marker><marker id="c3d" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#64a66f"/></marker></defs>
+          <rect class="node user" x="30" y="80" width="220" height="100" rx="16"/><text class="node-title" x="140" y="118">cleanup_capture()</text><text class="node-note" x="140" y="150">统一错误/退出路径</text>
+          <rect class="node rkisp" x="290" y="80" width="220" height="100" rx="16"/><text class="node-title" x="400" y="118">VIDIOC_STREAMOFF</text><text class="node-note" x="400" y="150">先停硬件和队列</text>
+          <rect class="node user" x="550" y="80" width="180" height="100" rx="16"/><text class="node-title" x="640" y="118">munmap()</text><text class="node-note" x="640" y="150">解除用户映射</text>
+          <rect class="node vb2" x="770" y="80" width="240" height="100" rx="16"/><text class="node-title" x="890" y="118">VIDIOC_REQBUFS(count=0)</text><text class="node-note" x="890" y="150">释放 VB2 Buffer 池</text>
+          <rect class="node user" x="1050" y="80" width="120" height="100" rx="16"/><text class="node-title" x="1110" y="118">close()</text><text class="node-note" x="1110" y="150">释放 fd</text>
+          <path class="edge callback" marker-end="url(#c3c)" d="M250 130H290"/><path class="edge direct" marker-end="url(#c3)" d="M510 130H550"/><path class="edge data" marker-end="url(#c3d)" d="M730 130H770"/><path class="edge direct" marker-end="url(#c3)" d="M1010 130H1050"/>
+          <rect class="node done" x="350" y="265" width="500" height="80" rx="16"/><text class="node-title" x="600" y="299">为什么必须逆序？</text><text class="node-note" x="600" y="328">不能在 DMA 仍可能写内存时先 unmap 或释放 Buffer</text>
+        </svg>
+      </div>
+      <div class="mobile-flow" aria-label="资源逆序清理"><div class="mobile-step"><code>cleanup_capture()</code> 进入统一收尾路径</div><div class="mobile-step callback"><code>VIDIOC_STREAMOFF</code>：先停流</div><div class="mobile-step"><code>munmap()</code>：解除用户映射</div><div class="mobile-step data"><code>VIDIOC_REQBUFS(count=0)</code>：归还驱动 Buffer 池</div><div class="mobile-step"><code>close()</code>：最后关闭 video fd</div></div>
+    </section>
+
+    <section id="real-files">
+      <h2>真实程序和板端结果</h2>
+      <div class="card-grid">
+        <a class="topic-card" href="../05-实验与证据/V4L2用户态取流/Day6-连续100帧与FPS/capture_100_frames.c"><b>程序源码</b><code>capture_100_frames.c</code>：本页全部用户态函数都在这里。</a>
+        <a class="topic-card" href="../05-实验与证据/V4L2用户态取流/Day6-连续100帧与FPS/capture.log"><b>原始日志</b><code>capture.log</code>：逐帧 index、sequence、bytesused。</a>
+        <a class="topic-card" href="../05-实验与证据/V4L2用户态取流/Day6-连续100帧与FPS/fps-result.txt"><b>统计结果</b><code>fps-result.txt</code>：100 帧、30.000 FPS 与异常计数。</a>
+      </div>
+    </section>
+
+    <section id="interview">
+      <h2>30 秒面试表达</h2>
+      <article class="source-card"><p>我用 MMAP 模式申请有限个 VB2 Buffer，先全部 QBUF，再 STREAMON。每次 poll 后 DQBUF 得到驱动写完的 Buffer，记录 index、sequence、bytesused 和时间戳，再 QBUF 归还。板端连续采集 100 帧，sequence 从 2 到 101、gap 和 timeout 都为 0、统计为 30.000 FPS。结束时先 STREAMOFF，再 munmap、REQBUFS(count=0)，最后 close，避免硬件仍写入已释放内存。</p></article>
+    </section>
+
+    <nav class="stage-nav"><a href="25-V4L2-QBUF到DQBUF取流闭环.html">← 专题2：取流闭环</a><a href="23-V4L2-VB2用户态取流.html">返回阶段08总览</a><a href="../00-首页/学习驾驶舱/pages/learning-route.html">完成阶段08 · 返回课程路线 →</a></nav>
+  </main>
+</body>
+</html>

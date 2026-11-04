@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>README · RK3568</title><link rel="stylesheet" href="../../site.css?v=a5f6aba6cb"></head><body><div class="page-shell"><nav class="site-nav" data-site-nav aria-label="RK3568 Camera 课程导航"><a class="site-nav__brand" href="../../index.html"><span>RK3568</span><strong>Camera 课程</strong></a><div class="site-nav__links"><a href="../../index.html" data-nav-key="home">学习首页</a><a href="../learning-route.html" data-nav-key="route">完整路线</a><a href="../project.html" data-nav-key="project">项目</a></div><details class="site-nav__more course-menu"><summary>课程目录</summary><div class="site-nav__more-panel course-menu__grid"><a class="course-menu__item" href="../system-map.html"><span>00</span><strong>总览</strong></a><a class="course-menu__item" href="../../../../04-项目/15-Linux设备模型与总线分层.html"><span>01</span><strong>Linux Driver Model</strong></a><a class="course-menu__item" href="../../../../04-项目/20-DTS到运行时设备发现.html"><span>02</span><strong>DTS 与设备发现</strong></a><a class="course-menu__item" href="../../../../04-项目/16-IMX415-三层驱动调用流程.html"><span>03</span><strong>IMX415 Sensor</strong></a><a class="course-menu__item" href="../../../../04-项目/17-DPHY-从DTS到MediaGraph.html"><span>04</span><strong>MIPI CSI-2 / D-PHY</strong></a><a class="course-menu__item" href="../../../../04-项目/19-IMX415-v4l2-subdev注册与开流.html"><span>05</span><strong>V4L2 Subdev</strong></a><a class="course-menu__item" href="../../../../04-项目/21-MediaController-Entity-Pad-Link.html"><span>06</span><strong>Media Controller</strong></a><a class="course-menu__item" href="../../../../04-项目/22-RKISP-从RAW到VideoNode.html"><span>07</span><strong>RKISP</strong></a><a class="course-menu__item" href="../../../../04-项目/23-V4L2-VB2用户态取流.html"><span>08</span><strong>V4L2 用户态取流</strong></a><a class="course-menu__item" href="07-专项笔记--OpenCV--OpenCV读取Camera记录.html"><span>09</span><strong>GStreamer / OpenCV</strong></a><a class="course-menu__item" href="07-专项笔记--系统--AI Camera系统数据流与模块边界.html"><span>10</span><strong>RKNN / YOLO</strong></a><a class="course-menu__item" href="07-专项笔记--系统--AI Camera故障排查索引.html"><span>11</span><strong>Camera Bring-up 排障</strong></a></div></details><details class="site-nav__more reference-menu"><summary data-nav-key="reference" aria-current="page">资料与实验</summary><div class="site-nav__more-panel reference-menu__panel"><a href="../evidence.html" data-nav-key="evidence">实验依据</a><a href="../notes.html" data-nav-key="notes">专项笔记</a><a href="../environment.html" data-nav-key="environment">开发环境</a><a href="../phase0.html" data-nav-key="phase0">可视化参考</a><a href="../archive.html" data-nav-key="archive">归档</a><a href="obsidian://open?vault=RK3568&amp;file=00-%E9%A6%96%E9%A1%B5%2F00-RK3568%E5%AD%A6%E4%B9%A0%E4%B8%BB%E5%85%A5%E5%8F%A3">在 Obsidian 中打开</a></div></details><div class="site-nav__tools"><a class="site-nav__stage course-status" href="../learning-route.html#stage-08" title="当前学习阶段">当前 阶段 08 · V4L2 用户态取流</a></div></nav><main id="main-content" class="note-page"><header class="hero"><p class="hero__eyebrow">GENERATED NOTE · 05-实验与证据/V4L2用户态取流/Day6-连续100帧与FPS</p><h1>README </h1><p>此页面由 Markdown 知识源自动生成，适合网页阅读；编辑仍请回到 Obsidian。</p><div class="hero__actions"><a class="button" href="obsidian://open?vault=RK3568&amp;file=05-%E5%AE%9E%E9%AA%8C%E4%B8%8E%E8%AF%81%E6%8D%AE%2FV4L2%E7%94%A8%E6%88%B7%E6%80%81%E5%8F%96%E6%B5%81%2FDay6-%E8%BF%9E%E7%BB%AD100%E5%B8%A7%E4%B8%8EFPS%2FREADME">在 Obsidian 中打开</a></div></header><article class="note-content"><p>Day5 已经证明能够保存一张真实 NV12 图像。Day6 不再研究图像内容，而是检查应用能否持续接住 Camera 的帧，并且在退出后不留下占用状态。</p>
+<pre><code class="language-text">4 个 MMAP Buffer 先全部 QBUF
+        ↓
+STREAMON 启动管线
+        ↓
+poll 等待 DONE Buffer
+        ↓
+DQBUF：应用取得一帧及其 index / sequence / bytesused
+        ↓
+记录统计，再 QBUF 归还同一个 Buffer
+        ↓
+重复 100 次
+        ↓
+STREAMOFF → munmap → REQBUFS(0) → free → close</code></pre>
+<h2>推荐观看顺序</h2>
+<p>1. 先看 Day6 验收记录 的“本次实际结果”和“两个编号不要混淆”。<br>2. 再打开 capture_100_frames.c，按下面顺序搜索：</p>
+<pre><code class="language-text">main
+→ capture_frames
+→ update_stats
+→ print_summary
+→ cleanup_capture</code></pre>
+<p>3. 最后对照 100 帧完整日志 和 FPS 汇总。</p>
+<p>今天不要重新逐行研究 Day1–Day5 的初始化代码。只看新增的三件事：</p>
+<ul><li><code>sequence</code> 怎样发现应用观察到的帧序号缺口；</li><li>首帧和末帧时间怎样换算 FPS；</li><li>任何失败为什么都要跳到同一个 <code>cleanup</code> 出口。</li></ul>
+<h2>今天最重要的三句话</h2>
+<blockquote><code>buffer index</code> 表示这帧存在哪一个循环复用的容器；<code>sequence</code> 表示它是第几帧。四个 Buffer 可以不断承载上百帧。</blockquote>
+<blockquote>30 FPS 不需要申请 30 个 Buffer；它表示硬件大约每 33.3 ms 完成一帧，应用必须及时 DQBUF、处理并 QBUF。</blockquote>
+<blockquote><code>STREAMON</code> 返回成功是启动证据；连续 100 次 DQBUF、稳定 bytesused 和连续 sequence 才是短时间稳定出帧证据。</blockquote></article><footer class="footer"><a href="../notes.html">返回专项笔记导航</a> · <a href="../../index.html">返回驾驶舱首页</a></footer></main></div><script defer src="../../generated/vault-data.js?v=a5f6aba6cb"></script><script defer src="../../site.js?v=a5f6aba6cb"></script></body></html>
